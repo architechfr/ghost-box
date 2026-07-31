@@ -1,0 +1,413 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#141A1E">
+<title>Vision — caméras et enregistrement</title>
+<link rel="icon" type="image/png" href="/ghost-box/favicon.png">
+<link rel="apple-touch-icon" href="/ghost-box/apple-touch-icon.png">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600&family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bench:#141A1E;--panel:#1D262B;--sunk:#0A0F12;--line:#2C383F;--hair:#212B31;
+  --signal:#5FD3A6;--gold:#E9B44C;--flag:#E2574C;--paper:#CFC6B4;--dim:#78868E;--text:#DDE6EA;
+  --legend:"Barlow Condensed","Arial Narrow",sans-serif;
+  --body:"IBM Plex Sans",system-ui,sans-serif;--mono:"IBM Plex Mono",ui-monospace,monospace;
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;background:var(--bench);color:var(--text);font-family:var(--body);-webkit-font-smoothing:antialiased}
+body{padding:0 0 calc(env(safe-area-inset-bottom) + 30px)}
+.wrap{max-width:660px;margin:0 auto;padding:0 14px}
+
+/* barre du haut, collante */
+.top{position:sticky;top:0;z-index:20;background:rgba(20,26,30,.96);backdrop-filter:blur(8px);
+  border-bottom:1px solid var(--line);padding:env(safe-area-inset-top) 0 0}
+.topin{max-width:660px;margin:0 auto;padding:10px 14px;display:flex;align-items:center;gap:10px}
+.topin a.back{color:var(--dim);text-decoration:none;font-family:var(--mono);font-size:16px}
+.topin h1{font-family:var(--legend);text-transform:uppercase;letter-spacing:.18em;font-size:15px;
+  font-weight:600;margin:0;flex:1}
+.recdot{font-family:var(--mono);font-size:13px;color:var(--flag);display:none}
+.recdot.on{display:inline}
+
+.lg{font-family:var(--legend);text-transform:uppercase;letter-spacing:.15em;font-size:12px;color:var(--dim);font-weight:600}
+.step{margin-top:22px;border-top:1px solid var(--line);padding-top:14px}
+.ex{font-size:12.5px;color:var(--dim);line-height:1.55;margin:5px 0 0}
+.ex b{color:var(--paper);font-weight:500}
+button{font-family:var(--legend);text-transform:uppercase;letter-spacing:.13em;font-weight:600;
+  border:1px solid var(--line);background:var(--panel);color:var(--text);border-radius:3px;
+  padding:11px 12px;font-size:13px;cursor:pointer}
+button:active{transform:translateY(1px)}
+button:disabled{opacity:.35;cursor:default}
+button.act{border-color:var(--signal);color:var(--signal)}
+button.ko{border-color:var(--flag);color:var(--flag)}
+button.on{background:var(--gold);color:#191204;border-color:var(--gold)}
+.row{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}.row>button{flex:1;min-width:110px}
+#lenses{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}
+#lenses button{flex:1;min-width:96px;font-size:12px;letter-spacing:.08em}
+
+#grid{display:grid;gap:8px;margin-top:12px}
+.cell{position:relative;background:#000;border:1px solid var(--line);border-radius:4px;overflow:hidden}
+.cell video{display:block;width:100%;height:auto}
+.cell canvas.ov{position:absolute;inset:0;width:100%;height:100%;pointer-events:none}
+.cell .tag{position:absolute;left:6px;top:6px;font-family:var(--mono);font-size:10px;
+  background:rgba(10,15,18,.75);color:var(--paper);padding:2px 6px;border-radius:2px}
+.cell .dead{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;
+  background:rgba(10,15,18,.8);color:var(--flag);font-family:var(--legend);letter-spacing:.14em;font-size:12px;text-align:center;padding:12px}
+
+#recBtn{width:100%;margin-top:10px;padding:16px 0;font-size:15px;letter-spacing:.18em;
+  background:var(--flag);color:#180605;border-color:var(--flag)}
+#recBtn.on{background:var(--sunk);color:var(--flag)}
+#recBtn:disabled{background:var(--panel);color:var(--dim);border-color:var(--line)}
+
+.clip{display:flex;gap:10px;align-items:flex-start;padding:10px 0;border-bottom:1px solid var(--hair)}
+.clip img{width:78px;height:58px;object-fit:cover;background:#000;border:1px solid var(--line);border-radius:3px;flex:none}
+.clip .meta{flex:1;min-width:0}
+.clip .nm{font-family:var(--mono);font-size:12.5px;color:var(--paper);word-break:break-all}
+.clip .sub{font-family:var(--mono);font-size:11px;color:var(--dim);margin-top:3px}
+.clip .acts{display:flex;gap:6px;margin-top:7px;flex-wrap:wrap}
+.clip .acts button{padding:7px 9px;font-size:11px;letter-spacing:.1em;min-width:0;flex:none}
+.empty{color:var(--dim);font-size:13.5px;padding:14px 0;line-height:1.55}
+.warn{margin-top:12px;padding:11px 12px;border-left:2px solid var(--gold);background:#1E1A12;
+  font-size:12.5px;line-height:1.55;color:#E4D3AE}
+.stat{font-family:var(--mono);font-size:12px;color:var(--dim);margin-top:8px;line-height:1.6}
+.stat b{color:var(--signal)}
+video.player{width:100%;margin-top:8px;border:1px solid var(--line);border-radius:3px;background:#000}
+</style>
+</head>
+<body>
+
+<div class="top"><div class="topin">
+  <a class="back" href="../">←</a>
+  <h1>Vision</h1>
+  <span class="recdot" id="recDot">● <span id="recT">00:00</span></span>
+</div></div>
+
+<div class="wrap">
+
+<div class="step" style="border-top:0">
+  <div class="lg">1 — Objectifs</div>
+  <p class="ex">Ton téléphone expose souvent plusieurs objectifs (grand-angle, ultra grand-angle, avant). Autorise la caméra pour les découvrir, puis bascule de l'un à l'autre.</p>
+  <div class="row"><button id="camOn">Activer la caméra</button></div>
+  <div id="lenses"></div>
+  <div class="row"><button id="tryAll" disabled>Tenter tous les objectifs à la fois</button></div>
+  <p id="multiVerdict" class="ex"></p>
+</div>
+
+<div class="step">
+  <div class="lg">2 — Aperçu</div>
+  <div id="grid"></div>
+  <p id="camState" class="ex">Caméra éteinte.</p>
+</div>
+
+<div class="step">
+  <div class="lg">3 — Enregistrer</div>
+  <p class="ex">La vidéo et le <b>son du micro</b> sont enregistrés dans le même fichier : tu peux filmer la pièce pendant que ta box radio tourne. Tout reste sur l'appareil.</p>
+  <div class="row">
+    <button id="withAudio" class="on">Son du micro</button>
+    <button id="withMotion">Marquer les mouvements</button>
+  </div>
+  <button id="recBtn" disabled>● Enregistrer</button>
+  <p id="recState" class="ex">Active d'abord la caméra.</p>
+</div>
+
+<div class="step">
+  <div class="lg">4 — Mouvement</div>
+  <p class="ex">L'appareil apprend l'image de fond, puis encadre ce qui bouge. Le <b>témoin</b> fait tourner le même détecteur sur une image mélangée — du bruit sans forme. Si les deux comptes se ressemblent, ce que tu vois n'est que du bruit.</p>
+  <div class="stat" id="motionStat">Détection inactive.</div>
+</div>
+
+<div class="step">
+  <div class="lg">5 — Enregistrements <span id="libCount" style="color:var(--paper)"></span></div>
+  <p class="ex">Stockés sur cet appareil uniquement. Supprime-les quand tu veux — ils occupent de la place.</p>
+  <div id="lib"><p class="empty">Aucun enregistrement.</p></div>
+  <div class="row">
+    <button id="wipe">Tout supprimer</button>
+  </div>
+  <p id="libStat" class="ex"></p>
+</div>
+
+</div>
+
+<script>
+(() => {
+"use strict";
+const $ = id => document.getElementById(id);
+const esc = s => String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const fmt = s => { s=Math.max(0,s|0); return String(s/60|0).padStart(2,'0')+':'+String(s%60).padStart(2,'0'); };
+const mo = b => b<1048576? (b/1024).toFixed(0)+' Ko' : (b/1048576).toFixed(1)+' Mo';
+const stamp = () => new Date().toISOString().slice(0,19).replace(/[:T]/g,'-');
+
+/* ═══════ caméras ═══════ */
+let devices=[], streams=[], cells=[], activeId=null, multi=false;
+
+async function listDevices(){
+  try{
+    const all=await navigator.mediaDevices.enumerateDevices();
+    devices=all.filter(d=>d.kind==='videoinput');
+  }catch(e){ devices=[]; }
+  const box=$('lenses'); box.innerHTML='';
+  devices.forEach((d,i)=>{
+    const b=document.createElement('button');
+    b.textContent=labelOf(d,i);
+    b.className=(d.deviceId===activeId && !multi)?'act':'';
+    b.onclick=()=>openOne(d.deviceId);
+    box.appendChild(b);
+  });
+  $('tryAll').disabled = devices.length<2;
+}
+function labelOf(d,i){
+  const l=(d.label||'').toLowerCase();
+  if(l.includes('front')||l.includes('avant')||l.includes('user')) return 'Avant';
+  if(l.includes('ultra')||l.includes('wide angle')) return 'Ultra grand-angle';
+  if(l.includes('tele')) return 'Téléobjectif';
+  if(l.includes('back')||l.includes('arrière')||l.includes('environment')) return 'Arrière'+(i?' '+i:'');
+  return d.label? d.label.slice(0,18) : 'Objectif '+(i+1);
+}
+function stopAll(){
+  streams.forEach(s=>{ try{ s.getTracks().forEach(t=>t.stop()); }catch(e){} });
+  streams=[]; cells=[]; $('grid').innerHTML=''; $('grid').style.gridTemplateColumns='';
+  motionOn=false; bg=null;
+}
+function makeCell(label){
+  const d=document.createElement('div'); d.className='cell';
+  d.innerHTML='<video playsinline muted autoplay></video><canvas class="ov"></canvas><div class="tag">'+esc(label)+'</div>';
+  $('grid').appendChild(d);
+  return {el:d, v:d.querySelector('video'), ov:d.querySelector('canvas.ov'), label};
+}
+async function openOne(deviceId){
+  stopAll(); multi=false; $('multiVerdict').textContent='';
+  try{
+    const c = deviceId? {deviceId:{exact:deviceId}} : {facingMode:'environment'};
+    c.width={ideal:1280}; c.height={ideal:720};
+    const st=await navigator.mediaDevices.getUserMedia({video:c, audio:false});
+    streams=[st]; activeId=st.getVideoTracks()[0].getSettings().deviceId||deviceId;
+    const cell=makeCell(labelOf(devices.find(d=>d.deviceId===activeId)||{label:''},0));
+    cell.v.srcObject=st; await cell.v.play().catch(()=>{});
+    cells=[cell];
+    $('grid').style.gridTemplateColumns='1fr';
+    $('camState').textContent='Caméra active.';
+    $('recBtn').disabled=false; $('camOn').className='act'; $('camOn').textContent='Couper la caméra';
+    await listDevices(); startMotion();
+  }catch(e){ $('camState').textContent='Caméra refusée ou indisponible.'; }
+}
+$('camOn').onclick=async ()=>{
+  if(streams.length){ stopAll(); activeId=null; $('camOn').className=''; $('camOn').textContent='Activer la caméra';
+    $('camState').textContent='Caméra éteinte.'; $('recBtn').disabled=true; $('motionStat').textContent='Détection inactive.';
+    await listDevices(); return; }
+  await openOne(null);
+};
+
+/* tentative multi-flux : on essaie, puis on VÉRIFIE lesquels vivent vraiment */
+$('tryAll').onclick=async ()=>{
+  stopAll(); multi=true;
+  $('multiVerdict').textContent='Ouverture de '+devices.length+' objectifs…';
+  const opened=[];
+  for(let i=0;i<devices.length;i++){
+    try{
+      const st=await navigator.mediaDevices.getUserMedia({video:{deviceId:{exact:devices[i].deviceId}},audio:false});
+      streams.push(st);
+      const cell=makeCell(labelOf(devices[i],i));
+      cell.v.srcObject=st; cell.v.play().catch(()=>{});
+      cells.push(cell); opened.push(i);
+    }catch(e){ /* refusé par l'appareil */ }
+  }
+  $('grid').style.gridTemplateColumns = cells.length>1? 'repeat(2,1fr)' : '1fr';
+  if(!cells.length){ $('multiVerdict').textContent='Aucun objectif n\'a pu être ouvert.'; return; }
+  // vérification honnête : un flux figé n'avance pas dans le temps
+  const t0=cells.map(c=>c.v.currentTime);
+  await new Promise(r=>setTimeout(r,1800));
+  let alive=0;
+  cells.forEach((c,i)=>{
+    const live = c.v.currentTime>t0[i]+0.05 && c.v.videoWidth>0;
+    if(live) alive++;
+    else { const d=document.createElement('div'); d.className='dead'; d.textContent='flux coupé par l\'appareil'; c.el.appendChild(d); }
+  });
+  $('multiVerdict').innerHTML = alive>1
+    ? '<b style="color:var(--signal)">'+alive+' objectifs tournent en même temps.</b>'
+    : 'Un seul flux reste vivant : <b>ton téléphone n\'autorise pas deux caméras à la fois</b> (limite d\'Android et d\'iOS, pas de l\'application). Utilise la bascule entre objectifs.';
+  $('camState').textContent = alive+' flux actif'+(alive>1?'s':'')+'.';
+  $('recBtn').disabled = alive<1;
+  startMotion();
+};
+
+/* ═══════ mouvement + témoin ═══════ */
+let motionOn=false, bg=null, prevBox=null, mHits=0, cHits=0, mOn=false, cOn=false, mStart=0, lastMotion=0;
+const MW=64, MH=48, TH=26, DET=4.5;
+function startMotion(){ motionOn=true; bg=null; mHits=0; cHits=0; mStart=performance.now(); loopMotion(); }
+function largestBlob(mask,W,H){
+  const seen=new Uint8Array(mask.length); let best={size:0,minx:0,maxx:0,miny:0,maxy:0}; const st=[];
+  for(let s=0;s<mask.length;s++){
+    if(!mask[s]||seen[s]) continue;
+    let size=0,minx=W,maxx=0,miny=H,maxy=0; st.length=0; st.push(s); seen[s]=1;
+    while(st.length){
+      const p=st.pop(), x=p%W, y=(p/W)|0; size++;
+      if(x<minx)minx=x; if(x>maxx)maxx=x; if(y<miny)miny=y; if(y>maxy)maxy=y;
+      if(x>0&&mask[p-1]&&!seen[p-1]){seen[p-1]=1;st.push(p-1);}
+      if(x<W-1&&mask[p+1]&&!seen[p+1]){seen[p+1]=1;st.push(p+1);}
+      if(y>0&&mask[p-W]&&!seen[p-W]){seen[p-W]=1;st.push(p-W);}
+      if(y<H-1&&mask[p+W]&&!seen[p+W]){seen[p+W]=1;st.push(p+W);}
+    }
+    if(size>best.size) best={size,minx,maxx,miny,maxy};
+  }
+  return best;
+}
+function shuffled(a){ const b=a.slice(); for(let i=b.length-1;i>0;i--){const j=(Math.random()*(i+1))|0;const t=b[i];b[i]=b[j];b[j]=t;} return b; }
+const mcv=document.createElement('canvas'); mcv.width=MW; mcv.height=MH;
+const mctx=mcv.getContext('2d',{willReadFrequently:true});
+function loopMotion(){
+  if(!motionOn || !cells.length){ return; }
+  const c=cells[0], v=c.v;
+  if(v.videoWidth){
+    mctx.drawImage(v,0,0,MW,MH);
+    const im=mctx.getImageData(0,0,MW,MH).data, px=MW*MH, cur=new Float32Array(px);
+    for(let i=0,j=0;i<im.length;i+=4,j++) cur[j]=im[i]*.299+im[i+1]*.587+im[i+2]*.114;
+    if(!bg) bg=cur.slice();
+    const mask=new Uint8Array(px);
+    for(let j=0;j<px;j++){ if(Math.abs(cur[j]-bg[j])>TH) mask[j]=1; bg[j]+=0.02*(cur[j]-bg[j]); }
+    const blob=largestBlob(mask,MW,MH), frac=blob.size/px*100;
+    const cfrac=largestBlob(shuffled(mask),MW,MH).size/px*100;
+    if(frac>=DET){ if(!mOn){mHits++;mOn=true;} lastMotion=performance.now(); } else mOn=false;
+    if(cfrac>=DET){ if(!cOn){cHits++;cOn=true;} } else cOn=false;
+    prevBox = frac>=DET? blob : null;
+    // encadrer la zone qui bouge (un rectangle factuel, pas une silhouette inventée)
+    const ov=c.ov, W=ov.width=v.clientWidth||320, H=ov.height=v.clientHeight||240, g=ov.getContext('2d');
+    g.clearRect(0,0,W,H);
+    if(prevBox){
+      const sx=W/MW, sy=H/MH;
+      g.strokeStyle='#5FD3A6'; g.lineWidth=2;
+      g.strokeRect(prevBox.minx*sx, prevBox.miny*sy, (prevBox.maxx-prevBox.minx+1)*sx, (prevBox.maxy-prevBox.miny+1)*sy);
+      g.fillStyle='#5FD3A6'; g.font='11px monospace';
+      g.fillText(frac.toFixed(1)+'%', prevBox.minx*sx+2, Math.max(11,prevBox.miny*sy-3));
+    }
+    const min=Math.max(.05,(performance.now()-mStart)/60000);
+    const verdict = mHits<3? '' : (mHits/min <= (cHits/min)*1.5
+      ? ' — au niveau du bruit.' : ' — au-dessus du bruit.');
+    $('motionStat').innerHTML='Mouvement <b>'+mHits+'</b>× ('+(mHits/min).toFixed(1)+'/min) · témoin, bruit <b>'+cHits+'</b>× ('+(cHits/min).toFixed(1)+'/min)'+verdict;
+  }
+  setTimeout(loopMotion,110);
+}
+$('withMotion').onclick=e=>e.target.classList.toggle('on');
+
+/* ═══════ enregistrement ═══════ */
+let micStream=null, rec=null, chunks=[], recording=false, recStart=0, recTimer=null, recMime='';
+$('withAudio').onclick=e=>e.target.classList.toggle('on');
+function pickMime(){
+  const c=['video/mp4;codecs=avc1','video/mp4','video/webm;codecs=vp9,opus','video/webm;codecs=vp8,opus','video/webm'];
+  for(const m of c) if(window.MediaRecorder&&MediaRecorder.isTypeSupported&&MediaRecorder.isTypeSupported(m)) return m;
+  return '';
+}
+$('recBtn').onclick=async ()=>{
+  if(recording){ try{ rec.stop(); }catch(e){} return; }
+  if(!streams.length){ $('recState').textContent="Active d'abord la caméra."; return; }
+  if(!window.MediaRecorder){ $('recState').textContent='Enregistrement vidéo non supporté par ce navigateur.'; return; }
+  const tracks=[...streams[0].getVideoTracks()];
+  if($('withAudio').classList.contains('on')){
+    try{
+      if(!micStream) micStream=await navigator.mediaDevices.getUserMedia({audio:{echoCancellation:false,noiseSuppression:false,autoGainControl:false}});
+      tracks.push(...micStream.getAudioTracks());
+    }catch(e){ $('recState').textContent='Micro refusé — enregistrement sans son.'; }
+  }
+  const mix=new MediaStream(tracks);
+  recMime=pickMime(); chunks=[];
+  try{ rec=new MediaRecorder(mix, recMime?{mimeType:recMime}:undefined); }
+  catch(e){ $('recState').textContent='Enregistrement indisponible sur ce navigateur.'; return; }
+  rec.ondataavailable=e=>{ if(e.data&&e.data.size) chunks.push(e.data); };
+  rec.onstop=onStop;
+  rec.start(1000); recording=true; recStart=performance.now();
+  $('recBtn').textContent='■ Arrêter'; $('recBtn').classList.add('on');
+  $('recDot').classList.add('on');
+  recTimer=setInterval(()=>{ const t=(performance.now()-recStart)/1000;
+    $('recT').textContent=fmt(t); $('recState').textContent='Enregistrement en cours — '+fmt(t); },250);
+};
+async function onStop(){
+  recording=false; clearInterval(recTimer);
+  $('recBtn').textContent='● Enregistrer'; $('recBtn').classList.remove('on');
+  $('recDot').classList.remove('on');
+  const dur=(performance.now()-recStart)/1000;
+  const type=(rec&&rec.mimeType)||recMime||'video/webm';
+  const blob=new Blob(chunks,{type});
+  const thumb=grabThumb();
+  const ext = type.indexOf('mp4')>=0? 'mp4':'webm';
+  const clip={ id:Date.now(), nom:'vision-'+stamp()+'.'+ext, mime:type, taille:blob.size,
+               duree:Math.round(dur), vignette:thumb, cam:(cells[0]&&cells[0].label)||'—', blob };
+  try{ await dbPut(clip); $('recState').textContent='Enregistrement sauvegardé ('+mo(blob.size)+').'; }
+  catch(e){ $('recState').textContent='Sauvegarde impossible (espace insuffisant ?) — télécharge-le tout de suite.';
+            dl(blob, clip.nom); }
+  renderLib();
+}
+function grabThumb(){
+  try{
+    const v=cells[0]&&cells[0].v; if(!v||!v.videoWidth) return '';
+    const c=document.createElement('canvas'); c.width=156; c.height=116;
+    c.getContext('2d').drawImage(v,0,0,156,116);
+    return c.toDataURL('image/jpeg',.5);
+  }catch(e){ return ''; }
+}
+function dl(blob,name){ const u=URL.createObjectURL(blob),a=document.createElement('a');
+  a.href=u;a.download=name;a.click(); setTimeout(()=>URL.revokeObjectURL(u),6000); }
+
+/* ═══════ bibliothèque (IndexedDB) ═══════ */
+const DBN='ghostbox-vision', ST='clips';
+function db(){ return new Promise((res,rej)=>{ const r=indexedDB.open(DBN,1);
+  r.onupgradeneeded=()=>{ if(!r.result.objectStoreNames.contains(ST)) r.result.createObjectStore(ST,{keyPath:'id'}); };
+  r.onsuccess=()=>res(r.result); r.onerror=()=>rej(r.error); }); }
+async function dbPut(o){ const d=await db(); return new Promise((res,rej)=>{
+  const t=d.transaction(ST,'readwrite'); t.objectStore(ST).put(o);
+  t.oncomplete=()=>res(); t.onerror=()=>rej(t.error); }); }
+async function dbAll(){ const d=await db(); return new Promise((res,rej)=>{
+  const t=d.transaction(ST,'readonly'), q=t.objectStore(ST).getAll();
+  q.onsuccess=()=>res(q.result||[]); q.onerror=()=>rej(q.error); }); }
+async function dbDel(id){ const d=await db(); return new Promise((res,rej)=>{
+  const t=d.transaction(ST,'readwrite'); t.objectStore(ST).delete(id);
+  t.oncomplete=()=>res(); t.onerror=()=>rej(t.error); }); }
+async function dbClear(){ const d=await db(); return new Promise((res,rej)=>{
+  const t=d.transaction(ST,'readwrite'); t.objectStore(ST).clear();
+  t.oncomplete=()=>res(); t.onerror=()=>rej(t.error); }); }
+
+async function renderLib(){
+  let all=[]; try{ all=await dbAll(); }catch(e){}
+  all.sort((a,b)=>b.id-a.id);
+  $('libCount').textContent = all.length? '· '+all.length : '';
+  const box=$('lib');
+  if(!all.length){ box.innerHTML='<p class="empty">Aucun enregistrement.</p>'; $('libStat').textContent=''; return; }
+  box.innerHTML='';
+  let total=0;
+  all.forEach(c=>{
+    total+=c.taille||0;
+    const d=document.createElement('div'); d.className='clip';
+    d.innerHTML=(c.vignette? '<img src="'+c.vignette+'" alt="">':'<img alt="">')+
+      '<div class="meta"><div class="nm">'+esc(c.nom)+'</div>'+
+      '<div class="sub">'+fmt(c.duree)+' · '+mo(c.taille||0)+' · '+esc(c.cam||'—')+'</div>'+
+      '<div class="acts"></div></div>';
+    const acts=d.querySelector('.acts');
+    const bl=document.createElement('button'); bl.textContent='Lire';
+    bl.onclick=()=>{ const ex=d.querySelector('video.player'); if(ex){ ex.remove(); return; }
+      const v=document.createElement('video'); v.className='player'; v.controls=true; v.playsInline=true;
+      v.src=URL.createObjectURL(c.blob); d.querySelector('.meta').appendChild(v); v.play().catch(()=>{}); };
+    const bd=document.createElement('button'); bd.textContent='Télécharger';
+    bd.onclick=()=>dl(c.blob,c.nom);
+    const bx=document.createElement('button'); bx.textContent='Supprimer'; bx.className='ko';
+    bx.onclick=async ()=>{ if(!confirm('Supprimer '+c.nom+' ?')) return; await dbDel(c.id); renderLib(); };
+    acts.appendChild(bl); acts.appendChild(bd); acts.appendChild(bx);
+    box.appendChild(d);
+  });
+  let quota='';
+  if(navigator.storage&&navigator.storage.estimate){
+    try{ const e=await navigator.storage.estimate();
+      if(e.quota) quota=' · espace disponible sur l\'appareil : '+mo(e.quota-(e.usage||0));
+    }catch(e){}
+  }
+  $('libStat').textContent='Total '+mo(total)+quota;
+}
+$('wipe').onclick=async ()=>{
+  if(!confirm('Supprimer TOUS les enregistrements ? Action définitive.')) return;
+  await dbClear(); renderLib();
+};
+
+listDevices(); renderLib();
+})();
+</script>
+</body>
+</html>

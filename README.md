@@ -1,6 +1,6 @@
 # ghost-box
 
-Outils de séance pour ghost box : enregistreur audio avec analyse, et banc d'essai capteurs → mots.
+Outils de séance pour ghost box : caméras et enregistrement vidéo, veille capteurs → mots, enregistreur audio avec analyse.
 
 Tout fonctionne côté navigateur. Aucune donnée ne quitte l'appareil, aucune dépendance à installer.
 
@@ -13,8 +13,10 @@ Tout fonctionne côté navigateur. Aucune donnée ne quitte l'appareil, aucune d
 | Chemin | Rôle |
 |---|---|
 | `index.html` | Accueil + diagnostic des capteurs de l'appareil |
-| `enregistreur/` | Enregistreur : micro sans traitement, spectrogramme, marqueurs, détection de pics, relecture (boucle, rognage, filtres), export WAV |
-| `banc/` | Banc d'essai : capteurs en direct, moteur capteur → mot (détection robuste), coïncidence multi-capteurs, forme + silhouette caméra avec témoin visuel, enregistrement audio de la box radio, transcription optionnelle, mode témoin, trace exportable avec preuve |
+| `vision/` | Vision : tous les objectifs de l'appareil avec bascule instantanée, aperçu direct, enregistrement vidéo + son du micro, détection de mouvement encadrée avec témoin de bruit, bibliothèque des enregistrements (lecture, export, suppression) stockée sur l'appareil |
+| `enregistreur/` | Écoute : micro sans traitement, spectrogramme, marqueurs, détection de pics, relecture (boucle, rognage, filtres), export WAV |
+| `banc/` | Banc d'essai : capteurs en direct, moteur capteur → mot à seuil auto-calibré, coïncidence multi-capteurs, forme caméra avec témoin visuel, enregistrement audio de la box radio, mode témoin à l'aveugle, trace exportable |
+| `contact-ia/` | Contact via IA (en développement) : transcription Voxtral de la box radio, silhouette IA en direct |
 | `db/` | Schémas PostgreSQL/Supabase et MySQL, jeux de données de départ |
 | `data/` | Lexique 567 mots (CSV, JSON) et le script qui le régénère |
 | `docs/` | Inventaire détaillé des capteurs et de la chaîne capteur → mot |
@@ -94,18 +96,34 @@ Même logique côté audio : la détection automatique de pics est indépendante
 
 ---
 
-## Détection : limiter les faux positifs
+## Détection : le seuil se calibre contre le bruit réel
 
-Le moteur du banc ne se contente plus d'une moyenne et d'un écart-type calculés une fois. Quatre garde-fous réduisent les faux positifs :
+Le réglage de sensibilité en écarts-types a été **supprimé**, parce qu'il reposait sur un mensonge statistique. « 3 σ arrive une fois sur mille » suppose un bruit gaussien et des mesures indépendantes ; un capteur de téléphone n'a ni l'un ni l'autre. Le bruit audio a des **queues lourdes** (des pics gros et fréquents) et deux mesures consécutives sont **fortement corrélées** — d'où des écarts mesurés à 7 σ ou plus sur un simple fond sonore, et une exigence de « persistance » qui ne filtrait rien puisque les mesures se ressemblent d'un instant à l'autre.
+
+À la place, l'appareil **mesure son propre bruit et se juge dessus** :
+
+- **Seuil de départ ancré sur le pire pic observé.** À la fin de l'apprentissage, le seuil n'est pas choisi mais calculé : le plus grand écart réellement atteint pendant que rien ne se passait, majoré de 40 %.
+- **Un témoin de bruit tourne en permanence.** Il rejoue, par blocs de trois secondes, le bruit réellement enregistré par l'appareil — mêmes pics, même corrélation, mais aucun événement, par construction. Il est testé quatre fois plus souvent que le signal réel.
+- **Chaque fois que le témoin aurait fait sortir un mot, le seuil monte de 15 %.** C'est un faux positif certain, puisqu'il n'y avait rien à voir. Le seuil s'élève donc jusqu'à ce que le bruit de l'appareil ne puisse plus jamais le faire parler, et l'interface affiche ce seuil et le nombre de relevages.
+- **Plafond dur et stabilisation.** Un intervalle minimum entre deux mots est imposé (au plus 1 mot par heure par défaut), et rien ne peut sortir pendant la première minute de veille.
+
+Mesuré en simulation sur trois heures de bruit synthétique autocorrélé à queues lourdes, avec les protections complètes : **zéro mot** sur du bruit réaliste ou calme, **un seul** dans un cas volontairement extrême — là où le réglage précédent à 3 σ produisait plus de vingt mille déclenchements. Un écart franc et soutenu reste détecté et produit bien un mot.
+
+Conséquence assumée : **la plupart des séances ne produiront aucun mot**. C'est le fonctionnement correct. Un appareil de ce type qui parle souvent est un appareil qui invente.
+
+---
+
+## Garde-fous complémentaires
+
+Sous le seuil auto-calibré, trois mécanismes restent actifs :
 
 - **Normale robuste** — la référence est apprise par **médiane + MAD**, insensible à un pic parasite survenu pendant l'apprentissage (là où une moyenne/écart-type se laisse tromper).
 - **Persistance** — un écart doit **tenir plusieurs relevés d'affilée** (~400 ms) avant de produire un mot. Un pic isolé, la principale source de fausses alertes, est ignoré. C'est aussi ce qui distingue un vrai signal — corrélé dans le temps — d'un bruit sans structure.
-- **Hystérésis** — après un mot, le moteur ne se ré-arme qu'une fois le signal **retombé** sous un seuil bas, pour éviter les rafales sur une même perturbation.
 - **Dérive** — quand tout est calme, la normale **suit lentement le fond** ; un changement durable devient la nouvelle référence, tandis qu'une vraie excursion, rapide, déclenche encore.
 
-Le mode témoin et le mode à l'aveugle passent par exactement les mêmes garde-fous : la comparaison reste honnête.
+Le mode témoin et le mode à l'aveugle passent par exactement les mêmes garde-fous, seuil auto-calibré compris : la comparaison reste honnête. En mode à l'aveugle, le générateur ne produira quasiment jamais de mot — c'est justement ce qui rend le test tranchant.
 
-**Tirage du mot.** Le mot n'est plus tiré à partir de *l'amplitude* de l'écart — cette méthode retombait toujours sur les mots du bout de la liste, puisqu'au moment du déclenchement l'écart est par construction grand. Il est désormais tiré par un **hachage** de la valeur brute (FNV-1a → position dans le lexique) : réparti sur les 567 mots, entièrement déterminé par la valeur enregistrée donc reproductible depuis la trace, avec une **anti-répétition** qui interdit les derniers mots sortis. Le champ `rehash` de la trace note le décalage éventuel appliqué par l'anti-répétition.
+**Tirage du mot.** Le mot n'est pas tiré à partir de *l'amplitude* de l'écart — cette méthode retombait toujours sur les mots du bout de la liste, puisqu'au moment du déclenchement l'écart est par construction grand. Il est désormais tiré par un **hachage** de la valeur brute (FNV-1a → position dans le lexique) : réparti sur les 567 mots, entièrement déterminé par la valeur enregistrée donc reproductible depuis la trace, avec une **anti-répétition** qui interdit les derniers mots sortis. Le champ `rehash` de la trace note le décalage éventuel appliqué par l'anti-répétition.
 
 ---
 
@@ -139,3 +157,12 @@ Au lieu d'un seul capteur par séance, le banc peut en surveiller **deux ou troi
 ## Licence
 
 MIT.
+
+
+---
+
+## Plusieurs caméras à la fois : ce qui est possible
+
+Un téléphone expose souvent plusieurs objectifs (arrière, ultra grand-angle, avant), et le module Vision les détecte tous. En revanche, **Android et iOS n'autorisent pas deux flux caméra simultanés** : ouvrir le second coupe le premier. C'est une limite des plateformes, pas de l'application — la même page affiche bien plusieurs flux sur un ordinateur.
+
+Vision en tient compte honnêtement : le bouton « Tenter tous les objectifs à la fois » ouvre réellement chaque objectif, puis **vérifie lequel est encore vivant** (un flux figé n'avance plus dans le temps), marque les flux coupés et affiche le verdict. Sur téléphone, la voie utile reste la **bascule instantanée** d'un objectif à l'autre.

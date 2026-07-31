@@ -29,7 +29,12 @@ a.card.f{border-left-color:var(--flag)}
 .wip{font-size:10px;color:var(--gold);letter-spacing:.1em;border:1px solid var(--gold);border-radius:2px;padding:1px 5px;margin-left:6px;vertical-align:middle}
 a.card h2{font-family:var(--legend);text-transform:uppercase;letter-spacing:.14em;font-size:16px;margin:0 0 5px;font-weight:600}
 a.card p{margin:0;font-size:13.5px}
+a.card .when{display:block;margin-top:7px;font-family:var(--mono);font-size:11.5px;color:var(--signal)}
+a.card.g .when{color:var(--gold)}
+a.card.f .when{color:var(--flag)}
 .arrow{float:right;color:var(--dim);font-family:var(--mono)}
+.sect{font-family:var(--legend);text-transform:uppercase;letter-spacing:.18em;font-size:11px;
+  color:var(--dim);font-weight:600;margin:26px 0 2px}
 hr{border:0;border-top:1px solid var(--hair);margin:26px 0}
 table{width:100%;border-collapse:collapse;font-size:13px;margin-top:8px}
 td{padding:8px 6px 8px 0;border-bottom:1px solid var(--hair)}
@@ -47,21 +52,34 @@ footer a{color:var(--dim)}
 <div class="wrap">
 
 <img src="assets/wordmark.png" alt="Ghost Box — poste de terrain" style="display:block;width:100%;max-width:440px;margin:24px 0 10px">
-<p>Trois outils de séance. L'enregistreur et le banc tournent entièrement sur l'appareil ; « Contact via IA » est expérimental et, pour la transcription, envoie l'audio à un service externe.</p>
+<p>Quatre outils, un par moment de séance. Tout reste sur l'appareil, sauf la transcription du dernier outil.</p>
 
-<a class="card" href="enregistreur/">
-  <h2>Enregistreur <span class="arrow">→</span></h2>
-  <p>Micro sans traitement, spectrogramme, marqueurs, détection de pics. Relecture avec boucle, rognage, filtres réglables. Export WAV.</p>
+<div class="sect">pendant la séance</div>
+
+<a class="card" href="vision/">
+  <h2>Vision <span class="arrow">→</span></h2>
+  <p>Tous les objectifs de l'appareil, bascule instantanée, aperçu en direct. Enregistrement vidéo avec le son du micro, détection de mouvement encadrée et son témoin de bruit. Bibliothèque des enregistrements sur l'appareil.</p>
+  <span class="when">→ pour filmer la pièce et revoir ce qui s'est passé</span>
 </a>
 
 <a class="card g" href="banc/">
-  <h2>Banc d'essai <span class="arrow">→</span></h2>
-  <p>Capteurs sondés en direct, moteur capteur → mot sur 567 mots, coïncidence multi-capteurs, caméra avec forme et témoin visuel, enregistrement de la box, mode témoin à l'aveugle, trace exportable.</p>
+  <h2>Séance capteurs <span class="arrow">→</span></h2>
+  <p>Les capteurs sondés en direct, moteur capteur → mot sur 567 mots, seuil auto-calibré contre le bruit réel, coïncidence multi-capteurs, mode témoin à l'aveugle, trace exportable.</p>
+  <span class="when">→ pour laisser l'appareil en veille, sans rien toucher</span>
 </a>
+
+<a class="card" href="enregistreur/">
+  <h2>Écoute <span class="arrow">→</span></h2>
+  <p>Micro sans traitement, spectrogramme, marqueurs, détection de pics. Relecture avec boucle, rognage, filtres réglables. Export WAV.</p>
+  <span class="when">→ pour capter et réécouter le son de la box radio</span>
+</a>
+
+<div class="sect">après la séance</div>
 
 <a class="card f" href="contact-ia/">
   <h2>Contact via IA <span class="wip">en développement</span><span class="arrow">→</span></h2>
-  <p>Transcription de la box radio (Voxtral) et détection de silhouette en direct (caméra). Expérimental : l'IA fabrique des mots et des formes, à traiter comme des pistes.</p>
+  <p>Transcription de la box radio (Voxtral) et détection de silhouette humaine. Expérimental : l'IA fabrique des mots à partir du bruit et des formes à partir de reflets — à traiter comme des pistes à vérifier, pas comme des preuves.</p>
+  <span class="when">→ envoie l'audio à un service externe</span>
 </a>
 
 <hr>
@@ -75,7 +93,7 @@ footer a{color:var(--dim)}
 <p>Un dispositif capteur → mot fabrique les mots : le vocabulaire vient de la table, la grammaire des gabarits, le sens de la personne qui lit. Le capteur ne fournit qu'un nombre. C'est pour ça que chaque émission conserve sa valeur brute et son index, et que le banc propose un mode témoin. Détail dans <code>docs/capteurs-et-lexique.md</code>.</p>
 
 <footer>
-  <a href="https://github.com/architechfr/ghost-box">Code source</a> · MIT
+  Ghost Box · MIT
 </footer>
 </div>
 

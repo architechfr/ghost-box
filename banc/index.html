@@ -107,8 +107,9 @@ video{display:none}
 <body>
 <div class="wrap">
 
-<h1>Banc d'essai <span style="font-size:11px;color:var(--signal);letter-spacing:.12em">v7</span></h1>
-<p class="sub">L'appareil reste <b>silencieux</b> par défaut. Il apprend d'abord le comportement normal du capteur, puis n'émet un mot que si une mesure s'écarte nettement de cette normale.</p>
+<p style="margin:14px 0 0"><a href="../" style="color:var(--dim);text-decoration:none;font-family:var(--mono);font-size:13px">← poste de terrain</a></p>
+<h1>Séance capteurs <span style="font-size:11px;color:var(--signal);letter-spacing:.12em">v8</span></h1>
+<p class="sub">L'appareil est fait pour <b>se taire</b>. Il apprend le bruit normal du capteur, puis relève son seuil tant que ce bruit pourrait le faire parler. Un mot ne sort que si une mesure dépasse tout ce que l'appareil a vu de normal — <b>et le silence est le résultat attendu</b>. S'il n'y a rien, il n'y a rien.</p>
 
 <div class="step">
   <div class="stepnum"><span class="n" id="n1">1</span><h2>Activer un capteur</h2><span class="r" id="capCount">0 actif</span></div>
@@ -123,7 +124,7 @@ video{display:none}
   <div class="grid" id="caps"></div>
   <p id="camWatch" class="ex"></p>
   <canvas id="camView" width="320" height="240"></canvas>
-  <p id="camHint" class="ex" style="display:none">Image en direct. La détection de mouvement alimente le capteur « Forme caméra » et le témoin visuel — aucun dessin de silhouette ici. Le vrai squelette de personne (points → os, type Kinect, seulement si quelqu'un est détecté) est dans l'outil <a href="../contact-ia/" style="color:var(--gold)">Contact via IA</a>.</p>
+  <p id="camHint" class="ex" style="display:none">Image en direct. Ici la caméra sert seulement de <b>capteur</b> : elle alimente « Forme caméra » et le témoin visuel. Pour filmer, enregistrer et revoir les vidéos, va dans <a href="../vision/" style="color:var(--signal)">Vision</a>.</p>
   <details id="dorm"><summary>Capteurs indisponibles</summary><div class="grid" id="capsOff"></div></details>
 </div>
 
@@ -138,14 +139,18 @@ video{display:none}
     <div id="coincList" class="grid"></div>
   </div>
 
-  <div class="fld"><span class="lg">sensibilité</span><input type="range" id="z" min="15" max="60" value="30"><span class="val" id="zV">3,0 σ</span></div>
-  <p class="ex">De combien la mesure doit s'écarter de la normale pour déclencher un mot, en écarts-types. <b>3,0 σ</b> : arrive environ une fois sur mille par pur hasard. <b>2,0 σ</b> : bavard. <b>4,0 σ</b> : très rare. Commence à 3,0.</p>
+  <div class="fld"><span class="lg">rareté</span><select id="rare">
+    <option value="12">au plus 12 mots par heure — pour tester l'appareil</option>
+    <option value="4">au plus 4 mots par heure</option>
+    <option value="1" selected>au plus 1 mot par heure</option>
+    <option value="0.333">au plus 1 mot toutes les 3 heures</option>
+  </select></div>
+  <p class="ex">Plafond <b>dur</b> : l'appareil ne peut pas parler plus souvent, quoi qu'il mesure. Il n'y a plus de réglage de sensibilité — <b>le seuil se calibre tout seul</b> contre le bruit réel de ton appareil, et il <b>monte</b> chaque fois que du bruit aurait suffi à déclencher un mot. Un contact est rare : le silence est le résultat attendu.</p>
 
-  <div class="fld"><span class="lg">apprentissage</span><input type="range" id="learn" min="10" max="120" step="5" value="30"><span class="val" id="learnV">30 s</span></div>
-  <p class="ex">Durée pendant laquelle l'appareil mesure sans rien dire, pour établir ce qui est normal <b>ici et maintenant</b>. Ne touche pas au téléphone pendant ce temps.</p>
+  <div class="fld"><span class="lg">apprentissage</span><input type="range" id="learn" min="30" max="180" step="10" value="60"><span class="val" id="learnV">60 s</span></div>
+  <p class="ex">Durée pendant laquelle l'appareil écoute sans rien dire, pour apprendre le bruit normal <b>ici et maintenant</b>. Plus c'est long, plus le seuil est juste. Ne touche pas au téléphone pendant ce temps.</p>
 
-  <div class="fld"><span class="lg">repos</span><input type="range" id="ref" min="2" max="60" step="1" value="8"><span class="val" id="refV">8 s</span></div>
-  <p class="ex">Silence minimum imposé après chaque mot. Empêche une perturbation qui dure de produire une rafale.</p>
+  <input type="hidden" id="ref" value="8">
 
   <div class="fld"><span class="lg">classe</span><select id="pos"></select></div>
   <p class="ex">Restreindre le tirage à une catégorie : noms, verbes, prénoms, réponses… <b>Toutes classes</b> laisse les 567 mots disponibles.</p>
@@ -195,7 +200,7 @@ video{display:none}
 
 <div class="step">
   <div class="lg">ce que fait vraiment cet appareil</div>
-  <p class="note">Il mesure une grandeur physique, apprend sa variation habituelle, et signale les écarts. Quand un écart dépasse le seuil, il convertit la mesure en position dans une liste de 567 mots. <b>Le mot vient de la liste, la position vient du capteur, le sens vient de toi.</b> Un dispositif de ce type ne détecte aucune intention — aucun capteur ne mesure ça. Ce qu'il peut faire, et qu'il fait ici, c'est se taire tant que rien ne sort de l'ordinaire, et garder assez d'informations pour que tu puisses vérifier après coup. Pour limiter les faux positifs, il ignore les pics isolés&nbsp;: l'écart doit <b>tenir plusieurs relevés d'affilée</b>, la normale est apprise de façon <b>robuste</b> (médiane, insensible aux parasites) et <b>suit lentement</b> la dérive du fond. Le mode à l'aveugle est là pour la seule question qui compte : est-ce que le capteur produit autre chose que du hasard&nbsp;?</p>
+  <p class="note">Il mesure une grandeur physique, apprend sa variation habituelle, et signale les écarts. Quand un écart dépasse le seuil, il convertit la mesure en position dans une liste de 567 mots. <b>Le mot vient de la liste, la position vient du capteur, le sens vient de toi.</b> Un dispositif de ce type ne détecte aucune intention — aucun capteur ne mesure ça. Ce qu'il peut faire, et qu'il fait ici, c'est se taire tant que rien ne sort de l'ordinaire, et garder assez d'informations pour que tu puisses vérifier après coup. Le seuil n'est <b>pas</b> un réglage théorique : un témoin rejoue en permanence le bruit réellement enregistré par ton appareil, et chaque fois que ce bruit aurait suffi à faire sortir un mot, <b>le seuil monte</b>. L'appareil s'élève donc jusqu'à ce que son propre bruit ne puisse plus jamais le faire parler. S'ajoutent un plafond dur de mots par heure et une minute de stabilisation au démarrage. Conséquence assumée&nbsp;: la plupart des séances ne produiront <b>aucun mot</b>. C'est le fonctionnement correct, pas une panne — un appareil qui parle souvent est un appareil qui invente.</p>
 </div>
 
 <video id="vid" playsinline muted></video>
@@ -593,9 +598,7 @@ function checkReady(){
 (function(){ const p=$('pos'); p.innerHTML='<option value="">toutes classes ('+N+')</option>';
   Object.keys(BY_POS).sort().forEach(k=>{ const o=document.createElement('option');
     o.value=k; o.textContent=k+' — '+BY_POS[k].length+' mots'; p.appendChild(o); }); })();
-$('z').oninput=e=>{ $('zV').textContent=(e.target.value/10).toFixed(1).replace('.',',')+' σ'; drawZ(lastZ); };
 $('learn').oninput=e=>{ $('learnV').textContent=e.target.value+' s'; checkReady(); };
-$('ref').oninput=e=>$('refV').textContent=e.target.value+' s';
 let speak=false, blind=false, coinc=false;
 const coincSel=new Set();
 $('tSpeak').onclick=e=>{speak=!speak;e.target.classList.toggle('on',speak);};
@@ -615,18 +618,33 @@ function updateCoinc(){
 }
 
 /* ═══════ moteur ═══════ */
-let running=false, phase='idle', realMode=true, timer=null, t0=0, tPhase=0;
-let W=[], lastEmit=-1e9, trace=[], seed=0, lastZ=0, revealed=false, armed=true, recentIdx=[];
+let running=false, phase='idle', realMode=true, timer=null, t0=0, tPhase=0, tWatch=0;
+let W=[], lastEmit=-1e9, trace=[], seed=0, lastZ=0, revealed=false, recentIdx=[];
 /* hachage FNV-1a d'une chaîne → [0,1) : réparti sur tout le lexique, reproductible depuis la trace */
 function hash01(str){ let h=2166136261>>>0;
   for(let i=0;i<str.length;i++){ h^=str.charCodeAt(i); h=Math.imul(h,16777619)>>>0; }
   return (h>>>0)/4294967296; }
 const PERSIST_NEED=4;                      // relevés consécutifs requis (~400 ms à 100 ms/relevé)
-const ADAPT=0.01;                          // vitesse d'adaptation lente de la normale (dérive)
+const ADAPT=0.004;                         // vitesse d'adaptation lente de la normale (dérive)
 const COINC_WIN=700;                       // fenêtre de coïncidence entre capteurs (ms)
-const Z = () => +$('z').value/10;
-// chaque capteur surveillé porte sa propre normale robuste et son propre état
-function mkW(code){ return {code,label:S[code].label,unit:S[code].unit,samples:[],moy:0,sd:1,ev:1,persist:0,lastAbove:-1e9,z:0,v:0}; }
+const NOISE_MAX=6000;                      // mémoire du bruit réel (~10 min à 10 Hz)
+const BLOCK=30;                            // bootstrap par blocs de 3 s : conserve l'autocorrélation
+const RAISE=1.15;                          // élévation du seuil à chaque déclenchement du témoin
+const CTL_MULT=4;                          // le témoin est testé 4× plus souvent que le réel
+const SETTLE=60000;                        // stabilisation : rien ne peut sortir la 1re minute de veille
+const RATE = () => +$('rare').value;       // plafond dur : mots par heure
+// chaque capteur surveillé porte sa normale, son seuil AUTO et son témoin de bruit
+function mkW(code){ return {code,label:S[code].label,unit:S[code].unit,
+  samples:[],noise:[],moy:0,sd:1,ev:1,thr:8,raises:0,
+  persist:0,lastAbove:-1e9,z:0,v:0,
+  cPtr:0,cLeft:0,cPersist:0,lastCtl:0}; }
+/* témoin : rejoue le bruit réellement enregistré, par blocs (mêmes pics, même corrélation,
+   mais aucun événement réel). S'il déclenche, c'est un faux positif certain. */
+function ctlNext(w){
+  const n=w.noise.length; if(n<20) return null;
+  if(w.cLeft<=0){ w.cPtr=(Math.random()*n)|0; w.cLeft=BLOCK; }
+  const v=w.noise[w.cPtr%n]; w.cPtr++; w.cLeft--; return v;
+}
 /* base d'apprentissage robuste : médiane + MAD (insensible aux pics parasites) */
 function robustStats(a){
   const s=[...a].sort((x,y)=>x-y), n=s.length, med=n%2?s[(n-1)/2]:(s[n/2-1]+s[n/2])/2;
@@ -653,8 +671,8 @@ function start(){
   realMode = blind ? Math.random()<.5 : true;
   seed=(Date.now()^0x9E3779B9)>>>0; rnd=mulberry(seed);
   W = list.map(mkW);
-  running=true; phase='learn'; lastEmit=-1e9; armed=true; recentIdx=[];
-  t0=performance.now(); tPhase=t0;
+  running=true; phase='learn'; lastEmit=-1e9; recentIdx=[];
+  t0=performance.now(); tPhase=t0; tWatch=0;
   $('run').textContent='Arrêter'; $('run').classList.add('on'); $('run').disabled=false;
   $('word').textContent='···'; $('word').className='q';
   $('stage').classList.remove('alert');
@@ -671,64 +689,93 @@ function stop(){
 
 function tick(){
   if(!W.length) return;
-  const now=performance.now(), dur=+$('learn').value*1000, thr=Z(), low=Math.max(1,thr*0.5);
+  const now=performance.now(), dur=+$('learn').value*1000;
 
   if(phase==='learn'){
     for(const w of W){ const val=S[w.code]?S[w.code].val:null; if(val!=null) w.samples.push(val); }
     const reste=Math.max(0,Math.ceil((dur-(now-tPhase))/1000));
     $('state').textContent='apprentissage';
     $('word').className='q'; $('word').textContent=reste+' s';
-    $('deriv').innerHTML='Mesure du comportement normal de <b>'+esc(W.map(w=>w.label).join(' + '))+'</b>. Ne touche pas au téléphone.';
+    $('deriv').innerHTML='Mesure du bruit normal de <b>'+esc(W.map(w=>w.label).join(' + '))+'</b>. Ne touche pas au téléphone.';
     $('zfill').style.background='var(--signal)';
     $('zfill').style.width=Math.min(100,(now-tPhase)/dur*100).toFixed(0)+'%';
     if(now-tPhase>=dur){
       for(const w of W){
-        if(w.samples.length<10){ $('deriv').textContent='Pas assez de relevés sur '+w.label+' — choisis un autre capteur.'; stop(); return; }
-        const rob=robustStats(w.samples); w.moy=rob.center; w.sd=rob.scale>1e-6?rob.scale:1e-6; w.ev=w.sd*w.sd; w.persist=0; w.lastAbove=-1e9;
+        if(w.samples.length<30){ $('deriv').textContent='Pas assez de relevés sur '+w.label+' — choisis un autre capteur.'; stop(); return; }
+        const rob=robustStats(w.samples);
+        w.moy=rob.center; w.sd=rob.scale>1e-9?rob.scale:1e-9; w.ev=w.sd*w.sd;
+        w.noise=w.samples.slice(-NOISE_MAX);
+        // seuil de départ ancré sur le PIRE pic réellement observé, pas sur une théorie
+        let zmax=0; for(const s of w.samples){ const z=Math.abs(s-w.moy)/w.sd; if(z>zmax) zmax=z; }
+        w.thr=Math.max(5, zmax*1.4);
+        w.persist=0; w.cPersist=0; w.lastAbove=-1e9; w.lastCtl=now;
       }
-      armed=true; phase='watch'; $('n3').className='n done';
+      phase='watch'; tWatch=now; $('n3').className='n done';
     }
     return;
   }
 
-  // veille : z pour chaque capteur surveillé
+  // ── veille ──
   let maxz=0, primary=W[0];
   for(const w of W){
     let v;
     if(realMode){ const cur=S[w.code]?S[w.code].val:null; if(cur==null) continue; v=cur; }
-    else v=w.moy+w.sd*gauss();
+    else { const s=ctlNext(w); v = (s==null? w.moy+w.sd*gauss() : s); }
     const z=Math.abs(v-w.moy)/w.sd; w.v=v; w.z=z;
-    if(z>=thr) w.persist++; else w.persist=0;
-    if(z>=thr && w.persist>=PERSIST_NEED) w.lastAbove=now;
-    if(z<low){ const dv=v-w.moy; w.moy+=ADAPT*dv; w.ev+=ADAPT*(dv*dv-w.ev); w.sd=Math.sqrt(Math.max(w.ev,1e-12)); if(w.sd<1e-6)w.sd=1e-6; }
+    if(z>=w.thr) w.persist++; else w.persist=0;
+    if(w.persist>=PERSIST_NEED) w.lastAbove=now;
+    // mémoriser TOUT le bruit, pics compris — sinon le témoin serait plus sage que la réalité
+    w.noise.push(v); if(w.noise.length>NOISE_MAX) w.noise.shift();
+    // ne suivre la dérive de la normale que sur les passages calmes
+    if(z < w.thr*0.5){
+      const dv=v-w.moy; w.moy+=ADAPT*dv; w.ev+=ADAPT*(dv*dv-w.ev);
+      w.sd=Math.sqrt(Math.max(w.ev,1e-18)); if(w.sd<1e-9) w.sd=1e-9;
+    }
+    // ── témoin permanent : le même test, sur du bruit sans aucun événement.
+    //    On lui donne 4× plus d'occasions qu'au réel : marge de sécurité. ──
+    for(let k=0;k<CTL_MULT;k++){
+      const cv=ctlNext(w); if(cv==null) break;
+      const cz=Math.abs(cv-w.moy)/w.sd;
+      if(cz>=w.thr) w.cPersist++; else w.cPersist=0;
+      if(w.cPersist>=PERSIST_NEED){          // le bruit seul aurait parlé → seuil trop bas
+        w.thr*=RAISE; w.raises++; w.cPersist=0; w.persist=0; w.lastCtl=now;
+      }
+    }
     if(z>maxz){ maxz=z; primary=w; }
   }
   lastZ=maxz; drawZ(maxz);
   $('upt').textContent=fmt((now-t0)/1000);
-  $('state').textContent='en veille';
-  $('zNow').textContent=maxz.toFixed(2).replace('.',',')+' σ';
-
-  if(!armed && maxz<low) armed=true;
+  $('zNow').textContent=maxz.toFixed(1).replace('.',',')+' σ';
 
   const multi=W.length>1;
   const hot=W.filter(w=> now-w.lastAbove <= COINC_WIN).length;
-  const ready = multi ? (hot>=W.length) : (primary.persist>=PERSIST_NEED && primary.lastAbove>0);
+  const ready = multi ? (hot>=W.length) : (primary.persist>=PERSIST_NEED);
+  const gap = Math.max(3600000/RATE(), +$('ref').value*1000);
+  const settled = (now-tWatch) >= SETTLE;
+  const waited  = (now-lastEmit) >= gap;
 
-  if(armed && ready && now-lastEmit > +$('ref').value*1000){
-    lastEmit=now; armed=false; for(const w of W) w.persist=0; emit(now);
+  $('state').textContent = settled? 'en veille' : 'stabilisation';
+
+  if(settled && ready && waited){
+    lastEmit=now; for(const w of W) w.persist=0; emit(now);
   } else if(now-lastEmit>2500 && $('word').className!=='q'){
     $('word').className='q'; $('word').textContent='···';
     $('stage').classList.remove('alert');
-    $('deriv').innerHTML = multi
-      ? 'Silence. Coïncidence de <b>'+esc(W.map(w=>w.label).join(' + '))+'</b> requise dans '+COINC_WIN+' ms, seuil '+thr.toFixed(1).replace('.',',')+' σ.'
-      : 'Silence. Normale <b>'+fmtN(primary.moy)+'</b> '+primary.unit+', dispersion <b>'+fmtN(primary.sd)+'</b>. Seuil '+thr.toFixed(1).replace('.',',')+' σ, tenue '+Math.round(PERSIST_NEED*100)+' ms.';
+    const calme=Math.round((now-primary.lastCtl)/60000);
+    const reste=lastEmit>0? Math.max(0,Math.ceil((gap-(now-lastEmit))/60000)) : 0;
+    $('deriv').innerHTML = 'Silence — c\'est le résultat normal. Seuil auto <b>'
+      + primary.thr.toFixed(1).replace('.',',') + ' σ</b>'
+      + (primary.raises? ' (relevé '+primary.raises+'×)' : '')
+      + '. Témoin de bruit muet depuis <b>'+calme+' min</b>.'
+      + (multi? ' Coïncidence de '+esc(W.map(w=>w.label).join(' + '))+' requise.' : '')
+      + (reste? ' Prochain mot possible dans '+reste+' min.' : '');
   }
 }
 function drawZ(z){
-  const max=Math.max(Z()*1.6,4);
+  const t=(W[0]&&W[0].thr)||8, max=Math.max(t*1.25,4);
   $('zfill').style.width=Math.min(100,z/max*100).toFixed(1)+'%';
-  $('zfill').style.background = z>=Z()? 'var(--gold)':'var(--signal)';
-  $('zmark').style.left=(Z()/max*100).toFixed(1)+'%';
+  $('zfill').style.background = z>=t? 'var(--gold)':'var(--signal)';
+  $('zmark').style.left=Math.min(100,t/max*100).toFixed(1)+'%';
 }
 function fmt(s){s=Math.max(0,s|0);return String(s/60|0).padStart(2,'0')+':'+String(s%60).padStart(2,'0');}
 
@@ -765,8 +812,8 @@ function emit(now){
   trace.unshift({ t_ms:Math.round(now-t0), mot:m.mot, pos:m.pos,
     capteur: realMode? (multi?('coinc:'+codes):W[0].code) : '—',
     valeur_brute:+W[0].v.toFixed(3), moyenne:+W[0].moy.toFixed(3), ecart_type:+W[0].sd.toFixed(4),
-    z:+zc.toFixed(2), index_calcule:idx, rehash:usedSalt, est_temoin:!realMode,
-    contributeurs: W.map(w=>({code:w.code, valeur:+w.v.toFixed(3), moyenne:+w.moy.toFixed(3), ecart_type:+w.sd.toFixed(4), z:+w.z.toFixed(2)})),
+    z:+zc.toFixed(2), seuil_auto:+W[0].thr.toFixed(2), index_calcule:idx, rehash:usedSalt, est_temoin:!realMode,
+    contributeurs: W.map(w=>({code:w.code, valeur:+w.v.toFixed(3), moyenne:+w.moy.toFixed(3), ecart_type:+w.sd.toFixed(4), z:+w.z.toFixed(2), seuil:+w.thr.toFixed(2)})),
     preuve: preuve });
   renderTrace();
 
@@ -807,10 +854,11 @@ $('expCsv').onclick=()=>{
     (r.contributeurs||[]).map(c=>c.code+':'+c.z).join(';')].join(',')).join('\n'),'emissions-'+stamp()+'.csv','text/csv');
 };
 $('expJson').onclick=()=>dl(JSON.stringify({banc:'poste-de-terrain',date:new Date().toISOString(),
-  graine:seed,aveugle:blind,seuil_sigma:Z(),apprentissage_s:+$('learn').value,
-  persistance_ms:Math.round(PERSIST_NEED*100),
+  graine:seed,aveugle:blind,apprentissage_s:+$('learn').value,
+  rarete_max_par_heure:RATE(), persistance_ms:Math.round(PERSIST_NEED*100),
   coincidence:W.length>1, coincidence_fenetre_ms:COINC_WIN,
-  capteurs:W.map(w=>({code:w.code,normale:+w.moy.toFixed(3),ecart_type:+w.sd.toFixed(4)})),
+  capteurs:W.map(w=>({code:w.code,normale:+w.moy.toFixed(3),ecart_type:+w.sd.toFixed(4),
+    seuil_auto_sigma:+w.thr.toFixed(2), relevages_temoin:w.raises})),
   audio_enregistre:!!recBlob,
   audio_offset_ms:(recStartPerf&&t0)?Math.round(t0-recStartPerf):null,
   emissions:[...trace].reverse()},null,1),'emissions-'+stamp()+'.json','application/json');
