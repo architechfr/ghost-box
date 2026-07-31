@@ -14,7 +14,7 @@ Tout fonctionne côté navigateur. Aucune donnée ne quitte l'appareil, aucune d
 |---|---|
 | `index.html` | Accueil + diagnostic des capteurs de l'appareil |
 | `enregistreur/` | Enregistreur : micro sans traitement, spectrogramme, marqueurs, détection de pics, relecture (boucle, rognage, filtres), export WAV |
-| `banc/` | Banc d'essai : 16 capteurs en direct, moteur capteur → mot (détection robuste), enregistrement audio de la box radio, transcription optionnelle, mode témoin, trace exportable |
+| `banc/` | Banc d'essai : capteurs en direct, moteur capteur → mot (détection robuste), coïncidence multi-capteurs, forme + silhouette caméra avec témoin visuel, enregistrement audio de la box radio, transcription optionnelle, mode témoin, trace exportable avec preuve |
 | `db/` | Schémas PostgreSQL/Supabase et MySQL, jeux de données de départ |
 | `data/` | Lexique 567 mots (CSV, JSON) et le script qui le régénère |
 | `docs/` | Inventaire détaillé des capteurs et de la chaîne capteur → mot |
@@ -115,6 +115,22 @@ La **transcription automatique** (Voxtral, modèle `voxtral-mini-latest` de Mist
 
 - Une transcription automatique **invente des mots** sur du bruit — c'est un défaut connu de ces modèles. Elle est affichée « non vérifiée » et doit être confirmée à l'oreille sur l'audio brut, jamais prise pour une parole avérée.
 - Pour cette étape seulement, **l'audio est envoyé au serveur Mistral** : la promesse « rien ne quitte l'appareil » ne s'applique pas à la transcription. La clé API est saisie dans la page, gardée en mémoire, jamais enregistrée. Le site étant servi en statique (GitHub Pages), l'appel part directement du navigateur ; si l'API refuse l'appel navigateur (CORS), il faut un petit relais côté serveur (Cloudflare Worker, fonction Vercel) qui garde la clé.
+
+---
+
+## Caméra : forme, silhouette et témoin visuel
+
+La caméra ne se limite plus à une luminance moyenne. Elle apprend l'image de fond de la pièce, la soustrait à chaque image, et cherche le **plus grand groupe de pixels connexes** qui a bougé — parce qu'une silhouette est *connexe*, là où le bruit d'un capteur dans le noir est *épars*. Cette « forme caméra » devient une source à part entière du moteur (taille, en % de l'image), soumise aux mêmes garde-fous que les autres capteurs. À chaque émission, l'**image du moment est capturée** et jointe à la trace : une preuve visuelle rejouable, pas une impression.
+
+Le **témoin visuel** est l'équivalent du mode à l'aveugle pour la caméra. Le même détecteur tourne en parallèle sur une version **mélangée** de l'image (la structure spatiale est détruite, le bruit est conservé). Il compte combien de fois le détecteur « voit une forme » sur du pur bruit. Affiché en direct à côté du taux réel : si les deux se ressemblent, la caméra ne voit rien de plus que du hasard. Sans ce chiffre, une forme détectée dans une pièce sombre ne prouve rien.
+
+En option, une **silhouette IA** (MediaPipe PoseLandmarker de Google) détecte un squelette humain. Le modèle tourne **sur le téléphone**, hors-ligne après un premier chargement (~5 Mo depuis un CDN). C'est **expérimental** et à traiter avec la même prudence que la transcription : un téléphone n'a pas de capteur de profondeur infrarouge comme un Kinect, donc dans le noir le modèle soit ne voit rien, soit accroche un reflet, un portrait ou l'opérateur. Ce n'est pas un détecteur de fantôme — c'est un capteur de plus, soumis au témoin et à la coïncidence.
+
+---
+
+## Coïncidence multi-capteurs
+
+Au lieu d'un seul capteur par séance, le banc peut en surveiller **deux ou trois en même temps** et n'émettre un mot **que s'ils s'écartent tous ensemble** dans une fenêtre courte (~0,7 s). Chaque capteur garde sa propre normale robuste et sa propre persistance ; le mot final est dérivé de la **combinaison** de leurs positions, et la trace enregistre chaque contributeur. L'intérêt est statistique : le bruit n'est pas corrélé entre des capteurs physiquement distincts (magnétomètre, micro, caméra), alors qu'un vrai événement dans la pièce peut toucher plusieurs canaux à la fois. C'est le garde-fou le plus puissant contre les faux positifs — et en mode à l'aveugle, la coïncidence fortuite du générateur est quasi impossible, ce qui rend le test encore plus tranchant.
 
 ---
 

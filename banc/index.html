@@ -123,6 +123,9 @@ video{display:none}
     <button id="pGeo">Position</button>
   </div>
   <div class="grid" id="caps"></div>
+  <p id="camWatch" class="ex"></p>
+  <div class="row"><button id="aiBtn" class="tgl">Silhouette IA (expérimental)</button></div>
+  <p id="aiState" class="ex">Détection de personne (squelette) via un modèle embarqué qui tourne sur le téléphone. Active d'abord la caméra. Fragile dans le noir — ce n'est pas un détecteur de fantôme.</p>
   <details id="dorm"><summary>Capteurs indisponibles</summary><div class="grid" id="capsOff"></div></details>
 </div>
 
@@ -130,6 +133,12 @@ video{display:none}
   <div class="stepnum"><span class="n" id="n2">2</span><h2>Choisir la source</h2></div>
   <div class="fld"><span class="lg">capteur</span><select id="src"></select></div>
   <p class="ex">La seule grandeur que l'appareil surveillera. Un capteur par séance : mélanger les sources rend la trace impossible à interpréter.</p>
+
+  <div class="row"><button id="tCoinc" class="tgl">Coïncidence</button></div>
+  <div id="coincWrap" style="display:none">
+    <p class="ex">Ne parle que si <b>plusieurs capteurs indépendants</b> s'écartent <b>en même temps</b> (dans ~0,7 s). Le bruit n'est pas corrélé entre des capteurs physiquement distincts ; un vrai événement dans la pièce, lui, peut l'être. Coche 2 ou 3 capteurs actifs — la sélection « capteur » ci-dessus est ignorée.</p>
+    <div id="coincList" class="grid"></div>
+  </div>
 
   <div class="fld"><span class="lg">sensibilité</span><input type="range" id="z" min="15" max="60" value="30"><span class="val" id="zV">3,0 σ</span></div>
   <p class="ex">De combien la mesure doit s'écarter de la normale pour déclencher un mot, en écarts-types. <b>3,0 σ</b> : arrive environ une fois sur mille par pur hasard. <b>2,0 σ</b> : bavard. <b>4,0 σ</b> : très rare. Commence à 3,0.</p>
@@ -226,6 +235,8 @@ reg('magneto','Magnétomètre','µT','non exposé par le navigateur');
 reg('lumiere','Lumière ambiante','lux','AmbientLightSensor absent');
 reg('cam_lum','Luminance caméra','0-255','caméra non activée');
 reg('cam_diff','Mouvement image','%','caméra non activée');
+reg('cam_forme','Forme caméra','%','caméra non activée');
+reg('cam_pose','Silhouette IA','%','IA non activée');
 reg('batterie','Batterie','%','—');
 reg('rtt','Latence réseau','ms','—');
 reg('debit','Débit estimé','Mb/s','—');
@@ -353,27 +364,112 @@ $('pMag').onclick = async () => {
   }
 };
 
-let vstream=null, prevFrame=null;
+let vstream=null, prevFrame=null, camBg=null, camActive=false, camBlob0=null;
+let camLiveHits=0, camCtrlHits=0, camLiveOn=false, camCtrlOn=false, camStart=0;
+const CW=64, CH=48, CAM_TH=24, CAM_DET=5;   // seuil pixel (0-255), seuil de détection (% de l'image)
+/* plus grand groupe de pixels connexes : une silhouette est connexe, le bruit est épars */
+function largestBlob(mask,W,H){
+  const seen=new Uint8Array(mask.length); let best={size:0,minx:0,maxx:0,miny:0,maxy:0}; const st=[];
+  for(let s=0;s<mask.length;s++){
+    if(!mask[s]||seen[s]) continue;
+    let size=0,minx=W,maxx=0,miny=H,maxy=0; st.length=0; st.push(s); seen[s]=1;
+    while(st.length){
+      const p=st.pop(), x=p%W, y=(p/W)|0; size++;
+      if(x<minx)minx=x; if(x>maxx)maxx=x; if(y<miny)miny=y; if(y>maxy)maxy=y;
+      if(x>0 && mask[p-1] && !seen[p-1]){seen[p-1]=1;st.push(p-1);}
+      if(x<W-1 && mask[p+1] && !seen[p+1]){seen[p+1]=1;st.push(p+1);}
+      if(y>0 && mask[p-W] && !seen[p-W]){seen[p-W]=1;st.push(p-W);}
+      if(y<H-1 && mask[p+W] && !seen[p+W]){seen[p+W]=1;st.push(p+W);}
+    }
+    if(size>best.size) best={size,minx,maxx,miny,maxy};
+  }
+  return best;
+}
+function shuffleMask(a){ const b=a.slice(); for(let i=b.length-1;i>0;i--){ const j=(Math.random()*(i+1))|0; const t=b[i];b[i]=b[j];b[j]=t; } return b; }
 $('pCam').onclick = async () => {
   try{
     vstream=await navigator.mediaDevices.getUserMedia({video:{facingMode:'environment',width:320,height:240}});
     const v=$('vid'); v.srcObject=vstream; await v.play();
-    const c=document.createElement('canvas'); c.width=64; c.height=48;
+    const c=document.createElement('canvas'); c.width=CW; c.height=CH;
     const g=c.getContext('2d',{willReadFrequently:true});
-    mark('pCam',true);
+    camActive=true; camStart=performance.now(); camLiveHits=0; camCtrlHits=0; mark('pCam',true);
     (function loop(){
       if(!vstream) return;
-      g.drawImage(v,0,0,64,48);
-      const im=g.getImageData(0,0,64,48).data, px=im.length/4, cur=new Float32Array(px);
+      g.drawImage(v,0,0,CW,CH);
+      const im=g.getImageData(0,0,CW,CH).data, px=CW*CH, cur=new Float32Array(px);
       let sum=0, diff=0;
       for(let i=0,j=0;i<im.length;i+=4,j++){
         const l=im[i]*.299+im[i+1]*.587+im[i+2]*.114;
         cur[j]=l; sum+=l; if(prevFrame) diff+=Math.abs(l-prevFrame[j]);
       }
       push('cam_lum',sum/px); if(prevFrame) push('cam_diff',diff/px/255*100);
+      // fond adaptatif + masque de mouvement
+      if(!camBg) camBg=cur.slice();
+      const mask=new Uint8Array(px);
+      for(let j=0;j<px;j++){ if(Math.abs(cur[j]-camBg[j])>CAM_TH) mask[j]=1; camBg[j]+=0.02*(cur[j]-camBg[j]); }
+      const live=largestBlob(mask,CW,CH), frac=live.size/px*100;
+      push('cam_forme',frac); camBlob0=live;
+      // témoin visuel : même détecteur sur un masque mélangé (structure détruite, bruit conservé)
+      const cfrac=largestBlob(shuffleMask(mask),CW,CH).size/px*100;
+      if(frac>=CAM_DET){ if(!camLiveOn){camLiveHits++;camLiveOn=true;} } else camLiveOn=false;
+      if(cfrac>=CAM_DET){ if(!camCtrlOn){camCtrlHits++;camCtrlOn=true;} } else camCtrlOn=false;
       prevFrame=cur; setTimeout(loop,140);
     })();
-  }catch(e){ mark('pCam',false); }
+  }catch(e){ mark('pCam',false); camActive=false; }
+};
+function grabEvidence(){
+  if(!camActive) return null;
+  try{ const v=$('vid'); if(!v||!v.videoWidth) return null;
+    const c=document.createElement('canvas'); c.width=96; c.height=72;
+    c.getContext('2d').drawImage(v,0,0,96,72);
+    return c.toDataURL('image/jpeg',0.5);
+  }catch(e){ return null; }
+}
+setInterval(()=>{ if(!camActive){ return; }
+  const min=Math.max(0.05,(performance.now()-camStart)/60000);
+  const lr=camLiveHits/min, cr=camCtrlHits/min;
+  const verdict = camLiveHits<3 ? '' : (lr<=cr*1.5
+    ? ' — au niveau du bruit : la caméra ne voit rien de plus que du hasard.'
+    : ' — au-dessus du bruit.');
+  $('camWatch').innerHTML='Caméra — forme détectée <b>'+camLiveHits+'</b>× ('+lr.toFixed(1)+'/min) · témoin visuel, bruit <b>'+camCtrlHits+'</b>× ('+cr.toFixed(1)+'/min)'+verdict;
+},1000);
+
+/* ═══════ silhouette IA (MediaPipe PoseLandmarker, optionnel, hors-ligne après 1er chargement) ═══════ */
+let poseLM=null, aiOn=false;
+$('aiBtn').onclick=async ()=>{
+  if(aiOn){ aiOn=false; $('aiBtn').classList.remove('on'); $('aiState').textContent='IA arrêtée.'; return; }
+  if(!camActive){ $('aiState').textContent="Active d'abord la caméra."; return; }
+  $('aiState').textContent='Chargement du modèle (~5 Mo, une seule fois)…';
+  try{
+    if(!poseLM){
+      const vision=await import('https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10/vision_bundle.mjs');
+      const fs=await vision.FilesetResolver.forVisionTasks('https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10/wasm');
+      poseLM=await vision.PoseLandmarker.createFromOptions(fs,{
+        baseOptions:{modelAssetPath:'https://storage.googleapis.com/mediapipe-models/pose_landmarker/pose_landmarker_lite/float16/1/pose_landmarker_lite.task'},
+        runningMode:'VIDEO', numPoses:1 });
+    }
+    aiOn=true; $('aiBtn').classList.add('on');
+    $('aiState').innerHTML='IA active. <b>Expérimental</b> : dans le noir elle peut ne rien voir, ou accrocher un reflet, un portrait, l\'opérateur. Ce n\'est pas un détecteur de fantôme — traite « Silhouette IA » comme n\'importe quel capteur, avec le mode témoin et la coïncidence.';
+    let lastT=-1;
+    (function aiLoop(){
+      if(!aiOn) return;
+      const v=$('vid');
+      if(v && v.videoWidth && v.currentTime!==lastT){
+        lastT=v.currentTime;
+        try{
+          const res=poseLM.detectForVideo(v, performance.now());
+          let pres=0;
+          if(res && res.landmarks && res.landmarks.length){
+            const lms=res.landmarks[0]; let vis=0,cnt=0;
+            for(const p of lms){ if(p.visibility!=null){ vis+=p.visibility; cnt++; } }
+            pres = cnt? vis/cnt*100 : 100;
+          }
+          push('cam_pose', pres);
+        }catch(e){}
+      }
+      requestAnimationFrame(aiLoop);
+    })();
+  }catch(e){ aiOn=false; $('aiBtn').classList.remove('on'); $('aiState').textContent='IA indisponible (le modèle n\'a pas pu se charger — réseau ?). Tout le reste fonctionne normalement.'; }
 };
 
 $('pGeo').onclick = () => {
@@ -507,16 +603,19 @@ function fillSrc(){
     sel.appendChild(o);
   });
   if(cur) sel.value=cur;
+  if(coinc) updateCoinc();
   checkReady();
 }
 $('src').onchange = checkReady;
 function checkReady(){
-  const s=S[$('src').value];
-  $('run').disabled = !s || !s.ok || running;
-  $('n2').className = s&&s.ok? 'n done':'n';
-  if(!running) $('deriv').innerHTML = s&&s.ok
-    ? 'Prêt. <b>'+s.label+'</b> sera observé '+$('learn').value+' s avant toute émission.'
-    : 'Choisis un capteur actif dans la liste.';
+  let ok, lbl='';
+  if(coinc){ const l=checkedCoinc(); ok=l.length>=2; lbl=l.map(c=>S[c].label).join(' + '); }
+  else { const s=S[$('src').value]; ok=!!(s&&s.ok); if(ok) lbl=s.label; }
+  $('run').disabled = !ok || running;
+  $('n2').className = ok? 'n done':'n';
+  if(!running) $('deriv').innerHTML = ok
+    ? 'Prêt. <b>'+esc(lbl)+'</b>'+(coinc?' (coïncidence)':'')+' — observé '+$('learn').value+' s avant toute émission.'
+    : (coinc?'Coche au moins deux capteurs actifs.':'Choisis un capteur actif dans la liste.');
 }
 (function(){ const p=$('pos'); p.innerHTML='<option value="">toutes classes ('+N+')</option>';
   Object.keys(BY_POS).sort().forEach(k=>{ const o=document.createElement('option');
@@ -524,17 +623,33 @@ function checkReady(){
 $('z').oninput=e=>{ $('zV').textContent=(e.target.value/10).toFixed(1).replace('.',',')+' σ'; drawZ(lastZ); };
 $('learn').oninput=e=>{ $('learnV').textContent=e.target.value+' s'; checkReady(); };
 $('ref').oninput=e=>$('refV').textContent=e.target.value+' s';
-let speak=false, blind=false;
+let speak=false, blind=false, coinc=false;
+const coincSel=new Set();
 $('tSpeak').onclick=e=>{speak=!speak;e.target.classList.toggle('on',speak);};
 $('tBlind').onclick=e=>{blind=!blind;e.target.classList.toggle('on',blind);};
+$('tCoinc').onclick=e=>{ coinc=!coinc; e.target.classList.toggle('on',coinc);
+  $('coincWrap').style.display=coinc?'block':'none'; updateCoinc(); checkReady(); };
+function checkedCoinc(){ return [...coincSel].filter(c=>S[c]&&S[c].ok); }
+function updateCoinc(){
+  const box=$('coincList'); if(!box) return; box.innerHTML='';
+  Object.values(S).filter(s=>s.ok && LENT.indexOf(s.code)<0).forEach(s=>{
+    const b=document.createElement('button'); b.textContent=s.label;
+    b.className='tgl'+(coincSel.has(s.code)?' on':'');
+    b.onclick=()=>{ if(coincSel.has(s.code)) coincSel.delete(s.code); else coincSel.add(s.code);
+      b.classList.toggle('on'); checkReady(); };
+    box.appendChild(b);
+  });
+}
 
 /* ═══════ moteur ═══════ */
 let running=false, phase='idle', realMode=true, timer=null, t0=0, tPhase=0;
-let samples=[], moy=0, sd=1, ev=1, lastEmit=-1e9, trace=[], seed=0, lastZ=0, revealed=false;
-let persist=0, armed=true;               // anti faux positifs : tenue + hystérésis
-const PERSIST_NEED=4;                     // relevés consécutifs requis (~400 ms à 100 ms/relevé)
-const ADAPT=0.01;                         // vitesse d'adaptation lente de la normale (dérive)
+let W=[], lastEmit=-1e9, trace=[], seed=0, lastZ=0, revealed=false, armed=true;
+const PERSIST_NEED=4;                      // relevés consécutifs requis (~400 ms à 100 ms/relevé)
+const ADAPT=0.01;                          // vitesse d'adaptation lente de la normale (dérive)
+const COINC_WIN=700;                       // fenêtre de coïncidence entre capteurs (ms)
 const Z = () => +$('z').value/10;
+// chaque capteur surveillé porte sa propre normale robuste et son propre état
+function mkW(code){ return {code,label:S[code].label,unit:S[code].unit,samples:[],moy:0,sd:1,ev:1,persist:0,lastAbove:-1e9,z:0,v:0}; }
 /* base d'apprentissage robuste : médiane + MAD (insensible aux pics parasites) */
 function robustStats(a){
   const s=[...a].sort((x,y)=>x-y), n=s.length, med=n%2?s[(n-1)/2]:(s[n/2-1]+s[n/2])/2;
@@ -555,10 +670,13 @@ function gauss(){ let u=0,v=0; while(!u)u=rnd(); while(!v)v=rnd();
 
 $('run').onclick = () => running? stop() : start();
 function start(){
-  const s=S[$('src').value]; if(!s||!s.ok) return;
+  const list = coinc ? checkedCoinc() : (S[$('src').value]&&S[$('src').value].ok ? [$('src').value] : []);
+  if(coinc && list.length<2){ $('deriv').textContent='Coïncidence : coche au moins deux capteurs actifs.'; return; }
+  if(!list.length) return;
   realMode = blind ? Math.random()<.5 : true;
   seed=(Date.now()^0x9E3779B9)>>>0; rnd=mulberry(seed);
-  running=true; phase='learn'; samples=[]; lastEmit=-1e9; persist=0; armed=true;
+  W = list.map(mkW);
+  running=true; phase='learn'; lastEmit=-1e9; armed=true;
   t0=performance.now(); tPhase=t0;
   $('run').textContent='Arrêter'; $('run').classList.add('on'); $('run').disabled=false;
   $('word').textContent='···'; $('word').className='q';
@@ -575,52 +693,58 @@ function stop(){
 }
 
 function tick(){
-  const s=S[$('src').value]; if(!s) return;
-  const now=performance.now(), dur=+$('learn').value*1000;
+  if(!W.length) return;
+  const now=performance.now(), dur=+$('learn').value*1000, thr=Z(), low=Math.max(1,thr*0.5);
 
   if(phase==='learn'){
-    if(s.val!=null) samples.push(s.val);
+    for(const w of W){ const val=S[w.code]?S[w.code].val:null; if(val!=null) w.samples.push(val); }
     const reste=Math.max(0,Math.ceil((dur-(now-tPhase))/1000));
     $('state').textContent='apprentissage';
     $('word').className='q'; $('word').textContent=reste+' s';
-    $('deriv').innerHTML='Mesure du comportement normal de <b>'+s.label+'</b>. '+samples.length+' relevés. Ne touche pas au téléphone.';
+    $('deriv').innerHTML='Mesure du comportement normal de <b>'+esc(W.map(w=>w.label).join(' + '))+'</b>. Ne touche pas au téléphone.';
     $('zfill').style.background='var(--signal)';
     $('zfill').style.width=Math.min(100,(now-tPhase)/dur*100).toFixed(0)+'%';
     if(now-tPhase>=dur){
-      if(samples.length<10){ $('deriv').textContent='Pas assez de relevés — ce capteur ne renvoie rien. Choisis-en un autre.'; stop(); return; }
-      const rob=robustStats(samples);
-      moy=rob.center; sd=rob.scale;
-      if(!(sd>1e-6)) sd=1e-6;
-      ev=sd*sd; persist=0; armed=true;
-      phase='watch'; $('n3').className='n done';
+      for(const w of W){
+        if(w.samples.length<10){ $('deriv').textContent='Pas assez de relevés sur '+w.label+' — choisis un autre capteur.'; stop(); return; }
+        const rob=robustStats(w.samples); w.moy=rob.center; w.sd=rob.scale>1e-6?rob.scale:1e-6; w.ev=w.sd*w.sd; w.persist=0; w.lastAbove=-1e9;
+      }
+      armed=true; phase='watch'; $('n3').className='n done';
     }
     return;
   }
 
-  let v;
-  if(realMode){ if(s.val==null) return; v=s.val; }
-  else v = moy + sd*gauss();
-  const z=Math.abs(v-moy)/sd;
-  lastZ=z; drawZ(z);
-
+  // veille : z pour chaque capteur surveillé
+  let maxz=0, primary=W[0];
+  for(const w of W){
+    let v;
+    if(realMode){ const cur=S[w.code]?S[w.code].val:null; if(cur==null) continue; v=cur; }
+    else v=w.moy+w.sd*gauss();
+    const z=Math.abs(v-w.moy)/w.sd; w.v=v; w.z=z;
+    if(z>=thr) w.persist++; else w.persist=0;
+    if(z>=thr && w.persist>=PERSIST_NEED) w.lastAbove=now;
+    if(z<low){ const dv=v-w.moy; w.moy+=ADAPT*dv; w.ev+=ADAPT*(dv*dv-w.ev); w.sd=Math.sqrt(Math.max(w.ev,1e-12)); if(w.sd<1e-6)w.sd=1e-6; }
+    if(z>maxz){ maxz=z; primary=w; }
+  }
+  lastZ=maxz; drawZ(maxz);
   $('upt').textContent=fmt((now-t0)/1000);
   $('state').textContent='en veille';
-  $('zNow').textContent=z.toFixed(2).replace('.',',')+' σ';
+  $('zNow').textContent=maxz.toFixed(2).replace('.',',')+' σ';
 
-  const thr=Z(), low=Math.max(1, thr*0.5);
-  // hystérésis : après un mot, ne ré-armer qu'une fois le signal retombé sous le seuil bas
-  if(!armed && z<low) armed=true;
-  // persistance : compter les relevés consécutifs au-dessus du seuil ; un pic isolé ne suffit plus
-  if(z>=thr) persist++; else persist=0;
-  // dérive : quand tout est calme, la normale suit lentement le fond (une vraie excursion, elle, déclenche)
-  if(z<low){ const dv=v-moy; moy+=ADAPT*dv; ev+=ADAPT*(dv*dv-ev); sd=Math.sqrt(Math.max(ev,1e-12)); if(sd<1e-6) sd=1e-6; }
+  if(!armed && maxz<low) armed=true;
 
-  if(armed && persist>=PERSIST_NEED && now-lastEmit > +$('ref').value*1000){
-    lastEmit=now; armed=false; persist=0; emit(v,z,now,s);
+  const multi=W.length>1;
+  const hot=W.filter(w=> now-w.lastAbove <= COINC_WIN).length;
+  const ready = multi ? (hot>=W.length) : (primary.persist>=PERSIST_NEED && primary.lastAbove>0);
+
+  if(armed && ready && now-lastEmit > +$('ref').value*1000){
+    lastEmit=now; armed=false; for(const w of W) w.persist=0; emit(now);
   } else if(now-lastEmit>2500 && $('word').className!=='q'){
     $('word').className='q'; $('word').textContent='···';
     $('stage').classList.remove('alert');
-    $('deriv').innerHTML='Silence. Normale <b>'+fmtN(moy)+'</b> '+s.unit+', dispersion <b>'+fmtN(sd)+'</b>. Seuil '+thr.toFixed(1).replace('.',',')+' σ, tenue '+Math.round(PERSIST_NEED*100)+' ms.';
+    $('deriv').innerHTML = multi
+      ? 'Silence. Coïncidence de <b>'+esc(W.map(w=>w.label).join(' + '))+'</b> requise dans '+COINC_WIN+' ms, seuil '+thr.toFixed(1).replace('.',',')+' σ.'
+      : 'Silence. Normale <b>'+fmtN(primary.moy)+'</b> '+primary.unit+', dispersion <b>'+fmtN(primary.sd)+'</b>. Seuil '+thr.toFixed(1).replace('.',',')+' σ, tenue '+Math.round(PERSIST_NEED*100)+' ms.';
   }
 }
 function drawZ(z){
@@ -631,25 +755,37 @@ function drawZ(z){
 }
 function fmt(s){s=Math.max(0,s|0);return String(s/60|0).padStart(2,'0')+':'+String(s%60).padStart(2,'0');}
 
-function emit(v,z,now,s){
+function emit(now){
   const posF=$('pos').value, pool = posF&&BY_POS[posF]? BY_POS[posF] : MOTS;
-  const norm=Math.max(0,Math.min(.999999,(v-(moy-4*sd))/(8*sd)));
+  const multi=W.length>1;
+  // position : moyenne des positions normalisées de chaque capteur → tous contribuent au mot
+  let norm;
+  if(multi){ let s=0; for(const w of W) s+=Math.max(0,Math.min(1,(w.v-(w.moy-4*w.sd))/(8*w.sd)));
+    norm=Math.max(0,Math.min(.999999,s/W.length)); }
+  else { const w=W[0]; norm=Math.max(0,Math.min(.999999,(w.v-(w.moy-4*w.sd))/(8*w.sd))); }
   let tot=0; for(const m of pool) tot+=m.poids;
   let x=norm*tot, idx=pool.length-1;
   for(let i=0;i<pool.length;i++){ x-=pool[i].poids; if(x<=0){ idx=i; break; } }
   const m=pool[idx];
+  const zc=W.reduce((p,w)=>p+w.z,0)/W.length;           // écart moyen des contributeurs
+  const codes=W.map(w=>w.code).join('+');
+  const label=multi? ('coïncidence '+W.map(w=>w.label).join(' + ')) : W[0].label;
 
   $('word').className=''; $('word').textContent=m.mot;
   $('stage').classList.add('alert');
   $('deriv').innerHTML = blind
-    ? 'écart <b>'+z.toFixed(2).replace('.',',')+' σ</b> → index <b>'+idx+'</b> / '+pool.length
+    ? 'écart <b>'+zc.toFixed(2).replace('.',',')+' σ</b> → index <b>'+idx+'</b> / '+pool.length
     : realMode
-      ? s.label+' <b>'+fmtN(v)+'</b> '+s.unit+' · normale '+fmtN(moy)+' · écart <b>'+z.toFixed(2).replace('.',',')+' σ</b> → index <b>'+idx+'</b> / '+pool.length
-      : 'générateur aléatoire · graine <b>'+seed+'</b> · écart <b>'+z.toFixed(2).replace('.',',')+' σ</b> → index <b>'+idx+'</b>';
+      ? esc(label)+' · écart <b>'+zc.toFixed(2).replace('.',',')+' σ</b> → index <b>'+idx+'</b> / '+pool.length
+      : 'générateur aléatoire · graine <b>'+seed+'</b> · écart <b>'+zc.toFixed(2).replace('.',',')+' σ</b> → index <b>'+idx+'</b>';
 
+  const preuve=grabEvidence();
   trace.unshift({ t_ms:Math.round(now-t0), mot:m.mot, pos:m.pos,
-    capteur: realMode? s.code : '—', valeur_brute:+v.toFixed(3), moyenne:+moy.toFixed(3),
-    ecart_type:+sd.toFixed(4), z:+z.toFixed(2), index_calcule:idx, est_temoin:!realMode });
+    capteur: realMode? (multi?('coinc:'+codes):W[0].code) : '—',
+    valeur_brute:+W[0].v.toFixed(3), moyenne:+W[0].moy.toFixed(3), ecart_type:+W[0].sd.toFixed(4),
+    z:+zc.toFixed(2), index_calcule:idx, est_temoin:!realMode,
+    contributeurs: W.map(w=>({code:w.code, valeur:+w.v.toFixed(3), moyenne:+w.moy.toFixed(3), ecart_type:+w.sd.toFixed(4), z:+w.z.toFixed(2)})),
+    preuve: preuve });
   renderTrace();
 
   if(speak && window.speechSynthesis){
@@ -664,10 +800,15 @@ function renderTrace(){
   $('n4').className=trace.length?'n done':'n';
   if(!trace.length){ $('tblWrap').innerHTML='<p class="empty">Aucune émission pour l\'instant.</p>'; return; }
   const show=(!blind||revealed);
-  const rows=trace.slice(0,60).map(r=>'<tr><td>'+fmt(r.t_ms/1000)+'</td><td class="w">'+r.mot+'</td><td>'+
-    (show? (r.est_temoin?'<span class="tm">témoin</span>':r.capteur) : '—')+'</td><td>'+
-    (show? r.valeur_brute : '—')+'</td><td>'+r.z+' σ</td><td>'+r.index_calcule+'</td></tr>').join('');
-  $('tblWrap').innerHTML='<table><thead><tr><th>t</th><th>mot</th><th>source</th><th>valeur</th><th>écart</th><th>idx</th></tr></thead><tbody>'+rows+'</tbody></table>';
+  const anyPreuve=trace.some(r=>r.preuve);
+  const rows=trace.slice(0,60).map(r=>{
+    const src = show? (r.est_temoin?'<span class="tm">témoin</span>':esc(r.capteur)) : '—';
+    const vue = r.preuve? '<img src="'+r.preuve+'" alt="vue" style="height:34px;border:1px solid var(--line);border-radius:2px">' : '';
+    return '<tr><td>'+fmt(r.t_ms/1000)+'</td><td class="w">'+r.mot+'</td><td>'+src+'</td><td>'+
+      (show? r.valeur_brute : '—')+'</td><td>'+r.z+' σ</td><td>'+r.index_calcule+'</td>'+
+      (anyPreuve?'<td>'+vue+'</td>':'')+'</tr>';
+  }).join('');
+  $('tblWrap').innerHTML='<table><thead><tr><th>t</th><th>mot</th><th>source</th><th>valeur</th><th>écart</th><th>idx</th>'+(anyPreuve?'<th>vue</th>':'')+'</tr></thead><tbody>'+rows+'</tbody></table>';
 }
 $('reveal').onclick=()=>{ revealed=true; renderTrace();
   const n=trace.filter(r=>r.est_temoin).length;
@@ -678,13 +819,16 @@ function dl(t,n,m){const b=new Blob([t],{type:m}),u=URL.createObjectURL(b),a=doc
   a.href=u;a.download=n;a.click();setTimeout(()=>URL.revokeObjectURL(u),4000);}
 const stamp=()=>new Date().toISOString().slice(0,19).replace(/[:T]/g,'-');
 $('expCsv').onclick=()=>{
-  const h='t_ms,mot,pos,capteur,valeur_brute,moyenne,ecart_type,z,index_calcule,est_temoin\n';
+  const h='t_ms,mot,pos,capteur,valeur_brute,moyenne,ecart_type,z,index_calcule,est_temoin,contributeurs\n';
   dl(h+[...trace].reverse().map(r=>[r.t_ms,r.mot,r.pos,r.capteur,r.valeur_brute,r.moyenne,
-    r.ecart_type,r.z,r.index_calcule,r.est_temoin].join(',')).join('\n'),'emissions-'+stamp()+'.csv','text/csv');
+    r.ecart_type,r.z,r.index_calcule,r.est_temoin,
+    (r.contributeurs||[]).map(c=>c.code+':'+c.z).join(';')].join(',')).join('\n'),'emissions-'+stamp()+'.csv','text/csv');
 };
 $('expJson').onclick=()=>dl(JSON.stringify({banc:'poste-de-terrain',date:new Date().toISOString(),
   graine:seed,aveugle:blind,seuil_sigma:Z(),apprentissage_s:+$('learn').value,
-  persistance_ms:Math.round(PERSIST_NEED*100),normale:moy,ecart_type:sd,
+  persistance_ms:Math.round(PERSIST_NEED*100),
+  coincidence:W.length>1, coincidence_fenetre_ms:COINC_WIN,
+  capteurs:W.map(w=>({code:w.code,normale:+w.moy.toFixed(3),ecart_type:+w.sd.toFixed(4)})),
   audio_enregistre:!!recBlob,
   audio_offset_ms:(recStartPerf&&t0)?Math.round(t0-recStartPerf):null,
   emissions:[...trace].reverse()},null,1),'emissions-'+stamp()+'.json','application/json');
