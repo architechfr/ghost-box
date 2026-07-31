@@ -71,13 +71,14 @@ video{display:none}
 <div class="step" style="border-top:0">
   <p class="ex">Mode tournage : la caméra filme ce que tu vois, et l'appareil <b>incruste dans la vidéo</b> l'heure, le lieu, le niveau sonore, la détection de présence et les mots émis. Un seul fichier, lisible plus tard sans rien d'autre. Idéal au bout d'une perche, en déplacement.</p>
   <div class="fld"><span class="lg">lieu</span><input type="text" id="lieu" placeholder="ex. Château de… — salle des gardes"></div>
-  <div class="fld"><span class="lg">rareté</span><select id="rare">
-    <option value="12">au plus 12 mots par heure — pour tester</option>
-    <option value="4" selected>au plus 4 mots par heure</option>
-    <option value="1">au plus 1 mot par heure</option>
-  </select></div>
-  <div class="row"><button id="prep">Préparer le tournage</button></div>
-  <p id="prepState" class="ex">La caméra et le micro sont nécessaires. L'appareil apprendra 45 s le bruit du lieu avant de pouvoir émettre un mot.</p>
+  <p class="ex"><b>Aucun réglage de fréquence.</b> L'appareil n'a pas de quota de mots : il parle si — et seulement si — une mesure dépasse tout ce que son propre bruit peut produire. Combien de mots sortiront n'est pas un paramètre, c'est le <b>résultat</b>. Souvent zéro.</p>
+  <div class="row">
+    <button id="prep">Préparer le tournage</button>
+    <button id="twoView" disabled>Deux vues</button>
+    <button id="selftest" disabled>Tester la chaîne</button>
+  </div>
+  <p id="twoState" class="ex"></p>
+  <p id="prepState" class="ex">La caméra et le micro sont nécessaires. L'appareil apprendra 45 s le bruit du lieu avant de pouvoir émettre quoi que ce soit.</p>
 </div>
 
 <div id="stageWrap"><canvas id="stage" width="960" height="540"></canvas></div>
@@ -124,6 +125,7 @@ function robustStats(a){
   return {center:med,scale:sc};
 }
 const NEED=4, ADAPT=.004, NOISE_MAX=4000, BLOCK=30, RAISE=1.15, CTL=4;
+const ANTI_RAFALE=60000;   // un même événement physique ne produit qu'un mot (ce n'est pas un quota)
 function mkW(code,label){ return {code,label,samples:[],noise:[],moy:0,sd:1,ev:1,thr:8,raises:0,
   persist:0,cPersist:0,cPtr:0,cLeft:0,z:0,v:0,ready:false}; }
 function ctlNext(w){ const n=w.noise.length; if(n<20) return null;
@@ -159,10 +161,64 @@ function hash01(str){ let h=2166136261>>>0;
 
 /* ═══════ capture ═══════ */
 let vstream=null, micStream=null, actx=null, ana=null, tdata=null;
+/* ── deux vues ──
+   Android et iOS interdisent deux flux caméra simultanés. On tente quand même le vrai
+   double direct ; s'il est refusé, on alterne : la vue principale reste en direct et
+   l'autre est une image rafraîchie à chaque passage, avec son âge affiché. */
+let dualLive=false, twoView=false, frontStream=null;
+const fvid=document.createElement('video'); fvid.playsInline=true; fvid.muted=true;
+const pipC=document.createElement('canvas'); pipC.width=320; pipC.height=240;
+const pipG=pipC.getContext('2d');
+let pipAt=0, swapping=false, lastSwap=0;
+const SWAP_EVERY=6000, PIP_MS=900;
+
+async function tryDualLive(){
+  try{
+    frontStream=await navigator.mediaDevices.getUserMedia({video:{facingMode:'user',width:{ideal:640}},audio:false});
+    fvid.srcObject=frontStream; await fvid.play().catch(()=>{});
+    const t0=fvid.currentTime, b0=$('vid').currentTime;
+    await new Promise(r=>setTimeout(r,1500));
+    const frontOk=fvid.currentTime>t0+.05 && fvid.videoWidth>0;
+    const backOk=$('vid').currentTime>b0+.05;
+    if(frontOk&&backOk){ dualLive=true; return true; }
+  }catch(e){}
+  if(frontStream){ frontStream.getTracks().forEach(t=>t.stop()); frontStream=null; }
+  dualLive=false; return false;
+}
+/* alternance : on emprunte la caméra avant une seconde, on garde l'image, on revient */
+async function swapGrab(){
+  if(swapping||dualLive||!twoView) return;
+  swapping=true;
+  try{
+    if(vstream){ vstream.getTracks().forEach(t=>t.stop()); vstream=null; }
+    const st=await navigator.mediaDevices.getUserMedia({video:{facingMode:'user',width:{ideal:640}},audio:false});
+    fvid.srcObject=st; await fvid.play().catch(()=>{});
+    await new Promise(r=>setTimeout(r,PIP_MS));
+    if(fvid.videoWidth){ pipG.drawImage(fvid,0,0,pipC.width,pipC.height); pipAt=performance.now(); }
+    st.getTracks().forEach(t=>t.stop());
+    vstream=await navigator.mediaDevices.getUserMedia({video:{facingMode:'environment',width:{ideal:1280},height:{ideal:720}},audio:false});
+    const v=$('vid'); v.srcObject=vstream; await v.play().catch(()=>{});
+  }catch(e){
+    try{ vstream=await navigator.mediaDevices.getUserMedia({video:{facingMode:'environment'},audio:false});
+      $('vid').srcObject=vstream; await $('vid').play().catch(()=>{}); }catch(e2){}
+  }
+  lastSwap=performance.now(); swapping=false;
+}
+$('twoView').onclick=async ()=>{
+  if(twoView){ twoView=false; $('twoView').className='';
+    if(frontStream){ frontStream.getTracks().forEach(t=>t.stop()); frontStream=null; }
+    dualLive=false; $('twoState').textContent='Vue unique.'; return; }
+  twoView=true; $('twoView').className='act'; $('twoState').textContent='Test du double direct…';
+  const ok=await tryDualLive();
+  $('twoState').innerHTML = ok
+    ? '<b style="color:var(--signal)">Double direct accepté</b> — les deux caméras filment en même temps.'
+    : 'Ton téléphone refuse deux caméras à la fois (limite Android/iOS). La vue arrière reste en <b>direct</b> et ta vue passe en vignette, <b>rafraîchie toutes les 6 s</b> — son âge est affiché dessus, rien n\'est maquillé.';
+  if(!ok){ lastSwap=performance.now(); }
+};
 let WA=mkW('audio','Niveau sonore'), WM=mkW('mouvement','Mouvement');
 let learning=false, tLearn=0, LEARN_MS=45000, tReady=0;
 const cv=$('stage'), g=cv.getContext('2d');
-let lastWord=null, lastWordT=-1e9, lastEmit=-1e9, recentIdx=[], journal=[];
+let lastWord=null, lastWordT=-1e9, lastWordTest=false, lastEmit=-1e9, recentIdx=[], journal=[];
 let mHits=0, cHits=0, mOn=false, cOn=false, tStart=0, box=null, lastPresence=-1e9;
 
 $('prep').onclick=async ()=>{
@@ -184,6 +240,7 @@ $('prep').onclick=async ()=>{
   WA=mkW('audio','Niveau sonore'); WM=mkW('mouvement','Mouvement');
   learning=true; tLearn=performance.now(); tStart=tLearn; bg=null; mHits=0; cHits=0;
   $('prep').className='act'; $('prep').textContent='Caméra active';
+  $('selftest').disabled=false; $('twoView').disabled=false;
   $('phase').textContent='apprentissage';
   $('prepState').innerHTML='Apprentissage du bruit du lieu — <b>ne bouge pas</b> pendant ce temps.';
   render(); measure();
@@ -244,9 +301,10 @@ function measure(){
     }
   } else {
     const fa=WA.ready&&feed(WA,level,false), fm=WM.ready&&feed(WM,frac,false);
-    const gap=Math.max(3600000/(+$('rare').value), 20000);
-    if((fa||fm) && (now-tReady)>20000 && (now-lastEmit)>=gap && MOTS.length){
-      lastEmit=now; emitWord(fa?WA:WM, now);
+    // seul délai conservé : empêcher qu'UN MÊME événement physique produise une rafale.
+    // Ce n'est pas un quota — rien ne garantit qu'un mot sortira un jour.
+    if((fa||fm) && (now-tReady)>20000 && (now-lastEmit)>=ANTI_RAFALE && MOTS.length){
+      lastEmit=now; emitWord(fa?WA:WM, now, false);
     }
   }
   const src=WA.ready?WA:WM;
@@ -258,9 +316,10 @@ function measure(){
   setTimeout(measure,100);
 }
 
-function emitWord(w,now){
+function emitWord(w,now,isTest){
+  if(!MOTS.length) return;
   let tot=0; for(const m of MOTS) tot+=m.poids;
-  const basis=w.v.toFixed(3)+'|'+w.code;
+  const basis=(isTest? String(now|0) : w.v.toFixed(3))+'|'+w.code;
   let idx=0;
   for(let s=0;s<=6;s++){
     let x=hash01(basis+(s?('#'+s):''))*tot, i2=MOTS.length-1;
@@ -269,10 +328,16 @@ function emitWord(w,now){
   }
   recentIdx.push(idx); if(recentIdx.length>5) recentIdx.shift();
   const m=MOTS[idx];
-  lastWord=m.mot; lastWordT=now;
-  addJ(now,'mot',m.mot+' · '+w.label+' '+w.z.toFixed(1)+' σ (seuil '+w.thr.toFixed(1)+')');
+  lastWord=m.mot; lastWordT=now; lastWordTest=!!isTest;
+  addJ(now, isTest?'TEST':'mot', isTest
+    ? m.mot+' · émission forcée pour vérifier la chaîne — aucune mesure derrière'
+    : m.mot+' · '+w.label+' '+w.z.toFixed(1)+' σ (seuil '+w.thr.toFixed(1)+')');
   if(navigator.vibrate) navigator.vibrate(80);
 }
+/* vérifier que l'affichage, la vibration et l'incrustation marchent — sans mentir sur l'origine */
+$('selftest').onclick=()=>{
+  emitWord(WA.ready?WA:WM, performance.now(), true);
+};
 function addJ(now,type,detail){
   journal.unshift({t_ms:Math.round(now-tStart), heure:hhmm(new Date()), type, detail});
   renderJ();
@@ -326,6 +391,21 @@ function render(){
     g.fillStyle='#5FD3A6'; g.font=(13*S|0)+'px monospace';
     g.fillText('MOUVEMENT', box.minx*sx, Math.max(0,box.miny*sy-16*S));
   }
+  // vignette « moi » : direct si l'appareil l'accepte, sinon image datée
+  if(twoView){
+    const pw=Math.round(W*0.26), ph=Math.round(pw*0.75), px=W-pw-10*S, py=44*S;
+    g.save();
+    g.fillStyle='#000'; g.fillRect(px,py,pw,ph);
+    if(dualLive && fvid.videoWidth) g.drawImage(fvid,px,py,pw,ph);
+    else if(pipAt) g.drawImage(pipC,px,py,pw,ph);
+    g.strokeStyle='#5FD3A6'; g.lineWidth=2*S; g.strokeRect(px,py,pw,ph);
+    g.fillStyle='rgba(10,15,18,.7)'; g.fillRect(px,py+ph-15*S,pw,15*S);
+    g.fillStyle= dualLive? '#5FD3A6' : '#E9B44C'; g.font=(10*S|0)+'px monospace';
+    const age=pipAt? Math.round((now-pipAt)/1000) : 0;
+    g.fillText(dualLive? 'DIRECT' : (swapping? 'capture…' : 'il y a '+age+' s'), px+4*S, py+ph-13*S);
+    g.restore();
+    if(!dualLive && !swapping && now-lastSwap>SWAP_EVERY) swapGrab();
+  }
   // compteur présence vs témoin, en bas à droite
   g.textAlign='right'; g.fillStyle='#78868E'; g.font=(11*S|0)+'px monospace';
   g.fillText('mouvement '+mHits+'  ·  témoin bruit '+cHits, W-10*S, H-20*S);
@@ -335,11 +415,11 @@ function render(){
     const a=Math.min(1,(9000-(now-lastWordT))/1500);
     g.globalAlpha=a;
     g.fillStyle='rgba(10,15,18,.6)'; g.fillRect(0,H*.40,W,H*.20);
-    g.fillStyle='#E9B44C'; g.textAlign='center';
+    g.fillStyle= lastWordTest? '#E2574C' : '#E9B44C'; g.textAlign='center';
     g.font='600 '+(52*S|0)+'px "Barlow Condensed",sans-serif';
     g.fillText(lastWord.toUpperCase(), W/2, H*.44);
-    g.fillStyle='#CFC6B4'; g.font=(13*S|0)+'px monospace';
-    g.fillText('mot émis par le capteur', W/2, H*.44+58*S);
+    g.fillStyle= lastWordTest? '#E2574C' : '#CFC6B4'; g.font=(13*S|0)+'px monospace';
+    g.fillText(lastWordTest? 'TEST — émission forcée, aucune mesure derrière' : 'mot émis par le capteur', W/2, H*.44+58*S);
     g.textAlign='left'; g.globalAlpha=1;
   }
   requestAnimationFrame(render);

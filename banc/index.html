@@ -108,7 +108,7 @@ video{display:none}
 <div class="wrap">
 
 <p style="margin:14px 0 0"><a href="../" style="color:var(--dim);text-decoration:none;font-family:var(--mono);font-size:13px">← poste de terrain</a></p>
-<h1>Séance capteurs <span style="font-size:11px;color:var(--signal);letter-spacing:.12em">v8</span></h1>
+<h1>Séance capteurs <span style="font-size:11px;color:var(--signal);letter-spacing:.12em">v9</span></h1>
 <p class="sub">L'appareil est fait pour <b>se taire</b>. Il apprend le bruit normal du capteur, puis relève son seuil tant que ce bruit pourrait le faire parler. Un mot ne sort que si une mesure dépasse tout ce que l'appareil a vu de normal — <b>et le silence est le résultat attendu</b>. S'il n'y a rien, il n'y a rien.</p>
 
 <div class="step">
@@ -139,13 +139,7 @@ video{display:none}
     <div id="coincList" class="grid"></div>
   </div>
 
-  <div class="fld"><span class="lg">rareté</span><select id="rare">
-    <option value="12">au plus 12 mots par heure — pour tester l'appareil</option>
-    <option value="4">au plus 4 mots par heure</option>
-    <option value="1" selected>au plus 1 mot par heure</option>
-    <option value="0.333">au plus 1 mot toutes les 3 heures</option>
-  </select></div>
-  <p class="ex">Plafond <b>dur</b> : l'appareil ne peut pas parler plus souvent, quoi qu'il mesure. Il n'y a plus de réglage de sensibilité — <b>le seuil se calibre tout seul</b> contre le bruit réel de ton appareil, et il <b>monte</b> chaque fois que du bruit aurait suffi à déclencher un mot. Un contact est rare : le silence est le résultat attendu.</p>
+  <p class="ex"><b>Aucun réglage de fréquence, aucun réglage de sensibilité.</b> Le seuil se calibre tout seul contre le bruit réel de ton appareil, et il <b>monte</b> chaque fois que ce bruit aurait suffi à faire sortir un mot. L'appareil parle si — et seulement si — une mesure dépasse tout ce qu'il a vu de normal. Combien de mots sortiront n'est pas un paramètre : c'est le <b>résultat</b>, et il est très souvent zéro.</p>
 
   <div class="fld"><span class="lg">apprentissage</span><input type="range" id="learn" min="30" max="180" step="10" value="60"><span class="val" id="learnV">60 s</span></div>
   <p class="ex">Durée pendant laquelle l'appareil écoute sans rien dire, pour apprendre le bruit normal <b>ici et maintenant</b>. Plus c'est long, plus le seuil est juste. Ne touche pas au téléphone pendant ce temps.</p>
@@ -632,7 +626,7 @@ const BLOCK=30;                            // bootstrap par blocs de 3 s : conse
 const RAISE=1.15;                          // élévation du seuil à chaque déclenchement du témoin
 const CTL_MULT=4;                          // le témoin est testé 4× plus souvent que le réel
 const SETTLE=60000;                        // stabilisation : rien ne peut sortir la 1re minute de veille
-const RATE = () => +$('rare').value;       // plafond dur : mots par heure
+const ANTI_RAFALE=60000;                   // un même événement physique ne produit qu'un mot (pas un quota)
 // chaque capteur surveillé porte sa normale, son seuil AUTO et son témoin de bruit
 function mkW(code){ return {code,label:S[code].label,unit:S[code].unit,
   samples:[],noise:[],moy:0,sd:1,ev:1,thr:8,raises:0,
@@ -750,7 +744,7 @@ function tick(){
   const multi=W.length>1;
   const hot=W.filter(w=> now-w.lastAbove <= COINC_WIN).length;
   const ready = multi ? (hot>=W.length) : (primary.persist>=PERSIST_NEED);
-  const gap = Math.max(3600000/RATE(), +$('ref').value*1000);
+  const gap = ANTI_RAFALE;
   const settled = (now-tWatch) >= SETTLE;
   const waited  = (now-lastEmit) >= gap;
 
@@ -762,13 +756,11 @@ function tick(){
     $('word').className='q'; $('word').textContent='···';
     $('stage').classList.remove('alert');
     const calme=Math.round((now-primary.lastCtl)/60000);
-    const reste=lastEmit>0? Math.max(0,Math.ceil((gap-(now-lastEmit))/60000)) : 0;
     $('deriv').innerHTML = 'Silence — c\'est le résultat normal. Seuil auto <b>'
       + primary.thr.toFixed(1).replace('.',',') + ' σ</b>'
       + (primary.raises? ' (relevé '+primary.raises+'×)' : '')
       + '. Témoin de bruit muet depuis <b>'+calme+' min</b>.'
-      + (multi? ' Coïncidence de '+esc(W.map(w=>w.label).join(' + '))+' requise.' : '')
-      + (reste? ' Prochain mot possible dans '+reste+' min.' : '');
+      + (multi? ' Coïncidence de '+esc(W.map(w=>w.label).join(' + '))+' requise.' : '');
   }
 }
 function drawZ(z){
@@ -855,7 +847,7 @@ $('expCsv').onclick=()=>{
 };
 $('expJson').onclick=()=>dl(JSON.stringify({banc:'poste-de-terrain',date:new Date().toISOString(),
   graine:seed,aveugle:blind,apprentissage_s:+$('learn').value,
-  rarete_max_par_heure:RATE(), persistance_ms:Math.round(PERSIST_NEED*100),
+  anti_rafale_ms:ANTI_RAFALE, persistance_ms:Math.round(PERSIST_NEED*100),
   coincidence:W.length>1, coincidence_fenetre_ms:COINC_WIN,
   capteurs:W.map(w=>({code:w.code,normale:+w.moy.toFixed(3),ecart_type:+w.sd.toFixed(4),
     seuil_auto_sigma:+w.thr.toFixed(2), relevages_temoin:w.raises})),
