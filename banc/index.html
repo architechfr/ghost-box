@@ -110,7 +110,7 @@ video{display:none}
 <body>
 <div class="wrap">
 
-<h1>Banc d'essai <span style="font-size:11px;color:var(--signal);letter-spacing:.12em">v3</span></h1>
+<h1>Banc d'essai <span style="font-size:11px;color:var(--signal);letter-spacing:.12em">v4</span></h1>
 <p class="sub">L'appareil reste <b>silencieux</b> par défaut. Il apprend d'abord le comportement normal du capteur, puis n'émet un mot que si une mesure s'écarte nettement de cette normale.</p>
 
 <div class="step">
@@ -286,11 +286,31 @@ function paintCards(){
 const fmtN = v => Math.abs(v)>=100? v.toFixed(0) : Math.abs(v)>=10? v.toFixed(1) : v.toFixed(2);
 
 /* ═══════ autorisations ═══════ */
-const mark=(id,ok)=>{ const b=$(id); b.classList.remove('act','ko');
-  b.classList.add(ok?'act':'ko'); b.disabled=ok; };
-let lastGyroDeg=99, hHist=[];
+// un bouton activé reste cliquable : re-cliquer éteint le capteur
+const mark=(id,ok)=>{ const b=$(id); b.classList.remove('act','ko'); b.classList.add(ok?'act':'ko'); };
+function markOff(id){ const b=$(id); if(b) b.classList.remove('act','ko'); }
+// éteindre des capteurs : remet leurs cartes en « indisponibles » et vide leur valeur
+function deactivate(codes){
+  codes.forEach(c=>{ const s=S[c]; if(!s) return; s.ok=false; s.val=null; s.hist=[];
+    if(s.el){ $('capsOff').appendChild(s.el);
+      const pip=s.el.querySelector('.pip'); if(pip) pip.className='pip';
+      const why=s.el.querySelector('.why'); if(why) why.style.display='';
+      const vv=s.el.querySelector('.v'); if(vv) vv.innerHTML='—<span class="u"> '+s.unit+'</span>';
+      s.el.classList.remove('sel');
+    }
+    if(typeof coincSel!=='undefined') coincSel.delete(c);
+  });
+  srcCount=-1; fillSrc();
+}
+let lastGyroDeg=99, hHist=[], motionH=null, orientH=null;
 
 $('pMotion').onclick = async () => {
+  if(motionH||orientH){                       // déjà actif → éteindre
+    if(motionH) removeEventListener('devicemotion',motionH);
+    if(orientH) removeEventListener('deviceorientation',orientH);
+    motionH=orientH=null; markOff('pMotion');
+    deactivate(['accel','gyro','tilt','boussole','magneto_jitter']); return;
+  }
   try{
     if(typeof DeviceMotionEvent!=='undefined' && DeviceMotionEvent.requestPermission){
       const r=await DeviceMotionEvent.requestPermission();
@@ -300,13 +320,14 @@ $('pMotion').onclick = async () => {
       try{ await DeviceOrientationEvent.requestPermission(); }catch(e){}
     }
   }catch(e){ mark('pMotion',false); return; }
-  addEventListener('devicemotion', e => {
+  motionH = e => {
     const a=e.accelerationIncludingGravity;
     if(a && a.x!=null) push('accel', Math.hypot(a.x,a.y,a.z));
     const r=e.rotationRate;
     if(r && r.alpha!=null){ const d=Math.hypot(r.alpha,r.beta,r.gamma); lastGyroDeg=d; push('gyro', d*Math.PI/180); }
-  });
-  addEventListener('deviceorientation', e => {
+  };
+  addEventListener('devicemotion', motionH);
+  orientH = e => {
     if(e.beta!=null) push('tilt', Math.min(90,Math.hypot(e.beta,e.gamma)));
     const h = e.webkitCompassHeading!=null? e.webkitCompassHeading : (e.absolute? e.alpha : null);
     if(h==null) return;
@@ -320,7 +341,8 @@ $('pMotion').onclick = async () => {
         push('magneto_jitter', Math.min(60, Math.sqrt(-2*Math.log(Math.max(R,1e-12)))*180/Math.PI));
       }
     } else hHist.length=0;
-  });
+  };
+  addEventListener('deviceorientation', orientH);
   mark('pMotion',true);
 };
 
@@ -336,7 +358,16 @@ async function ensureMic(){
   mark('pMic',true); pollAudio();
   return st;
 }
-$('pMic').onclick = async () => { try{ await ensureMic(); }catch(e){ mark('pMic',false); } };
+$('pMic').onclick = async () => {
+  if(micStream){ stopMic(); return; }
+  try{ await ensureMic(); }catch(e){ mark('pMic',false); }
+};
+function stopMic(){
+  try{ if(recording && mediaRec) mediaRec.stop(); }catch(e){}
+  if(micStream){ micStream.getTracks().forEach(t=>t.stop()); micStream=null; }
+  ana=null; try{ if(actx && actx.close) actx.close(); }catch(e){} actx=null;
+  markOff('pMic'); deactivate(['audio_rms','audio_grave','audio_med','audio_aigu']);
+}
 function pollAudio(){
   if(!ana) return;
   const n=ana.frequencyBinCount, d=new Float32Array(n), sr=actx.sampleRate;
@@ -350,7 +381,13 @@ function pollAudio(){
   setTimeout(pollAudio,100);
 }
 
+let magSensor=null, lightSensor=null;
 $('pMag').onclick = async () => {
+  if(magSensor || lightSensor){                 // déjà actif → éteindre
+    try{ if(magSensor) magSensor.stop(); }catch(e){} magSensor=null;
+    try{ if(lightSensor) lightSensor.stop(); }catch(e){} lightSensor=null;
+    markOff('pMag'); deactivate(['magneto','lumiere']); return;
+  }
   if(!('Magnetometer' in window)){
     mark('pMag',false);
     S.magneto.el.querySelector('.why').innerHTML='Non exposé par ce navigateur. Utilise <b>Perturbation magnétique</b>, qui lit le même capteur autrement.';
@@ -359,11 +396,11 @@ $('pMag').onclick = async () => {
   try{
     const m=new Magnetometer({frequency:10});
     m.addEventListener('reading',()=>push('magneto',Math.hypot(m.x,m.y,m.z)));
-    m.start(); mark('pMag',true);
+    m.start(); magSensor=m; mark('pMag',true);
   }catch(e){ mark('pMag',false); }
   if('AmbientLightSensor' in window){
     try{ const l=new AmbientLightSensor({frequency:5});
-      l.addEventListener('reading',()=>push('lumiere',l.illuminance)); l.start(); }catch(e){}
+      l.addEventListener('reading',()=>push('lumiere',l.illuminance)); l.start(); lightSensor=l; }catch(e){}
   }
 };
 
@@ -410,6 +447,7 @@ function drawSkeleton(g,lms,vw,vh){
   for(const p of lms){ g.beginPath(); g.arc(p.x*vw,p.y*vh,3.5,0,7); g.fill(); }
 }
 $('pCam').onclick = async () => {
+  if(vstream){ stopCam(); return; }
   try{
     vstream=await navigator.mediaDevices.getUserMedia({video:{facingMode:'environment',width:320,height:240}});
     const v=$('vid'); v.srcObject=vstream; await v.play();
@@ -448,6 +486,15 @@ $('pCam').onclick = async () => {
     })();
   }catch(e){ mark('pCam',false); camActive=false; }
 };
+function stopCam(){
+  aiOn=false; markOff('aiBtn'); $('aiState').textContent='IA arrêtée (caméra coupée).';
+  if(vstream){ vstream.getTracks().forEach(t=>t.stop()); vstream=null; }
+  camActive=false; camBg=null; prevFrame=null; lastPose=null;
+  const view=$('camView'); if(view) view.style.display='none';
+  const hint=$('camHint'); if(hint) hint.style.display='none';
+  $('camWatch').textContent=''; markOff('pCam');
+  deactivate(['cam_lum','cam_diff','cam_forme','cam_pose']);
+}
 function grabEvidence(){
   if(!camActive) return null;
   try{ const v=$('vid'); if(!v||!v.videoWidth) return null;
@@ -504,9 +551,12 @@ $('aiBtn').onclick=async ()=>{
   }catch(e){ aiOn=false; $('aiBtn').classList.remove('on'); $('aiState').textContent='IA indisponible (le modèle n\'a pas pu se charger — réseau ?). Tout le reste fonctionne normalement.'; }
 };
 
+let geoWatch=null;
 $('pGeo').onclick = () => {
+  if(geoWatch!=null){ try{ navigator.geolocation.clearWatch(geoWatch); }catch(e){} geoWatch=null;
+    markOff('pGeo'); deactivate(['gps_acc']); return; }
   if(!navigator.geolocation){ mark('pGeo',false); return; }
-  navigator.geolocation.watchPosition(p=>push('gps_acc',p.coords.accuracy),
+  geoWatch=navigator.geolocation.watchPosition(p=>push('gps_acc',p.coords.accuracy),
     ()=>mark('pGeo',false), {enableHighAccuracy:true,maximumAge:1000});
   mark('pGeo',true);
 };
@@ -643,7 +693,7 @@ function checkReady(){
   let ok, lbl='';
   if(coinc){ const l=checkedCoinc(); ok=l.length>=2; lbl=l.map(c=>S[c].label).join(' + '); }
   else { const s=S[$('src').value]; ok=!!(s&&s.ok); if(ok) lbl=s.label; }
-  $('run').disabled = !ok || running;
+  $('run').disabled = running ? false : !ok;   // en veille, le bouton « Arrêter » reste actif
   $('n2').className = ok? 'n done':'n';
   if(!running) $('deriv').innerHTML = ok
     ? 'Prêt. <b>'+esc(lbl)+'</b>'+(coinc?' (coïncidence)':'')+' — observé '+$('learn').value+' s avant toute émission.'
