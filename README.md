@@ -71,9 +71,12 @@ Le script écrit le CSV, le JSON et les `INSERT`. Pour ajouter du vocabulaire, �
 | | iOS / Safari | Android / Chrome |
 |---|---|---|
 | Micro, caméra, mouvement, orientation, cap boussole, position | ✅ | ✅ |
-| Magnétomètre, lumière ambiante, batterie, réseau, NFC | ❌ | ✅ |
+| Perturbation magnétique (cap boussole), batterie, réseau, NFC | ✅ / partiel | ✅ |
+| Magnétomètre, lumière ambiante | ❌ | ⚠️ drapeau requis |
 
-Safari n'implémente pas la Generic Sensor API. Pour tout ce qui touche au champ magnétique, il faut un appareil Android. La page d'accueil affiche le diagnostic de l'appareil en cours.
+Safari n'implémente pas la Generic Sensor API. Sur Chrome Android, le magnétomètre et la lumière ambiante existent mais ne sont **pas activés par défaut** — il faut ouvrir `chrome://flags/#enable-generic-sensor-extra-classes`, passer sur *Enabled* et relancer Chrome.
+
+Sans ce drapeau, le banc propose **Perturbation magnétique** : le cap boussole est calculé à partir du magnétomètre, et son instabilité mesurée téléphone immobile réagit aux mêmes causes. Ce n'est pas une valeur en microteslas, c'est un indicateur de variation — et il fonctionne partout sans réglage. La page d'accueil affiche le diagnostic de l'appareil en cours.
 
 Inventaire complet des 24 capteurs, avec pour chacun l'API, la disponibilité et les sources de bruit connues : [`docs/capteurs-et-lexique.md`](docs/capteurs-et-lexique.md).
 

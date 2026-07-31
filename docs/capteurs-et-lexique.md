@@ -29,7 +29,8 @@ Ce n'est pas une raison de ne pas le construire — c'est une raison de le const
 | Gyroscope | `rotationRate` · `Gyroscope` | ✅¹ | ✅ | Micro-tremblements, dérive thermique |
 | Orientation | `DeviceOrientationEvent` | ✅¹ | ✅ | Rotation du poignet |
 | Cap magnétique | `webkitCompassHeading` | ✅ | ✅ | Aimants de housse, ferraille, enceintes |
-| **Magnétomètre 3 axes** | `Magnetometer` | ❌ | ✅² | Câble secteur, béton armé, ascenseur |
+| **Magnétomètre 3 axes** | `Magnetometer` | ❌ | ⚠️² | Câble secteur, béton armé, ascenseur |
+| Perturbation magnétique | instabilité du cap boussole | ✅ | ✅ | Ton propre mouvement — ne vaut qu'à l'arrêt |
 | Luminosité ambiante | `AmbientLightSensor` | ❌ | ⚠️³ | Ta main au-dessus du téléphone |
 | Luminance caméra | `getUserMedia` + canvas | ✅ | ✅ | L'auto-exposition qui compense en boucle |
 | Mouvement image | comparaison de trames | ✅ | ✅ | Bruit du capteur en basse lumière, poussière |
@@ -40,7 +41,7 @@ Ce n'est pas une raison de ne pas le construire — c'est une raison de le const
 | Pression tactile | `PointerEvent.pressure` | ✅ | ✅ | Ton doigt — **à ne jamais brancher sur un mapping** |
 
 ¹ iOS exige `DeviceMotionEvent.requestPermission()` déclenché par un geste de l'utilisateur.
-² Chrome Android uniquement, HTTPS + permission `magnetometer`. Safari n'expose pas la Generic Sensor API.
+² **Pas activé par défaut.** `Magnetometer` et `AmbientLightSensor` font partie des « extra classes » de la Generic Sensor API : il faut activer `chrome://flags/#enable-generic-sensor-extra-classes` sur chaque appareil. Safari ne l'expose dans aucun cas. Sans le drapeau, utiliser l'instabilité du cap boussole comme indicateur de perturbation.
 ³ Derrière un flag Chrome. Utiliser la luminance caméra à la place.
 
 ### Applications natives uniquement
@@ -57,7 +58,7 @@ Ce n'est pas une raison de ne pas le construire — c'est une raison de le const
 
 ### Trois pièges connus
 
-- **Le magnétomètre n'est pas un détecteur EMF.** Il lit le champ magnétique statique en microteslas. Un vrai détecteur mesure les champs alternatifs d'un réseau électrique. Ce sont deux grandeurs différentes.
+- **Le magnétomètre n'est pas accessible sans drapeau, et ce n'est pas un détecteur EMF.** Il lit le champ magnétique statique en microteslas. Un vrai détecteur mesure les champs alternatifs d'un réseau électrique. Ce sont deux grandeurs différentes.
 - **Le micro coupe sous ~50 Hz.** Les infrasons, souvent invoqués, ne sont pas captables par un téléphone.
 - **Les caméras SLS utilisent un modèle de détection de posture humaine.** Il est entraîné à trouver des corps, donc il en trouve — sur un portemanteau, un rideau, un radiateur.
 

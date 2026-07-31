@@ -184,7 +184,8 @@ reg('accel','Accéléromètre','m/s²',8,12,'autorisation mouvement');
 reg('gyro','Gyroscope','rad/s',0,3,'autorisation mouvement');
 reg('tilt','Inclinaison','°',0,90,'autorisation mouvement');
 reg('boussole','Cap magnétique','°',0,360,'autorisation mouvement');
-reg('magneto','Magnétomètre','µT',20,80,'Chrome Android uniquement');
+reg('magneto','Magnétomètre','µT',20,80,'drapeau Chrome requis — voir README');
+reg('magneto_jitter','Perturbation magnétique','°',0,12,'autorisation mouvement + téléphone immobile');
 reg('lumiere','Lumière ambiante','lux',0,400,'AmbientLightSensor absent');
 reg('cam_lum','Luminance caméra','0-255',0,255,'caméra requise');
 reg('cam_diff','Mouvement image','%',0,12,'caméra requise');
@@ -245,12 +246,30 @@ $('pMotion').onclick = async () => {
     const a=e.accelerationIncludingGravity;
     if(a && a.x!=null) push('accel', Math.hypot(a.x,a.y,a.z));
     const r=e.rotationRate;
-    if(r && r.alpha!=null) push('gyro', Math.hypot(r.alpha,r.beta,r.gamma)*Math.PI/180);
+    if(r && r.alpha!=null){
+      const deg=Math.hypot(r.alpha,r.beta,r.gamma);
+      lastGyroDeg=deg; push('gyro', deg*Math.PI/180);
+    }
   });
   addEventListener('deviceorientation', e => {
     if(e.beta!=null) push('tilt', Math.min(90,Math.hypot(e.beta,e.gamma)));
     const h = e.webkitCompassHeading!=null? e.webkitCompassHeading : (e.absolute? e.alpha : null);
-    if(h!=null) push('boussole', h);
+    if(h!=null){
+      push('boussole', h);
+      // Le cap est calculé à partir du magnétomètre. À l'arrêt, il devrait être
+      // stable ; son tremblement trahit une perturbation du champ. On n'échantillonne
+      // que téléphone immobile, sinon on mesurerait seulement ton poignet.
+      if(lastGyroDeg < 8){
+        hHist.push(h); if(hHist.length>16) hHist.shift();
+        if(hHist.length>=8){
+          let sx=0, sy=0;
+          for(const a of hHist){ const r=a*Math.PI/180; sx+=Math.cos(r); sy+=Math.sin(r); }
+          const R=Math.min(1,Math.hypot(sx,sy)/hHist.length);
+          const sd=Math.sqrt(-2*Math.log(Math.max(R,1e-12)))*180/Math.PI;
+          push('magneto_jitter', Math.min(60,sd));
+        }
+      } else hHist.length=0;
+    }
   });
   $('pMotion').disabled=true;
 };
@@ -258,7 +277,7 @@ $('pMotion').onclick = async () => {
 $('pMag').onclick = async () => {
   if(!('Magnetometer' in window)){
     S.magneto.el.querySelector('.pip').className='pip no';
-    S.magneto.el.querySelector('.why').textContent='Absent de ce navigateur — Safari n\'expose pas la Generic Sensor API.';
+    S.magneto.el.querySelector('.why').innerHTML='Non exposé. Sur Chrome Android : activer <b>chrome://flags/#enable-generic-sensor-extra-classes</b>. Absent définitivement sur iPhone. Utilise « Perturbation magnétique » à la place.';
     return;
   }
   try{
@@ -274,6 +293,7 @@ $('pMag').onclick = async () => {
   }
 };
 
+let lastGyroDeg=99, hHist=[];
 let actx=null, ana=null;
 $('pMic').onclick = async () => {
   try{
@@ -513,7 +533,7 @@ $('expJson').onclick = () => dl(JSON.stringify({
 
 /* ════════ boucle d'affichage ════════ */
 buildCards(); setInterval(paintCards, 150);
-if(!('Magnetometer' in window)) S.magneto.el.querySelector('.why').textContent='Absent de ce navigateur (normal sur iPhone).';
+if(!('Magnetometer' in window)) S.magneto.el.querySelector('.why').innerHTML='Non exposé par défaut. Chrome Android : drapeau <b>enable-generic-sensor-extra-classes</b>. Jamais disponible sur iPhone.';
 if(!navigator.getBattery) S.batterie.el.querySelector('.why').textContent='Battery API absente (normal sur iPhone).';
 if(!navigator.connection) S.rtt.el.querySelector('.why').textContent='Network Info absente (normal sur iPhone).';
 })();
