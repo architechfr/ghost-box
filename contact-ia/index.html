@@ -56,7 +56,7 @@ video{display:none}
 <body>
 <div class="wrap">
 
-<h1>Contact via IA <span class="wip">en développement</span></h1>
+<h1>Contact via IA <span class="wip">en développement · v2</span></h1>
 <p class="sub">Deux expériences pour « entendre » ou « voir » au-delà des mesures brutes du banc. À traiter comme des <b>pistes à vérifier</b>, jamais comme des preuves : l'IA fabrique des mots à partir du bruit et des silhouettes à partir de reflets. La transcription <b>envoie l'audio au serveur Mistral</b> ; la silhouette tourne entièrement sur l'appareil.</p>
 
 <div class="step">
@@ -69,7 +69,9 @@ video{display:none}
   <p id="recState" class="ex">Micro requis. L'audio reste sur l'appareil tant que tu ne lances pas la transcription.</p>
   <div class="warn">Pour la transcription seulement, l'audio est envoyé au serveur Mistral — la promesse « rien ne quitte l'appareil » ne s'applique pas ici. La clé API reste en mémoire, n'est jamais enregistrée.</div>
   <div class="fld"><span class="lg">clé API</span><input type="password" id="trKey" placeholder="clé Mistral — reste en mémoire"></div>
-  <div class="row"><button id="trGo" disabled>Transcrire l'enregistrement</button></div>
+  <div class="row"><button id="trSave">Valider la clé</button></div>
+  <p id="keyState" class="ex"></p>
+  <div class="row"><button id="trGo">Transcrire l'enregistrement</button></div>
   <div id="trOut" class="note"></div>
 </div>
 
@@ -121,7 +123,7 @@ $('rec').onclick = async () => {
   mediaRec.onstop=onRecStop;
   mediaRec.start(); recording=true; recStartPerf=performance.now();
   $('rec').textContent='■ Arrêter'; $('rec').classList.add('ko');
-  $('recDl').disabled=true; $('trGo').disabled=true;
+  $('recDl').disabled=true;
   recTimer=setInterval(()=>{ $('recState').textContent='Enregistrement — '+fmt((performance.now()-recStartPerf)/1000); },250);
 };
 async function onRecStop(){
@@ -133,7 +135,7 @@ async function onRecStop(){
   try{ wavBlob=await toWav(recBlob);
     $('recState').textContent='Prêt — WAV '+(wavBlob.size/1048576).toFixed(1)+' Mo, 16 kHz mono.';
   }catch(e){ wavBlob=null; $('recState').textContent='Prêt (conversion WAV impossible — format brut).'; }
-  $('recDl').disabled=false; $('trGo').disabled=false;
+  $('recDl').disabled=false;
 }
 $('recDl').onclick=()=>{ const b=wavBlob||recBlob; if(!b) return;
   const ext=wavBlob?'wav':((recBlob.type||'').indexOf('mp4')>=0?'m4a':'webm');
@@ -159,8 +161,15 @@ function encodeWav(samples,rate){
 }
 
 /* ═══════ transcription Voxtral ═══════ */
+let savedKey='';
+$('trSave').onclick=()=>{
+  const k=$('trKey').value.trim();
+  if(!k){ $('keyState').innerHTML='<span class="tm">Colle d\'abord ta clé Mistral dans le champ.</span>'; return; }
+  savedKey=k;
+  $('keyState').innerHTML='Clé enregistrée en mémoire ✓ ('+esc(k.slice(0,3))+'…'+esc(k.slice(-2))+'). Enregistre un son, puis « Transcrire ».';
+};
 $('trGo').onclick=async ()=>{
-  const key=$('trKey').value.trim(), b=wavBlob||recBlob;
+  const key=($('trKey').value.trim()||savedKey), b=wavBlob||recBlob;
   if(!key){ $('trOut').innerHTML='<span class="tm">Renseigne ta clé API Mistral.</span>'; return; }
   if(!b){ $('trOut').innerHTML='<span class="tm">Aucun enregistrement à transcrire.</span>'; return; }
   $('trGo').disabled=true; $('trOut').textContent="Envoi à Voxtral… (l'audio quitte l'appareil pour cette étape)";
