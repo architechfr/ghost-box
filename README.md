@@ -14,7 +14,7 @@ Tout fonctionne côté navigateur. Aucune donnée ne quitte l'appareil, aucune d
 |---|---|
 | `index.html` | Accueil + diagnostic des capteurs de l'appareil |
 | `enregistreur/` | Enregistreur : micro sans traitement, spectrogramme, marqueurs, détection de pics, relecture (boucle, rognage, filtres), export WAV |
-| `banc/` | Banc d'essai : 16 capteurs en direct, moteur capteur → mot, mode témoin, trace exportable |
+| `banc/` | Banc d'essai : 16 capteurs en direct, moteur capteur → mot (détection robuste), enregistrement audio de la box radio, transcription optionnelle, mode témoin, trace exportable |
 | `db/` | Schémas PostgreSQL/Supabase et MySQL, jeux de données de départ |
 | `data/` | Lexique 567 mots (CSV, JSON) et le script qui le régénère |
 | `docs/` | Inventaire détaillé des capteurs et de la chaîne capteur → mot |
@@ -91,6 +91,30 @@ Un dispositif capteur → mot fabrique les mots qu'il affiche. Le vocabulaire vi
 - **Le gabarit « mot seul » pèse 40 sur 100.** Les phrases complètes existent mais restent rares : l'enchaînement grammatical, qui donne l'impression d'un dialogue, vient entièrement du code.
 
 Même logique côté audio : la détection automatique de pics est indépendante des marqueurs manuels, pour que tu puisses comparer après coup ce que tu as entendu et ce que le signal contenait.
+
+---
+
+## Détection : limiter les faux positifs
+
+Le moteur du banc ne se contente plus d'une moyenne et d'un écart-type calculés une fois. Quatre garde-fous réduisent les faux positifs :
+
+- **Normale robuste** — la référence est apprise par **médiane + MAD**, insensible à un pic parasite survenu pendant l'apprentissage (là où une moyenne/écart-type se laisse tromper).
+- **Persistance** — un écart doit **tenir plusieurs relevés d'affilée** (~400 ms) avant de produire un mot. Un pic isolé, la principale source de fausses alertes, est ignoré. C'est aussi ce qui distingue un vrai signal — corrélé dans le temps — d'un bruit sans structure.
+- **Hystérésis** — après un mot, le moteur ne se ré-arme qu'une fois le signal **retombé** sous un seuil bas, pour éviter les rafales sur une même perturbation.
+- **Dérive** — quand tout est calme, la normale **suit lentement le fond** ; un changement durable devient la nouvelle référence, tandis qu'une vraie excursion, rapide, déclenche encore.
+
+Le mode témoin et le mode à l'aveugle passent par exactement les mêmes garde-fous : la comparaison reste honnête.
+
+---
+
+## Enregistrement et transcription (banc)
+
+Le banc peut enregistrer le **son** de ta box radio via le micro, **indépendamment** de la veille capteurs. Trois usages : enregistrer seul, écouter les capteurs seuls, ou les deux en même temps — les deux partagent l'horloge de la séance, et l'export JSON note le décalage (`audio_offset_ms`) pour aligner les mots sur l'audio. L'enregistrement est converti en WAV 16 kHz mono, téléchargeable. Rappel important : le téléphone **ne reçoit pas les ondes radio** — il n'a pas de récepteur RF ; il enregistre l'onde *acoustique* qui sort du haut-parleur de la box.
+
+La **transcription automatique** (Voxtral, modèle `voxtral-mini-latest` de Mistral) est optionnelle et repliée par défaut. Deux limites à connaître :
+
+- Une transcription automatique **invente des mots** sur du bruit — c'est un défaut connu de ces modèles. Elle est affichée « non vérifiée » et doit être confirmée à l'oreille sur l'audio brut, jamais prise pour une parole avérée.
+- Pour cette étape seulement, **l'audio est envoyé au serveur Mistral** : la promesse « rien ne quitte l'appareil » ne s'applique pas à la transcription. La clé API est saisie dans la page, gardée en mémoire, jamais enregistrée. Le site étant servi en statique (GitHub Pages), l'appel part directement du navigateur ; si l'API refuse l'appel navigateur (CORS), il faut un petit relais côté serveur (Cloudflare Worker, fonction Vercel) qui garde la clé.
 
 ---
 

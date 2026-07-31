@@ -59,6 +59,12 @@ button.ko{border-color:var(--flag);color:var(--flag)}
 #dorm summary{font-family:var(--legend);text-transform:uppercase;letter-spacing:.14em;font-size:11px;
   color:var(--dim);cursor:pointer;padding:6px 0}
 #dorm .cap{opacity:.5}
+#trBox{margin-top:12px}
+#trBox summary{font-family:var(--legend);text-transform:uppercase;letter-spacing:.14em;font-size:11px;
+  color:var(--gold);cursor:pointer;padding:6px 0}
+#trKey{flex:1;min-width:0;background:var(--sunk);border:1px solid var(--line);color:var(--text);
+  font-family:var(--mono);font-size:13px;padding:10px;border-radius:2px}
+#recT{color:var(--flag)}
 
 .fld{display:flex;align-items:center;gap:10px;margin-top:12px}
 .fld .lg{min-width:88px}
@@ -158,6 +164,24 @@ video{display:none}
 </div>
 
 <div class="step">
+  <div class="stepnum"><span class="n" id="nRec">R</span><h2>Enregistrement box radio</h2><span class="r" id="recT"></span></div>
+  <p class="ex">Le micro enregistre le <b>son</b> qui sort de ta box (le « bruit de neige radio »). C'est <b>indépendant</b> de la veille : enregistre seul, écoute les capteurs seuls, ou les deux en même temps — les deux partagent la même horloge de séance. Le téléphone ne reçoit pas les ondes radio ; il enregistre ce que le micro entend.</p>
+  <div class="row">
+    <button id="rec">● Enregistrer</button>
+    <button id="recDl" disabled>Télécharger WAV</button>
+  </div>
+  <p id="recState" class="ex">Micro requis. L'audio reste sur l'appareil tant que tu ne l'exportes pas.</p>
+
+  <details id="trBox">
+    <summary>Transcription automatique (Voxtral) — optionnelle</summary>
+    <div class="warn">La transcription <b>invente des mots</b> à partir du bruit : c'est le défaut connu de ces modèles. Traite-la comme une piste à <b>vérifier à l'oreille</b> sur l'audio brut, jamais comme une parole avérée. Pour cette étape, l'audio est envoyé au serveur Mistral — la promesse « rien ne quitte l'appareil » ne s'applique plus.</div>
+    <div class="fld"><span class="lg">clé API</span><input type="password" id="trKey" placeholder="clé Mistral — reste en mémoire, non enregistrée"></div>
+    <div class="row"><button id="trGo" disabled>Transcrire l'enregistrement</button></div>
+    <div id="trOut" class="note"></div>
+  </details>
+</div>
+
+<div class="step">
   <div class="stepnum"><span class="n" id="n4">4</span><h2>Trace</h2><span class="r" id="tally">0</span></div>
   <p class="ex">Chaque mot est enregistré avec la valeur brute, la normale apprise, l'écart mesuré et l'index utilisé. Tu peux refaire le calcul à la main plus tard — c'est ce qui rend une séance vérifiable.</p>
   <div id="tblWrap"><p class="empty">Aucune émission pour l'instant.</p></div>
@@ -171,7 +195,7 @@ video{display:none}
 
 <div class="step">
   <div class="lg">ce que fait vraiment cet appareil</div>
-  <p class="note">Il mesure une grandeur physique, apprend sa variation habituelle, et signale les écarts. Quand un écart dépasse le seuil, il convertit la mesure en position dans une liste de 567 mots. <b>Le mot vient de la liste, la position vient du capteur, le sens vient de toi.</b> Un dispositif de ce type ne détecte aucune intention — aucun capteur ne mesure ça. Ce qu'il peut faire, et qu'il fait ici, c'est se taire tant que rien ne sort de l'ordinaire, et garder assez d'informations pour que tu puisses vérifier après coup. Le mode à l'aveugle est là pour la seule question qui compte : est-ce que le capteur produit autre chose que du hasard&nbsp;?</p>
+  <p class="note">Il mesure une grandeur physique, apprend sa variation habituelle, et signale les écarts. Quand un écart dépasse le seuil, il convertit la mesure en position dans une liste de 567 mots. <b>Le mot vient de la liste, la position vient du capteur, le sens vient de toi.</b> Un dispositif de ce type ne détecte aucune intention — aucun capteur ne mesure ça. Ce qu'il peut faire, et qu'il fait ici, c'est se taire tant que rien ne sort de l'ordinaire, et garder assez d'informations pour que tu puisses vérifier après coup. Pour limiter les faux positifs, il ignore les pics isolés&nbsp;: l'écart doit <b>tenir plusieurs relevés d'affilée</b>, la normale est apprise de façon <b>robuste</b> (médiane, insensible aux parasites) et <b>suit lentement</b> la dérive du fond. Le mode à l'aveugle est là pour la seule question qui compte : est-ce que le capteur produit autre chose que du hasard&nbsp;?</p>
 </div>
 
 <video id="vid" playsinline muted></video>
@@ -286,17 +310,19 @@ $('pMotion').onclick = async () => {
   mark('pMotion',true);
 };
 
-let actx=null, ana=null;
-$('pMic').onclick = async () => {
-  try{
-    const st=await navigator.mediaDevices.getUserMedia({audio:{echoCancellation:false,noiseSuppression:false,autoGainControl:false}});
-    actx=new (window.AudioContext||window.webkitAudioContext)(); await actx.resume();
-    const s=actx.createMediaStreamSource(st);
-    ana=actx.createAnalyser(); ana.fftSize=2048; ana.smoothingTimeConstant=.5;
-    ana.minDecibels=-100; ana.maxDecibels=-10; s.connect(ana);
-    mark('pMic',true); pollAudio();
-  }catch(e){ mark('pMic',false); }
-};
+let actx=null, ana=null, micStream=null;
+async function ensureMic(){
+  if(micStream) return micStream;
+  const st=await navigator.mediaDevices.getUserMedia({audio:{echoCancellation:false,noiseSuppression:false,autoGainControl:false}});
+  micStream=st;
+  actx=new (window.AudioContext||window.webkitAudioContext)(); await actx.resume();
+  const s=actx.createMediaStreamSource(st);
+  ana=actx.createAnalyser(); ana.fftSize=2048; ana.smoothingTimeConstant=.5;
+  ana.minDecibels=-100; ana.maxDecibels=-10; s.connect(ana);
+  mark('pMic',true); pollAudio();
+  return st;
+}
+$('pMic').onclick = async () => { try{ await ensureMic(); }catch(e){ mark('pMic',false); } };
 function pollAudio(){
   if(!ana) return;
   const n=ana.frequencyBinCount, d=new Float32Array(n), sr=actx.sampleRate;
@@ -365,6 +391,107 @@ if(navigator.connection){
   u(); c.addEventListener('change',u); setInterval(u,3000);
 }
 
+/* ═══════ enregistrement (box radio) ═══════ */
+let mediaRec=null, recChunks=[], recording=false, recStartPerf=0, recTimer=null, recBlob=null, wavBlob=null;
+function pickMime(){
+  const c=['audio/webm;codecs=opus','audio/webm','audio/mp4','audio/ogg'];
+  for(const m of c) if(window.MediaRecorder && MediaRecorder.isTypeSupported && MediaRecorder.isTypeSupported(m)) return m;
+  return '';
+}
+$('rec').onclick = async () => {
+  if(recording){ if(mediaRec) mediaRec.stop(); return; }
+  let st; try{ st=await ensureMic(); }catch(e){ $('recState').textContent="Micro refusé — impossible d'enregistrer."; return; }
+  if(!window.MediaRecorder){ $('recState').textContent='MediaRecorder non supporté par ce navigateur.'; return; }
+  recChunks=[]; recBlob=null; wavBlob=null;
+  const mime=pickMime();
+  try{ mediaRec=new MediaRecorder(st, mime?{mimeType:mime}:undefined); }
+  catch(e){ $('recState').textContent='Enregistrement indisponible sur ce navigateur.'; return; }
+  mediaRec.ondataavailable=e=>{ if(e.data && e.data.size) recChunks.push(e.data); };
+  mediaRec.onstop=onRecStop;
+  mediaRec.start(); recording=true; recStartPerf=performance.now();
+  $('rec').textContent='■ Arrêter'; $('rec').classList.add('ko');
+  $('recDl').disabled=true; $('trGo').disabled=true; $('nRec').className='n done';
+  recTimer=setInterval(()=>{ $('recT').textContent=fmt((performance.now()-recStartPerf)/1000); },250);
+  $('recState').textContent="Enregistrement en cours — l'audio reste sur l'appareil.";
+};
+async function onRecStop(){
+  recording=false; clearInterval(recTimer);
+  $('rec').textContent='● Enregistrer'; $('rec').classList.remove('ko');
+  const type=(mediaRec && mediaRec.mimeType) || 'audio/webm';
+  recBlob=new Blob(recChunks,{type});
+  $('recState').textContent='Enregistrement prêt ('+(recBlob.size/1048576).toFixed(1)+' Mo). Conversion WAV…';
+  try{
+    wavBlob=await toWav(recBlob);
+    $('recState').textContent='Enregistrement prêt — WAV '+(wavBlob.size/1048576).toFixed(1)+' Mo, 16 kHz mono.';
+    $('recDl').disabled=false; $('trGo').disabled=false;
+  }catch(e){
+    wavBlob=null;
+    $('recState').textContent='Enregistrement prêt (conversion WAV impossible ici — export au format brut).';
+    $('recDl').disabled=false; $('trGo').disabled=false;
+  }
+}
+$('recDl').onclick=()=>{ const b=wavBlob||recBlob; if(!b) return;
+  const ext=wavBlob?'wav':((recBlob.type||'').indexOf('mp4')>=0?'m4a':'webm');
+  dl2(b,'box-radio-'+stamp()+'.'+ext); };
+
+async function toWav(blob){
+  const AC=window.AudioContext||window.webkitAudioContext;
+  const ctx=new AC(), ab=await blob.arrayBuffer();
+  const buf=await ctx.decodeAudioData(ab);
+  if(ctx.close) ctx.close();
+  const tgt=16000, ch=buf.getChannelData(0), ratio=buf.sampleRate/tgt;
+  const outLen=Math.max(1,Math.floor(ch.length/ratio)), out=new Float32Array(outLen);
+  for(let i=0;i<outLen;i++){ const p=i*ratio, i0=p|0, f=p-i0, a=ch[i0]||0, b=(i0+1<ch.length?ch[i0+1]:a); out[i]=a+(b-a)*f; }
+  return encodeWav(out,tgt);
+}
+function encodeWav(samples,rate){
+  const n=samples.length, buf=new ArrayBuffer(44+n*2), v=new DataView(buf);
+  const ws=(o,s)=>{ for(let i=0;i<s.length;i++) v.setUint8(o+i,s.charCodeAt(i)); };
+  ws(0,'RIFF'); v.setUint32(4,36+n*2,true); ws(8,'WAVE'); ws(12,'fmt ');
+  v.setUint32(16,16,true); v.setUint16(20,1,true); v.setUint16(22,1,true);
+  v.setUint32(24,rate,true); v.setUint32(28,rate*2,true); v.setUint16(32,2,true); v.setUint16(34,16,true);
+  ws(36,'data'); v.setUint32(40,n*2,true);
+  let o=44; for(let i=0;i<n;i++){ const x=Math.max(-1,Math.min(1,samples[i])); v.setInt16(o,x<0?x*32768:x*32767,true); o+=2; }
+  return new Blob([buf],{type:'audio/wav'});
+}
+function dl2(blob,name){ const u=URL.createObjectURL(blob),a=document.createElement('a');
+  a.href=u; a.download=name; a.click(); setTimeout(()=>URL.revokeObjectURL(u),4000); }
+
+/* ═══════ transcription (Voxtral) ═══════ */
+const esc=s=>String(s).replace(/[&<>]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;'}[c]));
+$('trGo').onclick=async ()=>{
+  const key=$('trKey').value.trim(), b=wavBlob||recBlob;
+  if(!key){ $('trOut').innerHTML='<span class="tm">Renseigne ta clé API Mistral.</span>'; return; }
+  if(!b){ $('trOut').innerHTML='<span class="tm">Aucun enregistrement à transcrire.</span>'; return; }
+  $('trGo').disabled=true; $('trOut').textContent="Envoi à Voxtral… (l'audio quitte l'appareil pour cette étape)";
+  const fd=new FormData();
+  fd.append('file', b, wavBlob?'box-radio.wav':'box-radio.webm');
+  fd.append('model','voxtral-mini-latest');
+  fd.append('language','fr');
+  fd.append('timestamp_granularities','segment');
+  try{
+    const r=await fetch('https://api.mistral.ai/v1/audio/transcriptions',{ method:'POST', headers:{'x-api-key':key}, body:fd });
+    if(!r.ok){ const t=await r.text().catch(()=> ''); throw new Error('HTTP '+r.status+' '+t.slice(0,180)); }
+    renderTranscript(await r.json());
+  }catch(e){
+    $('trOut').innerHTML='<span class="tm">Échec : '+esc(String(e.message||e))+'.</span><br>'+
+      "Si l'erreur ressemble à un blocage réseau/CORS, l'appel direct depuis le navigateur est refusé par l'API : "+
+      'il faut alors un petit relais (Cloudflare Worker ou fonction Vercel) qui garde la clé côté serveur.';
+  }
+  $('trGo').disabled=false;
+};
+function renderTranscript(j){
+  const segs=(j&&j.segments)||[];
+  let html='<div class="warn">Transcription automatique <b>non vérifiée</b> — l\'ASR fabrique des mots sur du bruit. À confirmer à l\'oreille sur l\'audio brut.</div>';
+  if(segs.length){
+    html+='<table><thead><tr><th>t</th><th>texte (auto, non vérifié)</th></tr></thead><tbody>'+
+      segs.map(s=>'<tr><td>'+fmt(s.start||0)+'</td><td class="w">'+esc(s.text||'')+'</td></tr>').join('')+'</tbody></table>';
+  } else {
+    html+='<p class="w">'+esc((j&&j.text)||'(transcription vide)')+'</p>';
+  }
+  $('trOut').innerHTML=html;
+}
+
 /* ═══════ sélecteurs ═══════ */
 let srcCount=-1;
 function fillSrc(){
@@ -403,8 +530,23 @@ $('tBlind').onclick=e=>{blind=!blind;e.target.classList.toggle('on',blind);};
 
 /* ═══════ moteur ═══════ */
 let running=false, phase='idle', realMode=true, timer=null, t0=0, tPhase=0;
-let samples=[], moy=0, sd=1, lastEmit=-1e9, trace=[], seed=0, lastZ=0, revealed=false;
+let samples=[], moy=0, sd=1, ev=1, lastEmit=-1e9, trace=[], seed=0, lastZ=0, revealed=false;
+let persist=0, armed=true;               // anti faux positifs : tenue + hystérésis
+const PERSIST_NEED=4;                     // relevés consécutifs requis (~400 ms à 100 ms/relevé)
+const ADAPT=0.01;                         // vitesse d'adaptation lente de la normale (dérive)
 const Z = () => +$('z').value/10;
+/* base d'apprentissage robuste : médiane + MAD (insensible aux pics parasites) */
+function robustStats(a){
+  const s=[...a].sort((x,y)=>x-y), n=s.length, med=n%2?s[(n-1)/2]:(s[n/2-1]+s[n/2])/2;
+  const dev=s.map(x=>Math.abs(x-med)).sort((x,y)=>x-y);
+  let mad=n%2?dev[(n-1)/2]:(dev[n/2-1]+dev[n/2])/2;
+  let scale=mad*1.4826;
+  if(!(scale>1e-6)){ // repli sur l'écart-type si la MAD est nulle (valeurs quasi constantes)
+    const m=a.reduce((p,c)=>p+c,0)/n;
+    scale=Math.sqrt(a.reduce((p,c)=>p+(c-m)*(c-m),0)/n);
+  }
+  return {center:med, scale};
+}
 const mulberry = a => () => { a|=0; a=a+0x6D2B79F5|0;
   let t=Math.imul(a^a>>>15,1|a); t=t+Math.imul(t^t>>>7,61|t)^t; return ((t^t>>>14)>>>0)/4294967296; };
 let rnd = mulberry(1);
@@ -416,7 +558,7 @@ function start(){
   const s=S[$('src').value]; if(!s||!s.ok) return;
   realMode = blind ? Math.random()<.5 : true;
   seed=(Date.now()^0x9E3779B9)>>>0; rnd=mulberry(seed);
-  running=true; phase='learn'; samples=[]; lastEmit=-1e9;
+  running=true; phase='learn'; samples=[]; lastEmit=-1e9; persist=0; armed=true;
   t0=performance.now(); tPhase=t0;
   $('run').textContent='Arrêter'; $('run').classList.add('on'); $('run').disabled=false;
   $('word').textContent='···'; $('word').className='q';
@@ -446,9 +588,10 @@ function tick(){
     $('zfill').style.width=Math.min(100,(now-tPhase)/dur*100).toFixed(0)+'%';
     if(now-tPhase>=dur){
       if(samples.length<10){ $('deriv').textContent='Pas assez de relevés — ce capteur ne renvoie rien. Choisis-en un autre.'; stop(); return; }
-      moy=samples.reduce((a,b)=>a+b,0)/samples.length;
-      sd=Math.sqrt(samples.reduce((a,b)=>a+(b-moy)*(b-moy),0)/samples.length);
+      const rob=robustStats(samples);
+      moy=rob.center; sd=rob.scale;
       if(!(sd>1e-6)) sd=1e-6;
+      ev=sd*sd; persist=0; armed=true;
       phase='watch'; $('n3').className='n done';
     }
     return;
@@ -464,11 +607,20 @@ function tick(){
   $('state').textContent='en veille';
   $('zNow').textContent=z.toFixed(2).replace('.',',')+' σ';
 
-  if(z>=Z() && now-lastEmit > +$('ref').value*1000){ lastEmit=now; emit(v,z,now,s); }
-  else if(now-lastEmit>2500 && $('word').className!=='q'){
+  const thr=Z(), low=Math.max(1, thr*0.5);
+  // hystérésis : après un mot, ne ré-armer qu'une fois le signal retombé sous le seuil bas
+  if(!armed && z<low) armed=true;
+  // persistance : compter les relevés consécutifs au-dessus du seuil ; un pic isolé ne suffit plus
+  if(z>=thr) persist++; else persist=0;
+  // dérive : quand tout est calme, la normale suit lentement le fond (une vraie excursion, elle, déclenche)
+  if(z<low){ const dv=v-moy; moy+=ADAPT*dv; ev+=ADAPT*(dv*dv-ev); sd=Math.sqrt(Math.max(ev,1e-12)); if(sd<1e-6) sd=1e-6; }
+
+  if(armed && persist>=PERSIST_NEED && now-lastEmit > +$('ref').value*1000){
+    lastEmit=now; armed=false; persist=0; emit(v,z,now,s);
+  } else if(now-lastEmit>2500 && $('word').className!=='q'){
     $('word').className='q'; $('word').textContent='···';
     $('stage').classList.remove('alert');
-    $('deriv').innerHTML='Silence. Normale <b>'+fmtN(moy)+'</b> '+s.unit+', dispersion <b>'+fmtN(sd)+'</b>. Seuil à '+Z().toFixed(1).replace('.',',')+' σ.';
+    $('deriv').innerHTML='Silence. Normale <b>'+fmtN(moy)+'</b> '+s.unit+', dispersion <b>'+fmtN(sd)+'</b>. Seuil '+thr.toFixed(1).replace('.',',')+' σ, tenue '+Math.round(PERSIST_NEED*100)+' ms.';
   }
 }
 function drawZ(z){
@@ -532,7 +684,10 @@ $('expCsv').onclick=()=>{
 };
 $('expJson').onclick=()=>dl(JSON.stringify({banc:'poste-de-terrain',date:new Date().toISOString(),
   graine:seed,aveugle:blind,seuil_sigma:Z(),apprentissage_s:+$('learn').value,
-  normale:moy,ecart_type:sd,emissions:[...trace].reverse()},null,1),'emissions-'+stamp()+'.json','application/json');
+  persistance_ms:Math.round(PERSIST_NEED*100),normale:moy,ecart_type:sd,
+  audio_enregistre:!!recBlob,
+  audio_offset_ms:(recStartPerf&&t0)?Math.round(t0-recStartPerf):null,
+  emissions:[...trace].reverse()},null,1),'emissions-'+stamp()+'.json','application/json');
 
 buildCards(); setInterval(paintCards,150); checkReady(); drawZ(0);
 })();
