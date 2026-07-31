@@ -1,0 +1,403 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#0A0F12">
+<title>Réalisateur — tournage de séance</title>
+<link rel="icon" type="image/png" href="/ghost-box/favicon.png">
+<link rel="apple-touch-icon" href="/ghost-box/apple-touch-icon.png">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600&family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bench:#0A0F12;--panel:#1D262B;--sunk:#0A0F12;--line:#2C383F;--hair:#212B31;
+  --signal:#5FD3A6;--gold:#E9B44C;--flag:#E2574C;--paper:#CFC6B4;--dim:#78868E;--text:#DDE6EA;
+  --legend:"Barlow Condensed","Arial Narrow",sans-serif;
+  --body:"IBM Plex Sans",system-ui,sans-serif;--mono:"IBM Plex Mono",ui-monospace,monospace;
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;background:var(--bench);color:var(--text);font-family:var(--body);-webkit-font-smoothing:antialiased}
+body{padding:0 0 calc(env(safe-area-inset-bottom) + 24px)}
+.wrap{max-width:660px;margin:0 auto;padding:0 12px}
+.top{position:sticky;top:0;z-index:20;background:rgba(10,15,18,.96);backdrop-filter:blur(8px);
+  border-bottom:1px solid var(--line);padding:env(safe-area-inset-top) 0 0}
+.topin{max-width:660px;margin:0 auto;padding:10px 12px;display:flex;align-items:center;gap:10px}
+.topin a{color:var(--dim);text-decoration:none;font-family:var(--mono);font-size:16px}
+.topin h1{font-family:var(--legend);text-transform:uppercase;letter-spacing:.18em;font-size:15px;font-weight:600;margin:0;flex:1}
+.lg{font-family:var(--legend);text-transform:uppercase;letter-spacing:.15em;font-size:12px;color:var(--dim);font-weight:600}
+.ex{font-size:12.5px;color:var(--dim);line-height:1.55;margin:6px 0 0}
+.ex b{color:var(--paper);font-weight:500}
+.step{margin-top:18px;border-top:1px solid var(--line);padding-top:12px}
+button{font-family:var(--legend);text-transform:uppercase;letter-spacing:.13em;font-weight:600;
+  border:1px solid var(--line);background:var(--panel);color:var(--text);border-radius:3px;
+  padding:11px 12px;font-size:13px;cursor:pointer}
+button:active{transform:translateY(1px)}
+button:disabled{opacity:.35;cursor:default}
+button.act{border-color:var(--signal);color:var(--signal)}
+.row{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}.row>button{flex:1;min-width:120px}
+.fld{display:flex;align-items:center;gap:10px;margin-top:12px}
+.fld .lg{min-width:62px}
+input[type=text],select{flex:1;min-width:0;background:#10171B;border:1px solid var(--line);color:var(--text);
+  font-family:var(--body);font-size:14px;padding:10px;border-radius:2px}
+#stageWrap{margin-top:12px;background:#000;border:1px solid var(--line);border-radius:4px;overflow:hidden}
+#stage{display:block;width:100%;height:auto}
+#recBtn{width:100%;margin-top:10px;padding:18px 0;font-size:16px;letter-spacing:.2em;
+  background:var(--flag);color:#180605;border-color:var(--flag)}
+#recBtn.on{background:var(--sunk);color:var(--flag)}
+#recBtn:disabled{background:var(--panel);color:var(--dim);border-color:var(--line)}
+.stat{font-family:var(--mono);font-size:12px;color:var(--dim);margin-top:8px;line-height:1.65}
+.stat b{color:var(--signal)}
+table{width:100%;border-collapse:collapse;margin-top:8px}
+th{font-family:var(--legend);text-transform:uppercase;letter-spacing:.12em;font-size:10px;color:var(--dim);
+  text-align:left;font-weight:600;padding:0 6px 6px 0;border-bottom:1px solid var(--line)}
+td{padding:7px 6px 7px 0;border-bottom:1px solid var(--hair);font-family:var(--mono);font-size:12px;vertical-align:top}
+td.w{font-family:var(--body);font-size:14px;color:var(--paper)}
+.empty{color:var(--dim);font-size:13px;padding:12px 0}
+.warn{margin-top:10px;padding:10px 12px;border-left:2px solid var(--gold);background:#1E1A12;
+  font-size:12.5px;line-height:1.55;color:#E4D3AE}
+video{display:none}
+</style>
+</head>
+<body>
+
+<div class="top"><div class="topin">
+  <a href="../">←</a><h1>Réalisateur</h1>
+  <span class="lg" id="phase">à préparer</span>
+</div></div>
+
+<div class="wrap">
+
+<div class="step" style="border-top:0">
+  <p class="ex">Mode tournage : la caméra filme ce que tu vois, et l'appareil <b>incruste dans la vidéo</b> l'heure, le lieu, le niveau sonore, la détection de présence et les mots émis. Un seul fichier, lisible plus tard sans rien d'autre. Idéal au bout d'une perche, en déplacement.</p>
+  <div class="fld"><span class="lg">lieu</span><input type="text" id="lieu" placeholder="ex. Château de… — salle des gardes"></div>
+  <div class="fld"><span class="lg">rareté</span><select id="rare">
+    <option value="12">au plus 12 mots par heure — pour tester</option>
+    <option value="4" selected>au plus 4 mots par heure</option>
+    <option value="1">au plus 1 mot par heure</option>
+  </select></div>
+  <div class="row"><button id="prep">Préparer le tournage</button></div>
+  <p id="prepState" class="ex">La caméra et le micro sont nécessaires. L'appareil apprendra 45 s le bruit du lieu avant de pouvoir émettre un mot.</p>
+</div>
+
+<div id="stageWrap"><canvas id="stage" width="960" height="540"></canvas></div>
+<button id="recBtn" disabled>● Enregistrer</button>
+<div class="stat" id="live">—</div>
+
+<div class="step">
+  <div class="lg">Journal de tournage <span id="jCount" style="color:var(--paper)"></span></div>
+  <div id="jTbl"><p class="empty">Rien pour l'instant.</p></div>
+  <div class="row">
+    <button id="expJ">Export JSON</button>
+    <button id="clrJ">Effacer</button>
+  </div>
+  <p class="ex">Les vidéos sont rangées dans la bibliothèque de <a href="../vision/" style="color:var(--signal)">Vision</a>, où tu peux les revoir et les supprimer.</p>
+</div>
+
+</div>
+
+<video id="vid" playsinline muted></video>
+
+<script>
+(() => {
+"use strict";
+const $=id=>document.getElementById(id);
+const esc=s=>String(s).replace(/[&<>]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;'}[c]));
+const fmt=s=>{s=Math.max(0,s|0);return String(s/60|0).padStart(2,'0')+':'+String(s%60).padStart(2,'0');};
+const mo=b=>b<1048576?(b/1024).toFixed(0)+' Ko':(b/1048576).toFixed(1)+' Mo';
+const stamp=()=>new Date().toISOString().slice(0,19).replace(/[:T]/g,'-');
+const hhmm=d=>String(d.getHours()).padStart(2,'0')+':'+String(d.getMinutes()).padStart(2,'0')+':'+String(d.getSeconds()).padStart(2,'0');
+
+/* ═══════ lexique ═══════ */
+let MOTS=[];
+fetch('../data/lexique.json').then(r=>r.json()).then(j=>{
+  const m=(j&&j.mots)?j.mots:(Array.isArray(j)?j:[]);
+  MOTS=m.map(x=>({mot:x.mot,pos:x.pos,poids:x.poids||1}));
+}).catch(()=>{ MOTS=[]; });
+
+/* ═══════ statistique robuste + seuil auto (même principe que la séance capteurs) ═══════ */
+function robustStats(a){
+  const s=[...a].sort((x,y)=>x-y),n=s.length,med=n%2?s[(n-1)/2]:(s[n/2-1]+s[n/2])/2;
+  const dev=s.map(x=>Math.abs(x-med)).sort((x,y)=>x-y);
+  let mad=n%2?dev[(n-1)/2]:(dev[n/2-1]+dev[n/2])/2, sc=mad*1.4826;
+  if(!(sc>1e-9)){ const m=a.reduce((p,c)=>p+c,0)/n; sc=Math.sqrt(a.reduce((p,c)=>p+(c-m)*(c-m),0)/n); }
+  return {center:med,scale:sc};
+}
+const NEED=4, ADAPT=.004, NOISE_MAX=4000, BLOCK=30, RAISE=1.15, CTL=4;
+function mkW(code,label){ return {code,label,samples:[],noise:[],moy:0,sd:1,ev:1,thr:8,raises:0,
+  persist:0,cPersist:0,cPtr:0,cLeft:0,z:0,v:0,ready:false}; }
+function ctlNext(w){ const n=w.noise.length; if(n<20) return null;
+  if(w.cLeft<=0){ w.cPtr=(Math.random()*n)|0; w.cLeft=BLOCK; }
+  const v=w.noise[w.cPtr%n]; w.cPtr++; w.cLeft--; return v; }
+function feed(w,v,learning){
+  if(!isFinite(v)) return false;
+  w.v=v;
+  if(learning){ w.samples.push(v); return false; }
+  const z=Math.abs(v-w.moy)/w.sd; w.z=z;
+  if(z>=w.thr) w.persist++; else w.persist=0;
+  w.noise.push(v); if(w.noise.length>NOISE_MAX) w.noise.shift();
+  if(z<w.thr*.5){ const dv=v-w.moy; w.moy+=ADAPT*dv; w.ev+=ADAPT*(dv*dv-w.ev);
+    w.sd=Math.sqrt(Math.max(w.ev,1e-18)); if(w.sd<1e-9) w.sd=1e-9; }
+  for(let k=0;k<CTL;k++){ const cv=ctlNext(w); if(cv==null) break;
+    const cz=Math.abs(cv-w.moy)/w.sd;
+    if(cz>=w.thr) w.cPersist++; else w.cPersist=0;
+    if(w.cPersist>=NEED){ w.thr*=RAISE; w.raises++; w.cPersist=0; w.persist=0; } }
+  const fired = w.persist>=NEED;
+  if(fired) w.persist=0;
+  return fired;
+}
+function seal(w){
+  if(w.samples.length<30) return false;
+  const r=robustStats(w.samples); w.moy=r.center; w.sd=r.scale>1e-9?r.scale:1e-9; w.ev=w.sd*w.sd;
+  w.noise=w.samples.slice(-NOISE_MAX);
+  let zmax=0; for(const s of w.samples){ const z=Math.abs(s-w.moy)/w.sd; if(z>zmax) zmax=z; }
+  w.thr=Math.max(5,zmax*1.4); w.ready=true; return true;
+}
+function hash01(str){ let h=2166136261>>>0;
+  for(let i=0;i<str.length;i++){ h^=str.charCodeAt(i); h=Math.imul(h,16777619)>>>0; }
+  return (h>>>0)/4294967296; }
+
+/* ═══════ capture ═══════ */
+let vstream=null, micStream=null, actx=null, ana=null, tdata=null;
+let WA=mkW('audio','Niveau sonore'), WM=mkW('mouvement','Mouvement');
+let learning=false, tLearn=0, LEARN_MS=45000, tReady=0;
+const cv=$('stage'), g=cv.getContext('2d');
+let lastWord=null, lastWordT=-1e9, lastEmit=-1e9, recentIdx=[], journal=[];
+let mHits=0, cHits=0, mOn=false, cOn=false, tStart=0, box=null, lastPresence=-1e9;
+
+$('prep').onclick=async ()=>{
+  $('prepState').textContent='Autorisations…';
+  try{
+    vstream=await navigator.mediaDevices.getUserMedia({video:{facingMode:'environment',width:{ideal:1280},height:{ideal:720}},audio:false});
+    const v=$('vid'); v.srcObject=vstream; await v.play();
+  }catch(e){ $('prepState').textContent='Caméra refusée — impossible de tourner.'; return; }
+  try{
+    micStream=await navigator.mediaDevices.getUserMedia({audio:{echoCancellation:false,noiseSuppression:false,autoGainControl:false}});
+    actx=new (window.AudioContext||window.webkitAudioContext)(); await actx.resume();
+    const src=actx.createMediaStreamSource(micStream);
+    ana=actx.createAnalyser(); ana.fftSize=1024; ana.smoothingTimeConstant=.4; src.connect(ana);
+    tdata=new Float32Array(ana.fftSize);
+  }catch(e){ $('prepState').textContent='Micro refusé — la vidéo sera muette et sans niveau sonore.'; }
+  const v=$('vid');
+  if(v.videoWidth){ const r=v.videoHeight/v.videoWidth;
+    cv.width=Math.min(1280,v.videoWidth); cv.height=Math.round(cv.width*r); }
+  WA=mkW('audio','Niveau sonore'); WM=mkW('mouvement','Mouvement');
+  learning=true; tLearn=performance.now(); tStart=tLearn; bg=null; mHits=0; cHits=0;
+  $('prep').className='act'; $('prep').textContent='Caméra active';
+  $('phase').textContent='apprentissage';
+  $('prepState').innerHTML='Apprentissage du bruit du lieu — <b>ne bouge pas</b> pendant ce temps.';
+  render(); measure();
+};
+
+/* ── mesures : audio + mouvement ── */
+let bg=null;
+const mc=document.createElement('canvas'); mc.width=64; mc.height=48;
+const mg=mc.getContext('2d',{willReadFrequently:true});
+function largestBlob(mask,W,H){
+  const seen=new Uint8Array(mask.length); let best={size:0,minx:0,maxx:0,miny:0,maxy:0}; const st=[];
+  for(let s=0;s<mask.length;s++){
+    if(!mask[s]||seen[s]) continue;
+    let size=0,minx=W,maxx=0,miny=H,maxy=0; st.length=0; st.push(s); seen[s]=1;
+    while(st.length){ const p=st.pop(),x=p%W,y=(p/W)|0; size++;
+      if(x<minx)minx=x; if(x>maxx)maxx=x; if(y<miny)miny=y; if(y>maxy)maxy=y;
+      if(x>0&&mask[p-1]&&!seen[p-1]){seen[p-1]=1;st.push(p-1);}
+      if(x<W-1&&mask[p+1]&&!seen[p+1]){seen[p+1]=1;st.push(p+1);}
+      if(y>0&&mask[p-W]&&!seen[p-W]){seen[p-W]=1;st.push(p-W);}
+      if(y<H-1&&mask[p+W]&&!seen[p+W]){seen[p+W]=1;st.push(p+W);} }
+    if(size>best.size) best={size,minx,maxx,miny,maxy}; }
+  return best;
+}
+function shuffled(a){ const b=a.slice(); for(let i=b.length-1;i>0;i--){const j=(Math.random()*(i+1))|0;const t=b[i];b[i]=b[j];b[j]=t;} return b; }
+let level=-100;
+function measure(){
+  if(!vstream) return;
+  const now=performance.now();
+  // audio
+  if(ana){ ana.getFloatTimeDomainData(tdata);
+    let s=0; for(let i=0;i<tdata.length;i++) s+=tdata[i]*tdata[i];
+    level=20*Math.log10(Math.sqrt(s/tdata.length)+1e-9); }
+  // mouvement
+  const v=$('vid'); let frac=0;
+  if(v.videoWidth){
+    mg.drawImage(v,0,0,64,48);
+    const im=mg.getImageData(0,0,64,48).data, px=64*48, cur=new Float32Array(px);
+    for(let i=0,j=0;i<im.length;i+=4,j++) cur[j]=im[i]*.299+im[i+1]*.587+im[i+2]*.114;
+    if(!bg) bg=cur.slice();
+    const mask=new Uint8Array(px);
+    for(let j=0;j<px;j++){ if(Math.abs(cur[j]-bg[j])>26) mask[j]=1; bg[j]+=.02*(cur[j]-bg[j]); }
+    const b=largestBlob(mask,64,48); frac=b.size/px*100;
+    const cf=largestBlob(shuffled(mask),64,48).size/px*100;
+    if(frac>=4.5){ if(!mOn){mHits++;mOn=true;} box=b; lastPresence=now; } else { mOn=false; box=null; }
+    if(cf>=4.5){ if(!cOn){cHits++;cOn=true;} } else cOn=false;
+  }
+  // moteur
+  if(learning){
+    feed(WA,level,true); feed(WM,frac,true);
+    if(now-tLearn>=LEARN_MS){
+      const a=seal(WA), m=seal(WM);
+      learning=false; tReady=now;
+      $('phase').textContent='prêt';
+      $('prepState').innerHTML = (a||m)
+        ? 'Prêt à tourner. Seuils appris — l\'appareil ne parlera que si une mesure dépasse tout ce qu\'il a vu de normal.'
+        : 'Pas assez de mesures — relance la préparation.';
+      $('recBtn').disabled=!(a||m);
+    }
+  } else {
+    const fa=WA.ready&&feed(WA,level,false), fm=WM.ready&&feed(WM,frac,false);
+    const gap=Math.max(3600000/(+$('rare').value), 20000);
+    if((fa||fm) && (now-tReady)>20000 && (now-lastEmit)>=gap && MOTS.length){
+      lastEmit=now; emitWord(fa?WA:WM, now);
+    }
+  }
+  const src=WA.ready?WA:WM;
+  $('live').innerHTML = learning
+    ? 'Apprentissage — reste <b>'+Math.ceil((LEARN_MS-(now-tLearn))/1000)+' s</b>. Niveau '+level.toFixed(0)+' dBFS, mouvement '+frac.toFixed(1)+' %.'
+    : 'Niveau <b>'+level.toFixed(0)+'</b> dBFS · mouvement <b>'+frac.toFixed(1)+'</b> % · seuils auto : son '
+      +WA.thr.toFixed(1)+' σ, image '+WM.thr.toFixed(1)+' σ (relevés '+(WA.raises+WM.raises)+'×) · présence '
+      +mHits+'× vs témoin de bruit '+cHits+'×';
+  setTimeout(measure,100);
+}
+
+function emitWord(w,now){
+  let tot=0; for(const m of MOTS) tot+=m.poids;
+  const basis=w.v.toFixed(3)+'|'+w.code;
+  let idx=0;
+  for(let s=0;s<=6;s++){
+    let x=hash01(basis+(s?('#'+s):''))*tot, i2=MOTS.length-1;
+    for(let i=0;i<MOTS.length;i++){ x-=MOTS[i].poids; if(x<=0){ i2=i; break; } }
+    idx=i2; if(recentIdx.indexOf(idx)<0) break;
+  }
+  recentIdx.push(idx); if(recentIdx.length>5) recentIdx.shift();
+  const m=MOTS[idx];
+  lastWord=m.mot; lastWordT=now;
+  addJ(now,'mot',m.mot+' · '+w.label+' '+w.z.toFixed(1)+' σ (seuil '+w.thr.toFixed(1)+')');
+  if(navigator.vibrate) navigator.vibrate(80);
+}
+function addJ(now,type,detail){
+  journal.unshift({t_ms:Math.round(now-tStart), heure:hhmm(new Date()), type, detail});
+  renderJ();
+}
+function renderJ(){
+  $('jCount').textContent=journal.length? '· '+journal.length : '';
+  if(!journal.length){ $('jTbl').innerHTML='<p class="empty">Rien pour l\'instant.</p>'; return; }
+  $('jTbl').innerHTML='<table><thead><tr><th>t</th><th>heure</th><th>type</th><th>détail</th></tr></thead><tbody>'+
+    journal.slice(0,40).map(r=>'<tr><td>'+fmt(r.t_ms/1000)+'</td><td>'+r.heure+'</td><td>'+esc(r.type)+
+    '</td><td class="w">'+esc(r.detail)+'</td></tr>').join('')+'</tbody></table>';
+}
+$('clrJ').onclick=()=>{ journal=[]; renderJ(); };
+$('expJ').onclick=()=>{
+  const b=new Blob([JSON.stringify({lieu:$('lieu').value||'—',date:new Date().toISOString(),
+    seuil_son:+WA.thr.toFixed(2),seuil_image:+WM.thr.toFixed(2),
+    presence:mHits,temoin_bruit:cHits,evenements:[...journal].reverse()},null,1)],{type:'application/json'});
+  const u=URL.createObjectURL(b),a=document.createElement('a');
+  a.href=u;a.download='tournage-'+stamp()+'.json';a.click();setTimeout(()=>URL.revokeObjectURL(u),4000);
+};
+
+/* ═══════ rendu de l'image composée (c'est ELLE qui est enregistrée) ═══════ */
+function render(){
+  if(!vstream) return;
+  const v=$('vid'), W=cv.width, H=cv.height, now=performance.now();
+  if(v.videoWidth) g.drawImage(v,0,0,W,H); else { g.fillStyle='#000'; g.fillRect(0,0,W,H); }
+  const S=W/960;                                  // échelle des incrustations
+  g.textBaseline='top';
+  // bandeau haut : lieu + heure
+  g.fillStyle='rgba(10,15,18,.55)'; g.fillRect(0,0,W,34*S);
+  g.fillStyle='#CFC6B4'; g.font=(15*S|0)+'px monospace';
+  g.fillText(($('lieu').value||'—').slice(0,34), 10*S, 9*S);
+  const d=new Date(), th=hhmm(d)+'  '+String(d.getDate()).padStart(2,'0')+'/'+String(d.getMonth()+1).padStart(2,'0');
+  g.textAlign='right'; g.fillText(th, W-10*S, 9*S); g.textAlign='left';
+  // témoin d'enregistrement + chrono
+  if(recording){
+    g.fillStyle='#E2574C'; g.beginPath(); g.arc(14*S,50*S,6*S,0,7); g.fill();
+    g.font=(15*S|0)+'px monospace'; g.fillText(fmt((now-recStart)/1000), 26*S, 43*S);
+  }
+  // VU-mètre (niveau sonore)
+  const lw=140*S, lx=10*S, ly=H-26*S;
+  const lv=Math.max(0,Math.min(1,(level+70)/60));
+  g.fillStyle='rgba(10,15,18,.55)'; g.fillRect(lx-4*S,ly-6*S,lw+8*S,20*S);
+  g.fillStyle='#2C383F'; g.fillRect(lx,ly,lw,7*S);
+  g.fillStyle= lv>.85? '#E2574C' : '#5FD3A6'; g.fillRect(lx,ly,lw*lv,7*S);
+  g.fillStyle='#78868E'; g.font=(11*S|0)+'px monospace'; g.fillText(level.toFixed(0)+' dBFS', lx, ly+10*S);
+  // présence : cadre autour de ce qui bouge (factuel, jamais de silhouette inventée)
+  if(box){
+    const sx=W/64, sy=H/48;
+    g.strokeStyle='#5FD3A6'; g.lineWidth=2*S;
+    g.strokeRect(box.minx*sx, box.miny*sy, (box.maxx-box.minx+1)*sx, (box.maxy-box.miny+1)*sy);
+    g.fillStyle='#5FD3A6'; g.font=(13*S|0)+'px monospace';
+    g.fillText('MOUVEMENT', box.minx*sx, Math.max(0,box.miny*sy-16*S));
+  }
+  // compteur présence vs témoin, en bas à droite
+  g.textAlign='right'; g.fillStyle='#78868E'; g.font=(11*S|0)+'px monospace';
+  g.fillText('mouvement '+mHits+'  ·  témoin bruit '+cHits, W-10*S, H-20*S);
+  g.textAlign='left';
+  // mot émis : gros, au centre, quelques secondes
+  if(lastWord && now-lastWordT<9000){
+    const a=Math.min(1,(9000-(now-lastWordT))/1500);
+    g.globalAlpha=a;
+    g.fillStyle='rgba(10,15,18,.6)'; g.fillRect(0,H*.40,W,H*.20);
+    g.fillStyle='#E9B44C'; g.textAlign='center';
+    g.font='600 '+(52*S|0)+'px "Barlow Condensed",sans-serif';
+    g.fillText(lastWord.toUpperCase(), W/2, H*.44);
+    g.fillStyle='#CFC6B4'; g.font=(13*S|0)+'px monospace';
+    g.fillText('mot émis par le capteur', W/2, H*.44+58*S);
+    g.textAlign='left'; g.globalAlpha=1;
+  }
+  requestAnimationFrame(render);
+}
+
+/* ═══════ enregistrement de l'image composée + micro ═══════ */
+let rec=null, chunks=[], recording=false, recStart=0, recMime='';
+function pickMime(){
+  const c=['video/mp4;codecs=avc1','video/mp4','video/webm;codecs=vp9,opus','video/webm;codecs=vp8,opus','video/webm'];
+  for(const m of c) if(window.MediaRecorder&&MediaRecorder.isTypeSupported&&MediaRecorder.isTypeSupported(m)) return m;
+  return '';
+}
+$('recBtn').onclick=()=>{
+  if(recording){ try{ rec.stop(); }catch(e){} return; }
+  if(!vstream) return;
+  let cs; try{ cs=cv.captureStream(30); }
+  catch(e){ $('live').textContent='Ce navigateur ne sait pas enregistrer l\'image composée.'; return; }
+  const tracks=[...cs.getVideoTracks()];
+  if(micStream) tracks.push(...micStream.getAudioTracks());
+  recMime=pickMime(); chunks=[];
+  try{ rec=new MediaRecorder(new MediaStream(tracks), recMime?{mimeType:recMime}:undefined); }
+  catch(e){ $('live').textContent='Enregistrement indisponible sur ce navigateur.'; return; }
+  rec.ondataavailable=e=>{ if(e.data&&e.data.size) chunks.push(e.data); };
+  rec.onstop=onStop;
+  rec.start(1000); recording=true; recStart=performance.now();
+  $('recBtn').textContent='■ Arrêter'; $('recBtn').classList.add('on');
+  $('phase').textContent='tournage';
+  addJ(recStart,'départ','enregistrement lancé');
+};
+async function onStop(){
+  recording=false;
+  $('recBtn').textContent='● Enregistrer'; $('recBtn').classList.remove('on');
+  $('phase').textContent='prêt';
+  const dur=(performance.now()-recStart)/1000;
+  const type=(rec&&rec.mimeType)||recMime||'video/webm';
+  const blob=new Blob(chunks,{type});
+  const ext=type.indexOf('mp4')>=0?'mp4':'webm';
+  let thumb=''; try{ const c=document.createElement('canvas'); c.width=156; c.height=Math.round(156*cv.height/cv.width);
+    c.getContext('2d').drawImage(cv,0,0,c.width,c.height); thumb=c.toDataURL('image/jpeg',.5); }catch(e){}
+  const clip={ id:Date.now(), nom:'tournage-'+stamp()+'.'+ext, mime:type, taille:blob.size,
+    duree:Math.round(dur), vignette:thumb, cam:($('lieu').value||'tournage'), blob,
+    source:'realisateur', journal:[...journal].reverse() };
+  try{ await dbPut(clip); addJ(performance.now(),'fin','vidéo sauvegardée ('+mo(blob.size)+')'); }
+  catch(e){ addJ(performance.now(),'fin','sauvegarde impossible — téléchargement direct');
+    const u=URL.createObjectURL(blob),a=document.createElement('a'); a.href=u;a.download=clip.nom;a.click();
+    setTimeout(()=>URL.revokeObjectURL(u),6000); }
+}
+/* même bibliothèque que Vision */
+const DBN='ghostbox-vision', ST='clips';
+function db(){ return new Promise((res,rej)=>{ const r=indexedDB.open(DBN,1);
+  r.onupgradeneeded=()=>{ if(!r.result.objectStoreNames.contains(ST)) r.result.createObjectStore(ST,{keyPath:'id'}); };
+  r.onsuccess=()=>res(r.result); r.onerror=()=>rej(r.error); }); }
+async function dbPut(o){ const d=await db(); return new Promise((res,rej)=>{
+  const t=d.transaction(ST,'readwrite'); t.objectStore(ST).put(o);
+  t.oncomplete=()=>res(); t.onerror=()=>rej(t.error); }); }
+
+renderJ();
+})();
+</script>
+</body>
+</html>

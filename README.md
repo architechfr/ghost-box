@@ -13,6 +13,7 @@ Tout fonctionne côté navigateur. Aucune donnée ne quitte l'appareil, aucune d
 | Chemin | Rôle |
 |---|---|
 | `index.html` | Accueil + diagnostic des capteurs de l'appareil |
+| `realisateur/` | Réalisateur : mode tournage en déplacement — l'image composée (vidéo + incrustations lieu, heure, chrono, VU-mètre, cadre de présence, mots émis) est enregistrée avec le micro dans un seul fichier, journal exportable |
 | `vision/` | Vision : tous les objectifs de l'appareil avec bascule instantanée, aperçu direct, enregistrement vidéo + son du micro, détection de mouvement encadrée avec témoin de bruit, bibliothèque des enregistrements (lecture, export, suppression) stockée sur l'appareil |
 | `enregistreur/` | Écoute : micro sans traitement, spectrogramme, marqueurs, détection de pics, relecture (boucle, rognage, filtres), export WAV |
 | `banc/` | Banc d'essai : capteurs en direct, moteur capteur → mot à seuil auto-calibré, coïncidence multi-capteurs, forme caméra avec témoin visuel, enregistrement audio de la box radio, mode témoin à l'aveugle, trace exportable |

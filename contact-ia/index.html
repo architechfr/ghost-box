@@ -51,6 +51,10 @@ th{font-family:var(--legend);text-transform:uppercase;letter-spacing:.12em;font-
   text-align:left;font-weight:600;padding:0 6px 6px 0;border-bottom:1px solid var(--line)}
 td{padding:8px 6px 8px 0;border-bottom:1px solid var(--hair);font-family:var(--mono);font-size:12px;vertical-align:top}
 #camView{display:none;width:100%;max-width:360px;margin:12px auto 0;border:1px solid var(--line);border-radius:4px;background:#000}
+.keyb{margin-top:12px;padding:10px 12px;border-radius:3px;border:1px solid var(--line);
+  font-family:var(--mono);font-size:12.5px;line-height:1.5}
+.keyb.no{border-color:var(--flag);color:var(--flag);background:#1E1211}
+.keyb.ok{border-color:var(--signal);color:var(--signal);background:#0F1D18}
 a.back{display:inline-block;margin-top:26px;color:var(--dim);font-size:13px;text-decoration:none}
 video{display:none}
 </style>
@@ -58,7 +62,7 @@ video{display:none}
 <body>
 <div class="wrap">
 
-<h1>Contact via IA <span class="wip">en développement · v2</span></h1>
+<h1>Contact via IA <span class="wip">en développement · v3</span></h1>
 <p class="sub">Deux expériences pour « entendre » ou « voir » au-delà des mesures brutes du banc. À traiter comme des <b>pistes à vérifier</b>, jamais comme des preuves : l'IA fabrique des mots à partir du bruit et des silhouettes à partir de reflets. La transcription <b>envoie l'audio au serveur Mistral</b> ; la silhouette tourne entièrement sur l'appareil.</p>
 
 <div class="step">
@@ -69,9 +73,13 @@ video{display:none}
     <button id="recDl" disabled>Télécharger WAV</button>
   </div>
   <p id="recState" class="ex">Micro requis. L'audio reste sur l'appareil tant que tu ne lances pas la transcription.</p>
-  <div class="warn">Pour la transcription seulement, l'audio est envoyé au serveur Mistral — la promesse « rien ne quitte l'appareil » ne s'applique pas ici. La clé API reste en mémoire, n'est jamais enregistrée.</div>
-  <div class="fld"><span class="lg">clé API</span><input type="password" id="trKey" placeholder="clé Mistral — reste en mémoire"></div>
-  <div class="row"><button id="trSave">Valider la clé</button></div>
+  <div class="warn">Pour la transcription seulement, l'audio est envoyé au serveur Mistral — la promesse « rien ne quitte l'appareil » ne s'applique pas ici. La clé est <b>retenue sur cet appareil</b> pour ne pas la retaper : elle n'est envoyée qu'à Mistral, jamais publiée dans le code. Tu peux l'effacer à tout moment.</div>
+  <div id="keyBanner" class="keyb no">● Aucune clé enregistrée.</div>
+  <div class="fld"><span class="lg">clé API</span><input type="password" id="trKey" placeholder="colle ta clé Mistral"></div>
+  <div class="row">
+    <button id="trSave">Valider et retenir</button>
+    <button id="trForget">Oublier la clé</button>
+  </div>
   <p id="keyState" class="ex"></p>
   <div class="row"><button id="trGo">Transcrire l'enregistrement</button></div>
   <div id="trOut" class="note"></div>
@@ -163,12 +171,54 @@ function encodeWav(samples,rate){
 }
 
 /* ═══════ transcription Voxtral ═══════ */
+/* la clé est retenue sur l'appareil : plus besoin de la retaper après une mise à jour */
+const LSK='ghostbox-mistral-key', LSV='ghostbox-mistral-key-verifiee';
 let savedKey='';
-$('trSave').onclick=()=>{
+const mask = k => k.length>6? k.slice(0,3)+'…'+k.slice(-2) : '…';
+function paintKey(k){
+  const b=$('keyBanner');
+  if(!k){ b.className='keyb no'; b.textContent='● Aucune clé enregistrée — la transcription ne peut pas fonctionner.';
+    $('trForget').disabled=true; return; }
+  let v=''; try{ v=localStorage.getItem(LSV)||''; }catch(e){}
+  b.className='keyb ok';
+  b.innerHTML='● Clé retenue sur cet appareil ('+esc(mask(k))+')'
+    + (v? ' · vérifiée le '+esc(v) : ' · pas encore vérifiée auprès de Mistral');
+  $('trForget').disabled=false;
+}
+(function loadKey(){
+  try{ savedKey=localStorage.getItem(LSK)||''; }catch(e){ savedKey=''; }
+  if(savedKey) $('trKey').value=savedKey;
+  paintKey(savedKey);
+})();
+$('trSave').onclick=async ()=>{
   const k=$('trKey').value.trim();
   if(!k){ $('keyState').innerHTML='<span class="tm">Colle d\'abord ta clé Mistral dans le champ.</span>'; return; }
   savedKey=k;
-  $('keyState').innerHTML='Clé enregistrée en mémoire ✓ ('+esc(k.slice(0,3))+'…'+esc(k.slice(-2))+'). Enregistre un son, puis « Transcrire ».';
+  let stored=true;
+  try{ localStorage.setItem(LSK,k); }catch(e){ stored=false; }
+  paintKey(k);
+  if(!stored){ $('keyState').textContent='Impossible de retenir la clé sur cet appareil (navigation privée ?) — elle reste valable le temps de la séance.'; return; }
+  $('keyState').textContent='Vérification auprès de Mistral…'; $('trSave').disabled=true;
+  try{
+    const r=await fetch('https://api.mistral.ai/v1/models',{headers:{'Authorization':'Bearer '+k}});
+    if(r.ok){
+      const d=new Date().toLocaleDateString('fr-FR');
+      try{ localStorage.setItem(LSV,d); }catch(e){}
+      paintKey(k); $('keyState').innerHTML='Clé <b>valide</b> et retenue. Elle sera encore là au prochain lancement.';
+    } else if(r.status===401 || r.status===403){
+      try{ localStorage.removeItem(LSV); }catch(e){} paintKey(k);
+      $('keyState').innerHTML='<span class="tm">Clé refusée par Mistral ('+r.status+') — vérifie que tu l\'as copiée en entier.</span>';
+    } else {
+      $('keyState').textContent='Clé retenue. Réponse inattendue ('+r.status+') — elle sera testée à la première transcription.';
+    }
+  }catch(e){
+    $('keyState').textContent='Clé retenue sur cet appareil. La vérification directe est bloquée par le navigateur — elle sera testée à la première transcription.';
+  }
+  $('trSave').disabled=false;
+};
+$('trForget').onclick=()=>{
+  try{ localStorage.removeItem(LSK); localStorage.removeItem(LSV); }catch(e){}
+  savedKey=''; $('trKey').value=''; paintKey(''); $('keyState').textContent='Clé effacée de cet appareil.';
 };
 $('trGo').onclick=async ()=>{
   const key=($('trKey').value.trim()||savedKey), b=wavBlob||recBlob;
@@ -181,6 +231,9 @@ $('trGo').onclick=async ()=>{
   try{
     const r=await fetch('https://api.mistral.ai/v1/audio/transcriptions',{ method:'POST', headers:{'x-api-key':key}, body:fd });
     if(!r.ok){ const t=await r.text().catch(()=> ''); throw new Error('HTTP '+r.status+' '+t.slice(0,180)); }
+    // une transcription réussie prouve la clé : on le note pour de bon
+    try{ localStorage.setItem(LSV,new Date().toLocaleDateString('fr-FR')); }catch(e){}
+    paintKey(key);
     renderTranscript(await r.json());
   }catch(e){
     $('trOut').innerHTML='<span class="tm">Échec : '+esc(String(e.message||e))+'.</span><br>'+
