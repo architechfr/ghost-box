@@ -1,0 +1,26 @@
+# Séances et exports — ne jamais publier sur un dépôt public
+*.wav
+*.mp3
+exports/
+seances/
+emissions-*.csv
+emissions-*.json
+journal-*.txt
+seance-*.wav
+repere-*.wav
+
+# Secrets
+.env
+.env.*
+*.key
+
+# Python
+__pycache__/
+*.pyc
+.venv/
+
+# Systèmes
+.DS_Store
+Thumbs.db
+desktop.ini
+~$*

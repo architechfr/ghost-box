@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#0A0F12">
+<title>Ghost Box — poste de terrain</title>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600&family=IBM+Plex+Mono:wght@400&family=IBM+Plex+Sans:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root{--night:#0A0F12;--panel:#1D262B;--sunk:#0A0F12;--line:#2C383F;--hair:#212B31;
+  --signal:#5FD3A6;--gold:#E9B44C;--flag:#E2574C;--paper:#CFC6B4;--dim:#78868E;--text:#DDE6EA;
+  --legend:"Barlow Condensed","Arial Narrow",sans-serif;--body:"IBM Plex Sans",system-ui,sans-serif;
+  --mono:"IBM Plex Mono",ui-monospace,monospace}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;background:var(--night);color:var(--text);font-family:var(--body);-webkit-font-smoothing:antialiased}
+body{padding:env(safe-area-inset-top) 0 calc(env(safe-area-inset-bottom) + 30px)}
+.wrap{max-width:600px;margin:0 auto;padding:0 16px}
+.lg{font-family:var(--legend);text-transform:uppercase;letter-spacing:.18em;font-size:11px;color:var(--dim);font-weight:600}
+h1{font-family:var(--legend);text-transform:uppercase;letter-spacing:.22em;font-size:20px;font-weight:600;margin:26px 0 4px}
+p{font-size:14px;line-height:1.6;color:var(--dim)}
+a.card{display:block;text-decoration:none;color:inherit;background:var(--panel);border:1px solid var(--line);
+  border-left:2px solid var(--signal);border-radius:3px;padding:16px;margin-top:10px}
+a.card:active{transform:translateY(1px)}
+a.card.g{border-left-color:var(--gold)}
+a.card h2{font-family:var(--legend);text-transform:uppercase;letter-spacing:.14em;font-size:16px;margin:0 0 5px;font-weight:600}
+a.card p{margin:0;font-size:13.5px}
+.arrow{float:right;color:var(--dim);font-family:var(--mono)}
+hr{border:0;border-top:1px solid var(--hair);margin:26px 0}
+table{width:100%;border-collapse:collapse;font-size:13px;margin-top:8px}
+td{padding:8px 6px 8px 0;border-bottom:1px solid var(--hair)}
+td.k{font-family:var(--legend);text-transform:uppercase;letter-spacing:.1em;font-size:11px;color:var(--dim);width:42%}
+td.v{font-family:var(--mono);font-size:12.5px}
+.ok{color:var(--signal)}.no{color:var(--flag)}.warn{color:var(--gold)}
+.note{border-left:2px solid var(--gold);background:#1A1710;padding:12px 14px;font-size:13.5px;
+  line-height:1.6;color:#E4D3AE;margin-top:14px}
+code{font-family:var(--mono);font-size:12px;color:var(--paper)}
+footer{margin-top:30px;font-size:12px;color:#4E5C64}
+footer a{color:var(--dim)}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<div class="lg" style="margin-top:22px">architechfr / ghost-box</div>
+<h1>Poste de terrain</h1>
+<p>Deux outils de séance. Tout tourne sur l'appareil, rien n'est envoyé nulle part.</p>
+
+<a class="card" href="enregistreur/">
+  <h2>Enregistreur <span class="arrow">→</span></h2>
+  <p>Micro sans traitement, spectrogramme, marqueurs, détection de pics. Relecture avec boucle, rognage, filtres réglables. Export WAV.</p>
+</a>
+
+<a class="card g" href="banc/">
+  <h2>Banc d'essai <span class="arrow">→</span></h2>
+  <p>16 capteurs sondés en direct, moteur capteur → mot sur 567 mots français, mode témoin à l'aveugle, trace exportable.</p>
+</a>
+
+<hr>
+<div class="lg">cet appareil</div>
+<table id="diag"><tbody></tbody></table>
+
+<div class="note" id="ctx"></div>
+
+<hr>
+<div class="lg">à savoir</div>
+<p>Un dispositif capteur → mot fabrique les mots : le vocabulaire vient de la table, la grammaire des gabarits, le sens de la personne qui lit. Le capteur ne fournit qu'un nombre. C'est pour ça que chaque émission conserve sa valeur brute et son index, et que le banc propose un mode témoin. Détail dans <code>docs/capteurs-et-lexique.md</code>.</p>
+
+<footer>
+  <a href="https://github.com/architechfr/ghost-box">Code source</a> · MIT
+</footer>
+</div>
+
+<script>
+(() => {
+const T = [
+  ['Protocole', location.protocol==='https:'||location.hostname==='localhost'
+    ? ['https — capteurs autorisés','ok'] : ['http — micro et capteurs bloqués','no']],
+  ['Micro / caméra', navigator.mediaDevices&&navigator.mediaDevices.getUserMedia?['disponible','ok']:['absent','no']],
+  ['Mouvement', typeof DeviceMotionEvent!=='undefined'
+    ? (DeviceMotionEvent.requestPermission?['autorisation à demander','warn']:['disponible','ok'])
+    : ['absent','no']],
+  ['Magnétomètre', 'Magnetometer' in window ? ['disponible','ok'] : ['absent de ce navigateur','no']],
+  ['Lumière ambiante', 'AmbientLightSensor' in window ? ['disponible','ok'] : ['absente','no']],
+  ['Batterie', navigator.getBattery?['disponible','ok']:['absente','no']],
+  ['Réseau', navigator.connection?['disponible','ok']:['absent','no']],
+  ['Synthèse vocale', window.speechSynthesis?['disponible','ok']:['absente','no']],
+];
+document.querySelector('#diag tbody').innerHTML =
+  T.map(([k,[v,c]])=>`<tr><td class="k">${k}</td><td class="v ${c}">${v}</td></tr>`).join('');
+
+const ios = /iPad|iPhone|iPod/.test(navigator.userAgent) ||
+  (navigator.platform==='MacIntel' && navigator.maxTouchPoints>1);
+document.getElementById('ctx').innerHTML = ios
+  ? "Appareil Apple détecté. Safari n'expose pas la Generic Sensor API : le magnétomètre, la lumière ambiante, la batterie et le réseau resteront indisponibles. Le micro, la caméra, le mouvement et le cap boussole fonctionnent normalement."
+  : ('Magnetometer' in window)
+    ? "Magnétomètre accessible. C'est cet appareil qu'il faut utiliser pour tout ce qui touche au champ magnétique."
+    : "Ni magnétomètre ni Generic Sensor API sur ce navigateur. Essaie Chrome sur Android pour la partie capteurs.";
+})();
+</script>
+</body>
+</html>

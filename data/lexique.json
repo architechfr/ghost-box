@@ -1,0 +1,4025 @@
+{
+ "mots": [
+  {
+   "idx": 0,
+   "mot": "homme",
+   "pos": "NOM",
+   "categorie": "personne",
+   "poids": 2
+  },
+  {
+   "idx": 1,
+   "mot": "femme",
+   "pos": "NOM",
+   "categorie": "personne",
+   "poids": 2
+  },
+  {
+   "idx": 2,
+   "mot": "enfant",
+   "pos": "NOM",
+   "categorie": "personne",
+   "poids": 1
+  },
+  {
+   "idx": 3,
+   "mot": "fille",
+   "pos": "NOM",
+   "categorie": "personne",
+   "poids": 2
+  },
+  {
+   "idx": 4,
+   "mot": "garçon",
+   "pos": "NOM",
+   "categorie": "personne",
+   "poids": 1
+  },
+  {
+   "idx": 5,
+   "mot": "bébé",
+   "pos": "NOM",
+   "categorie": "personne",
+   "poids": 2
+  },
+  {
+   "idx": 6,
+   "mot": "vieillard",
+   "pos": "NOM",
+   "categorie": "personne",
+   "poids": 1
+  },
+  {
+   "idx": 7,
+   "mot": "dame",
+   "pos": "NOM",
+   "categorie": "personne",
+   "poids": 2
+  },
+  {
+   "idx": 8,
+   "mot": "monsieur",
+   "pos": "NOM",
+   "categorie": "personne",
+   "poids": 1
+  },
+  {
+   "idx": 9,
+   "mot": "madame",
+   "pos": "NOM",
+   "categorie": "personne",
+   "poids": 1
+  },
+  {
+   "idx": 10,
+   "mot": "mère",
+   "pos": "NOM",
+   "categorie": "personne",
+   "poids": 2
+  },
+  {
+   "idx": 11,
+   "mot": "père",
+   "pos": "NOM",
+   "categorie": "personne",
+   "poids": 2
+  },
+  {
+   "idx": 12,
+   "mot": "frère",
+   "pos": "NOM",
+   "categorie": "personne",
+   "poids": 2
+  },
+  {
+   "idx": 13,
+   "mot": "sœur",
+   "pos": "NOM",
+   "categorie": "personne",
+   "poids": 2
+  },
+  {
+   "idx": 14,
+   "mot": "fils",
+   "pos": "NOM",
+   "categorie": "personne",
+   "poids": 2
+  },
+  {
+   "idx": 15,
+   "mot": "grand-mère",
+   "pos": "NOM",
+   "categorie": "personne",
+   "poids": 1
+  },
+  {
+   "idx": 16,
+   "mot": "grand-père",
+   "pos": "NOM",
+   "categorie": "personne",
+   "poids": 1
+  },
+  {
+   "idx": 17,
+   "mot": "famille",
+   "pos": "NOM",
+   "categorie": "personne",
+   "poids": 1
+  },
+  {
+   "idx": 18,
+   "mot": "ami",
+   "pos": "NOM",
+   "categorie": "personne",
+   "poids": 2
+  },
+  {
+   "idx": 19,
+   "mot": "amie",
+   "pos": "NOM",
+   "categorie": "personne",
+   "poids": 2
+  },
+  {
+   "idx": 20,
+   "mot": "ennemi",
+   "pos": "NOM",
+   "categorie": "personne",
+   "poids": 1
+  },
+  {
+   "idx": 21,
+   "mot": "voisin",
+   "pos": "NOM",
+   "categorie": "personne",
+   "poids": 1
+  },
+  {
+   "idx": 22,
+   "mot": "étranger",
+   "pos": "NOM",
+   "categorie": "personne",
+   "poids": 1
+  },
+  {
+   "idx": 23,
+   "mot": "soldat",
+   "pos": "NOM",
+   "categorie": "personne",
+   "poids": 1
+  },
+  {
+   "idx": 24,
+   "mot": "prêtre",
+   "pos": "NOM",
+   "categorie": "personne",
+   "poids": 1
+  },
+  {
+   "idx": 25,
+   "mot": "curé",
+   "pos": "NOM",
+   "categorie": "personne",
+   "poids": 2
+  },
+  {
+   "idx": 26,
+   "mot": "docteur",
+   "pos": "NOM",
+   "categorie": "personne",
+   "poids": 1
+  },
+  {
+   "idx": 27,
+   "mot": "infirmière",
+   "pos": "NOM",
+   "categorie": "personne",
+   "poids": 1
+  },
+  {
+   "idx": 28,
+   "mot": "maître",
+   "pos": "NOM",
+   "categorie": "personne",
+   "poids": 1
+  },
+  {
+   "idx": 29,
+   "mot": "maîtresse",
+   "pos": "NOM",
+   "categorie": "personne",
+   "poids": 1
+  },
+  {
+   "idx": 30,
+   "mot": "patron",
+   "pos": "NOM",
+   "categorie": "personne",
+   "poids": 1
+  },
+  {
+   "idx": 31,
+   "mot": "ouvrier",
+   "pos": "NOM",
+   "categorie": "personne",
+   "poids": 1
+  },
+  {
+   "idx": 32,
+   "mot": "fermier",
+   "pos": "NOM",
+   "categorie": "personne",
+   "poids": 1
+  },
+  {
+   "idx": 33,
+   "mot": "marin",
+   "pos": "NOM",
+   "categorie": "personne",
+   "poids": 2
+  },
+  {
+   "idx": 34,
+   "mot": "gardien",
+   "pos": "NOM",
+   "categorie": "personne",
+   "poids": 1
+  },
+  {
+   "idx": 35,
+   "mot": "servante",
+   "pos": "NOM",
+   "categorie": "personne",
+   "poids": 1
+  },
+  {
+   "idx": 36,
+   "mot": "nourrice",
+   "pos": "NOM",
+   "categorie": "personne",
+   "poids": 1
+  },
+  {
+   "idx": 37,
+   "mot": "veuve",
+   "pos": "NOM",
+   "categorie": "personne",
+   "poids": 2
+  },
+  {
+   "idx": 38,
+   "mot": "orphelin",
+   "pos": "NOM",
+   "categorie": "personne",
+   "poids": 1
+  },
+  {
+   "idx": 39,
+   "mot": "invité",
+   "pos": "NOM",
+   "categorie": "personne",
+   "poids": 1
+  },
+  {
+   "idx": 40,
+   "mot": "inconnu",
+   "pos": "NOM",
+   "categorie": "personne",
+   "poids": 1
+  },
+  {
+   "idx": 41,
+   "mot": "témoin",
+   "pos": "NOM",
+   "categorie": "personne",
+   "poids": 1
+  },
+  {
+   "idx": 42,
+   "mot": "Marie",
+   "pos": "PRENOM",
+   "categorie": "prenom",
+   "poids": 2
+  },
+  {
+   "idx": 43,
+   "mot": "Jean",
+   "pos": "PRENOM",
+   "categorie": "prenom",
+   "poids": 2
+  },
+  {
+   "idx": 44,
+   "mot": "Pierre",
+   "pos": "PRENOM",
+   "categorie": "prenom",
+   "poids": 1
+  },
+  {
+   "idx": 45,
+   "mot": "Louis",
+   "pos": "PRENOM",
+   "categorie": "prenom",
+   "poids": 2
+  },
+  {
+   "idx": 46,
+   "mot": "Anne",
+   "pos": "PRENOM",
+   "categorie": "prenom",
+   "poids": 2
+  },
+  {
+   "idx": 47,
+   "mot": "Jeanne",
+   "pos": "PRENOM",
+   "categorie": "prenom",
+   "poids": 1
+  },
+  {
+   "idx": 48,
+   "mot": "Henri",
+   "pos": "PRENOM",
+   "categorie": "prenom",
+   "poids": 2
+  },
+  {
+   "idx": 49,
+   "mot": "Paul",
+   "pos": "PRENOM",
+   "categorie": "prenom",
+   "poids": 2
+  },
+  {
+   "idx": 50,
+   "mot": "Claude",
+   "pos": "PRENOM",
+   "categorie": "prenom",
+   "poids": 1
+  },
+  {
+   "idx": 51,
+   "mot": "Marguerite",
+   "pos": "PRENOM",
+   "categorie": "prenom",
+   "poids": 1
+  },
+  {
+   "idx": 52,
+   "mot": "Antoine",
+   "pos": "PRENOM",
+   "categorie": "prenom",
+   "poids": 1
+  },
+  {
+   "idx": 53,
+   "mot": "Thérèse",
+   "pos": "PRENOM",
+   "categorie": "prenom",
+   "poids": 1
+  },
+  {
+   "idx": 54,
+   "mot": "Émile",
+   "pos": "PRENOM",
+   "categorie": "prenom",
+   "poids": 2
+  },
+  {
+   "idx": 55,
+   "mot": "Suzanne",
+   "pos": "PRENOM",
+   "categorie": "prenom",
+   "poids": 1
+  },
+  {
+   "idx": 56,
+   "mot": "Georges",
+   "pos": "PRENOM",
+   "categorie": "prenom",
+   "poids": 1
+  },
+  {
+   "idx": 57,
+   "mot": "Madeleine",
+   "pos": "PRENOM",
+   "categorie": "prenom",
+   "poids": 1
+  },
+  {
+   "idx": 58,
+   "mot": "Joseph",
+   "pos": "PRENOM",
+   "categorie": "prenom",
+   "poids": 1
+  },
+  {
+   "idx": 59,
+   "mot": "Lucie",
+   "pos": "PRENOM",
+   "categorie": "prenom",
+   "poids": 2
+  },
+  {
+   "idx": 60,
+   "mot": "François",
+   "pos": "PRENOM",
+   "categorie": "prenom",
+   "poids": 1
+  },
+  {
+   "idx": 61,
+   "mot": "Camille",
+   "pos": "PRENOM",
+   "categorie": "prenom",
+   "poids": 1
+  },
+  {
+   "idx": 62,
+   "mot": "Robert",
+   "pos": "PRENOM",
+   "categorie": "prenom",
+   "poids": 1
+  },
+  {
+   "idx": 63,
+   "mot": "Yvonne",
+   "pos": "PRENOM",
+   "categorie": "prenom",
+   "poids": 1
+  },
+  {
+   "idx": 64,
+   "mot": "Albert",
+   "pos": "PRENOM",
+   "categorie": "prenom",
+   "poids": 1
+  },
+  {
+   "idx": 65,
+   "mot": "Germaine",
+   "pos": "PRENOM",
+   "categorie": "prenom",
+   "poids": 1
+  },
+  {
+   "idx": 66,
+   "mot": "Maurice",
+   "pos": "PRENOM",
+   "categorie": "prenom",
+   "poids": 1
+  },
+  {
+   "idx": 67,
+   "mot": "Simone",
+   "pos": "PRENOM",
+   "categorie": "prenom",
+   "poids": 1
+  },
+  {
+   "idx": 68,
+   "mot": "André",
+   "pos": "PRENOM",
+   "categorie": "prenom",
+   "poids": 2
+  },
+  {
+   "idx": 69,
+   "mot": "Berthe",
+   "pos": "PRENOM",
+   "categorie": "prenom",
+   "poids": 1
+  },
+  {
+   "idx": 70,
+   "mot": "Charles",
+   "pos": "PRENOM",
+   "categorie": "prenom",
+   "poids": 1
+  },
+  {
+   "idx": 71,
+   "mot": "Hélène",
+   "pos": "PRENOM",
+   "categorie": "prenom",
+   "poids": 1
+  },
+  {
+   "idx": 72,
+   "mot": "Michel",
+   "pos": "PRENOM",
+   "categorie": "prenom",
+   "poids": 1
+  },
+  {
+   "idx": 73,
+   "mot": "Denise",
+   "pos": "PRENOM",
+   "categorie": "prenom",
+   "poids": 1
+  },
+  {
+   "idx": 74,
+   "mot": "Raymond",
+   "pos": "PRENOM",
+   "categorie": "prenom",
+   "poids": 1
+  },
+  {
+   "idx": 75,
+   "mot": "Odette",
+   "pos": "PRENOM",
+   "categorie": "prenom",
+   "poids": 1
+  },
+  {
+   "idx": 76,
+   "mot": "Roger",
+   "pos": "PRENOM",
+   "categorie": "prenom",
+   "poids": 2
+  },
+  {
+   "idx": 77,
+   "mot": "Renée",
+   "pos": "PRENOM",
+   "categorie": "prenom",
+   "poids": 2
+  },
+  {
+   "idx": 78,
+   "mot": "Gustave",
+   "pos": "PRENOM",
+   "categorie": "prenom",
+   "poids": 1
+  },
+  {
+   "idx": 79,
+   "mot": "Adèle",
+   "pos": "PRENOM",
+   "categorie": "prenom",
+   "poids": 2
+  },
+  {
+   "idx": 80,
+   "mot": "Léon",
+   "pos": "PRENOM",
+   "categorie": "prenom",
+   "poids": 2
+  },
+  {
+   "idx": 81,
+   "mot": "Victorine",
+   "pos": "PRENOM",
+   "categorie": "prenom",
+   "poids": 1
+  },
+  {
+   "idx": 82,
+   "mot": "je",
+   "pos": "PRON",
+   "categorie": "pronom",
+   "poids": 3
+  },
+  {
+   "idx": 83,
+   "mot": "tu",
+   "pos": "PRON",
+   "categorie": "pronom",
+   "poids": 3
+  },
+  {
+   "idx": 84,
+   "mot": "il",
+   "pos": "PRON",
+   "categorie": "pronom",
+   "poids": 3
+  },
+  {
+   "idx": 85,
+   "mot": "elle",
+   "pos": "PRON",
+   "categorie": "pronom",
+   "poids": 3
+  },
+  {
+   "idx": 86,
+   "mot": "nous",
+   "pos": "PRON",
+   "categorie": "pronom",
+   "poids": 3
+  },
+  {
+   "idx": 87,
+   "mot": "vous",
+   "pos": "PRON",
+   "categorie": "pronom",
+   "poids": 3
+  },
+  {
+   "idx": 88,
+   "mot": "ils",
+   "pos": "PRON",
+   "categorie": "pronom",
+   "poids": 3
+  },
+  {
+   "idx": 89,
+   "mot": "elles",
+   "pos": "PRON",
+   "categorie": "pronom",
+   "poids": 3
+  },
+  {
+   "idx": 90,
+   "mot": "on",
+   "pos": "PRON",
+   "categorie": "pronom",
+   "poids": 3
+  },
+  {
+   "idx": 91,
+   "mot": "moi",
+   "pos": "PRON",
+   "categorie": "pronom",
+   "poids": 3
+  },
+  {
+   "idx": 92,
+   "mot": "toi",
+   "pos": "PRON",
+   "categorie": "pronom",
+   "poids": 3
+  },
+  {
+   "idx": 93,
+   "mot": "lui",
+   "pos": "PRON",
+   "categorie": "pronom",
+   "poids": 3
+  },
+  {
+   "idx": 94,
+   "mot": "eux",
+   "pos": "PRON",
+   "categorie": "pronom",
+   "poids": 3
+  },
+  {
+   "idx": 95,
+   "mot": "quelqu'un",
+   "pos": "PRON",
+   "categorie": "pronom",
+   "poids": 3
+  },
+  {
+   "idx": 96,
+   "mot": "personne",
+   "pos": "PRON",
+   "categorie": "pronom",
+   "poids": 3
+  },
+  {
+   "idx": 97,
+   "mot": "être",
+   "pos": "VERBE",
+   "categorie": "verbe",
+   "poids": 2
+  },
+  {
+   "idx": 98,
+   "mot": "avoir",
+   "pos": "VERBE",
+   "categorie": "verbe",
+   "poids": 2
+  },
+  {
+   "idx": 99,
+   "mot": "aller",
+   "pos": "VERBE",
+   "categorie": "verbe",
+   "poids": 2
+  },
+  {
+   "idx": 100,
+   "mot": "venir",
+   "pos": "VERBE",
+   "categorie": "verbe",
+   "poids": 2
+  },
+  {
+   "idx": 101,
+   "mot": "partir",
+   "pos": "VERBE",
+   "categorie": "verbe",
+   "poids": 1
+  },
+  {
+   "idx": 102,
+   "mot": "rester",
+   "pos": "VERBE",
+   "categorie": "verbe",
+   "poids": 1
+  },
+  {
+   "idx": 103,
+   "mot": "attendre",
+   "pos": "VERBE",
+   "categorie": "verbe",
+   "poids": 1
+  },
+  {
+   "idx": 104,
+   "mot": "chercher",
+   "pos": "VERBE",
+   "categorie": "verbe",
+   "poids": 1
+  },
+  {
+   "idx": 105,
+   "mot": "trouver",
+   "pos": "VERBE",
+   "categorie": "verbe",
+   "poids": 1
+  },
+  {
+   "idx": 106,
+   "mot": "perdre",
+   "pos": "VERBE",
+   "categorie": "verbe",
+   "poids": 1
+  },
+  {
+   "idx": 107,
+   "mot": "voir",
+   "pos": "VERBE",
+   "categorie": "verbe",
+   "poids": 2
+  },
+  {
+   "idx": 108,
+   "mot": "regarder",
+   "pos": "VERBE",
+   "categorie": "verbe",
+   "poids": 1
+  },
+  {
+   "idx": 109,
+   "mot": "entendre",
+   "pos": "VERBE",
+   "categorie": "verbe",
+   "poids": 1
+  },
+  {
+   "idx": 110,
+   "mot": "écouter",
+   "pos": "VERBE",
+   "categorie": "verbe",
+   "poids": 1
+  },
+  {
+   "idx": 111,
+   "mot": "parler",
+   "pos": "VERBE",
+   "categorie": "verbe",
+   "poids": 1
+  },
+  {
+   "idx": 112,
+   "mot": "dire",
+   "pos": "VERBE",
+   "categorie": "verbe",
+   "poids": 2
+  },
+  {
+   "idx": 113,
+   "mot": "appeler",
+   "pos": "VERBE",
+   "categorie": "verbe",
+   "poids": 1
+  },
+  {
+   "idx": 114,
+   "mot": "crier",
+   "pos": "VERBE",
+   "categorie": "verbe",
+   "poids": 2
+  },
+  {
+   "idx": 115,
+   "mot": "chuchoter",
+   "pos": "VERBE",
+   "categorie": "verbe",
+   "poids": 1
+  },
+  {
+   "idx": 116,
+   "mot": "pleurer",
+   "pos": "VERBE",
+   "categorie": "verbe",
+   "poids": 1
+  },
+  {
+   "idx": 117,
+   "mot": "rire",
+   "pos": "VERBE",
+   "categorie": "verbe",
+   "poids": 2
+  },
+  {
+   "idx": 118,
+   "mot": "chanter",
+   "pos": "VERBE",
+   "categorie": "verbe",
+   "poids": 1
+  },
+  {
+   "idx": 119,
+   "mot": "dormir",
+   "pos": "VERBE",
+   "categorie": "verbe",
+   "poids": 1
+  },
+  {
+   "idx": 120,
+   "mot": "rêver",
+   "pos": "VERBE",
+   "categorie": "verbe",
+   "poids": 2
+  },
+  {
+   "idx": 121,
+   "mot": "réveiller",
+   "pos": "VERBE",
+   "categorie": "verbe",
+   "poids": 1
+  },
+  {
+   "idx": 122,
+   "mot": "mourir",
+   "pos": "VERBE",
+   "categorie": "verbe",
+   "poids": 1
+  },
+  {
+   "idx": 123,
+   "mot": "vivre",
+   "pos": "VERBE",
+   "categorie": "verbe",
+   "poids": 2
+  },
+  {
+   "idx": 124,
+   "mot": "naître",
+   "pos": "VERBE",
+   "categorie": "verbe",
+   "poids": 1
+  },
+  {
+   "idx": 125,
+   "mot": "tuer",
+   "pos": "VERBE",
+   "categorie": "verbe",
+   "poids": 2
+  },
+  {
+   "idx": 126,
+   "mot": "blesser",
+   "pos": "VERBE",
+   "categorie": "verbe",
+   "poids": 1
+  },
+  {
+   "idx": 127,
+   "mot": "aider",
+   "pos": "VERBE",
+   "categorie": "verbe",
+   "poids": 2
+  },
+  {
+   "idx": 128,
+   "mot": "sauver",
+   "pos": "VERBE",
+   "categorie": "verbe",
+   "poids": 1
+  },
+  {
+   "idx": 129,
+   "mot": "protéger",
+   "pos": "VERBE",
+   "categorie": "verbe",
+   "poids": 1
+  },
+  {
+   "idx": 130,
+   "mot": "cacher",
+   "pos": "VERBE",
+   "categorie": "verbe",
+   "poids": 1
+  },
+  {
+   "idx": 131,
+   "mot": "ouvrir",
+   "pos": "VERBE",
+   "categorie": "verbe",
+   "poids": 1
+  },
+  {
+   "idx": 132,
+   "mot": "fermer",
+   "pos": "VERBE",
+   "categorie": "verbe",
+   "poids": 1
+  },
+  {
+   "idx": 133,
+   "mot": "entrer",
+   "pos": "VERBE",
+   "categorie": "verbe",
+   "poids": 1
+  },
+  {
+   "idx": 134,
+   "mot": "sortir",
+   "pos": "VERBE",
+   "categorie": "verbe",
+   "poids": 1
+  },
+  {
+   "idx": 135,
+   "mot": "monter",
+   "pos": "VERBE",
+   "categorie": "verbe",
+   "poids": 1
+  },
+  {
+   "idx": 136,
+   "mot": "descendre",
+   "pos": "VERBE",
+   "categorie": "verbe",
+   "poids": 1
+  },
+  {
+   "idx": 137,
+   "mot": "passer",
+   "pos": "VERBE",
+   "categorie": "verbe",
+   "poids": 1
+  },
+  {
+   "idx": 138,
+   "mot": "traverser",
+   "pos": "VERBE",
+   "categorie": "verbe",
+   "poids": 1
+  },
+  {
+   "idx": 139,
+   "mot": "toucher",
+   "pos": "VERBE",
+   "categorie": "verbe",
+   "poids": 1
+  },
+  {
+   "idx": 140,
+   "mot": "prendre",
+   "pos": "VERBE",
+   "categorie": "verbe",
+   "poids": 1
+  },
+  {
+   "idx": 141,
+   "mot": "tenir",
+   "pos": "VERBE",
+   "categorie": "verbe",
+   "poids": 2
+  },
+  {
+   "idx": 142,
+   "mot": "laisser",
+   "pos": "VERBE",
+   "categorie": "verbe",
+   "poids": 1
+  },
+  {
+   "idx": 143,
+   "mot": "donner",
+   "pos": "VERBE",
+   "categorie": "verbe",
+   "poids": 1
+  },
+  {
+   "idx": 144,
+   "mot": "rendre",
+   "pos": "VERBE",
+   "categorie": "verbe",
+   "poids": 1
+  },
+  {
+   "idx": 145,
+   "mot": "oublier",
+   "pos": "VERBE",
+   "categorie": "verbe",
+   "poids": 1
+  },
+  {
+   "idx": 146,
+   "mot": "rappeler",
+   "pos": "VERBE",
+   "categorie": "verbe",
+   "poids": 1
+  },
+  {
+   "idx": 147,
+   "mot": "savoir",
+   "pos": "VERBE",
+   "categorie": "verbe",
+   "poids": 1
+  },
+  {
+   "idx": 148,
+   "mot": "connaître",
+   "pos": "VERBE",
+   "categorie": "verbe",
+   "poids": 1
+  },
+  {
+   "idx": 149,
+   "mot": "comprendre",
+   "pos": "VERBE",
+   "categorie": "verbe",
+   "poids": 1
+  },
+  {
+   "idx": 150,
+   "mot": "croire",
+   "pos": "VERBE",
+   "categorie": "verbe",
+   "poids": 1
+  },
+  {
+   "idx": 151,
+   "mot": "penser",
+   "pos": "VERBE",
+   "categorie": "verbe",
+   "poids": 1
+  },
+  {
+   "idx": 152,
+   "mot": "vouloir",
+   "pos": "VERBE",
+   "categorie": "verbe",
+   "poids": 1
+  },
+  {
+   "idx": 153,
+   "mot": "pouvoir",
+   "pos": "VERBE",
+   "categorie": "verbe",
+   "poids": 1
+  },
+  {
+   "idx": 154,
+   "mot": "devoir",
+   "pos": "VERBE",
+   "categorie": "verbe",
+   "poids": 1
+  },
+  {
+   "idx": 155,
+   "mot": "falloir",
+   "pos": "VERBE",
+   "categorie": "verbe",
+   "poids": 1
+  },
+  {
+   "idx": 156,
+   "mot": "aimer",
+   "pos": "VERBE",
+   "categorie": "verbe",
+   "poids": 2
+  },
+  {
+   "idx": 157,
+   "mot": "détester",
+   "pos": "VERBE",
+   "categorie": "verbe",
+   "poids": 1
+  },
+  {
+   "idx": 158,
+   "mot": "craindre",
+   "pos": "VERBE",
+   "categorie": "verbe",
+   "poids": 1
+  },
+  {
+   "idx": 159,
+   "mot": "brûler",
+   "pos": "VERBE",
+   "categorie": "verbe",
+   "poids": 1
+  },
+  {
+   "idx": 160,
+   "mot": "geler",
+   "pos": "VERBE",
+   "categorie": "verbe",
+   "poids": 2
+  },
+  {
+   "idx": 161,
+   "mot": "tomber",
+   "pos": "VERBE",
+   "categorie": "verbe",
+   "poids": 1
+  },
+  {
+   "idx": 162,
+   "mot": "courir",
+   "pos": "VERBE",
+   "categorie": "verbe",
+   "poids": 1
+  },
+  {
+   "idx": 163,
+   "mot": "marcher",
+   "pos": "VERBE",
+   "categorie": "verbe",
+   "poids": 1
+  },
+  {
+   "idx": 164,
+   "mot": "fuir",
+   "pos": "VERBE",
+   "categorie": "verbe",
+   "poids": 2
+  },
+  {
+   "idx": 165,
+   "mot": "arrêter",
+   "pos": "VERBE",
+   "categorie": "verbe",
+   "poids": 1
+  },
+  {
+   "idx": 166,
+   "mot": "continuer",
+   "pos": "VERBE",
+   "categorie": "verbe",
+   "poids": 1
+  },
+  {
+   "idx": 167,
+   "mot": "revenir",
+   "pos": "VERBE",
+   "categorie": "verbe",
+   "poids": 1
+  },
+  {
+   "idx": 168,
+   "mot": "prier",
+   "pos": "VERBE",
+   "categorie": "verbe",
+   "poids": 2
+  },
+  {
+   "idx": 169,
+   "mot": "mentir",
+   "pos": "VERBE",
+   "categorie": "verbe",
+   "poids": 1
+  },
+  {
+   "idx": 170,
+   "mot": "promettre",
+   "pos": "VERBE",
+   "categorie": "verbe",
+   "poids": 1
+  },
+  {
+   "idx": 171,
+   "mot": "jurer",
+   "pos": "VERBE",
+   "categorie": "verbe",
+   "poids": 2
+  },
+  {
+   "idx": 172,
+   "mot": "pardonner",
+   "pos": "VERBE",
+   "categorie": "verbe",
+   "poids": 1
+  },
+  {
+   "idx": 173,
+   "mot": "frapper",
+   "pos": "VERBE",
+   "categorie": "verbe",
+   "poids": 1
+  },
+  {
+   "idx": 174,
+   "mot": "casser",
+   "pos": "VERBE",
+   "categorie": "verbe",
+   "poids": 1
+  },
+  {
+   "idx": 175,
+   "mot": "creuser",
+   "pos": "VERBE",
+   "categorie": "verbe",
+   "poids": 1
+  },
+  {
+   "idx": 176,
+   "mot": "enterrer",
+   "pos": "VERBE",
+   "categorie": "verbe",
+   "poids": 1
+  },
+  {
+   "idx": 177,
+   "mot": "noyer",
+   "pos": "VERBE",
+   "categorie": "verbe",
+   "poids": 2
+  },
+  {
+   "idx": 178,
+   "mot": "étouffer",
+   "pos": "VERBE",
+   "categorie": "verbe",
+   "poids": 1
+  },
+  {
+   "idx": 179,
+   "mot": "suivre",
+   "pos": "VERBE",
+   "categorie": "verbe",
+   "poids": 1
+  },
+  {
+   "idx": 180,
+   "mot": "attraper",
+   "pos": "VERBE",
+   "categorie": "verbe",
+   "poids": 1
+  },
+  {
+   "idx": 181,
+   "mot": "est",
+   "pos": "VERBE3",
+   "categorie": "verbe_conj",
+   "poids": 2
+  },
+  {
+   "idx": 182,
+   "mot": "était",
+   "pos": "VERBE3",
+   "categorie": "verbe_conj",
+   "poids": 2
+  },
+  {
+   "idx": 183,
+   "mot": "sera",
+   "pos": "VERBE3",
+   "categorie": "verbe_conj",
+   "poids": 2
+  },
+  {
+   "idx": 184,
+   "mot": "a",
+   "pos": "VERBE3",
+   "categorie": "verbe_conj",
+   "poids": 2
+  },
+  {
+   "idx": 185,
+   "mot": "avait",
+   "pos": "VERBE3",
+   "categorie": "verbe_conj",
+   "poids": 2
+  },
+  {
+   "idx": 186,
+   "mot": "vient",
+   "pos": "VERBE3",
+   "categorie": "verbe_conj",
+   "poids": 2
+  },
+  {
+   "idx": 187,
+   "mot": "venait",
+   "pos": "VERBE3",
+   "categorie": "verbe_conj",
+   "poids": 1
+  },
+  {
+   "idx": 188,
+   "mot": "part",
+   "pos": "VERBE3",
+   "categorie": "verbe_conj",
+   "poids": 2
+  },
+  {
+   "idx": 189,
+   "mot": "reste",
+   "pos": "VERBE3",
+   "categorie": "verbe_conj",
+   "poids": 2
+  },
+  {
+   "idx": 190,
+   "mot": "attend",
+   "pos": "VERBE3",
+   "categorie": "verbe_conj",
+   "poids": 1
+  },
+  {
+   "idx": 191,
+   "mot": "cherche",
+   "pos": "VERBE3",
+   "categorie": "verbe_conj",
+   "poids": 1
+  },
+  {
+   "idx": 192,
+   "mot": "voit",
+   "pos": "VERBE3",
+   "categorie": "verbe_conj",
+   "poids": 2
+  },
+  {
+   "idx": 193,
+   "mot": "entend",
+   "pos": "VERBE3",
+   "categorie": "verbe_conj",
+   "poids": 1
+  },
+  {
+   "idx": 194,
+   "mot": "parle",
+   "pos": "VERBE3",
+   "categorie": "verbe_conj",
+   "poids": 2
+  },
+  {
+   "idx": 195,
+   "mot": "dit",
+   "pos": "VERBE3",
+   "categorie": "verbe_conj",
+   "poids": 2
+  },
+  {
+   "idx": 196,
+   "mot": "appelle",
+   "pos": "VERBE3",
+   "categorie": "verbe_conj",
+   "poids": 1
+  },
+  {
+   "idx": 197,
+   "mot": "crie",
+   "pos": "VERBE3",
+   "categorie": "verbe_conj",
+   "poids": 2
+  },
+  {
+   "idx": 198,
+   "mot": "pleure",
+   "pos": "VERBE3",
+   "categorie": "verbe_conj",
+   "poids": 1
+  },
+  {
+   "idx": 199,
+   "mot": "dort",
+   "pos": "VERBE3",
+   "categorie": "verbe_conj",
+   "poids": 2
+  },
+  {
+   "idx": 200,
+   "mot": "meurt",
+   "pos": "VERBE3",
+   "categorie": "verbe_conj",
+   "poids": 2
+  },
+  {
+   "idx": 201,
+   "mot": "vit",
+   "pos": "VERBE3",
+   "categorie": "verbe_conj",
+   "poids": 2
+  },
+  {
+   "idx": 202,
+   "mot": "aide",
+   "pos": "VERBE3",
+   "categorie": "verbe_conj",
+   "poids": 2
+  },
+  {
+   "idx": 203,
+   "mot": "cache",
+   "pos": "VERBE3",
+   "categorie": "verbe_conj",
+   "poids": 2
+  },
+  {
+   "idx": 204,
+   "mot": "ouvre",
+   "pos": "VERBE3",
+   "categorie": "verbe_conj",
+   "poids": 2
+  },
+  {
+   "idx": 205,
+   "mot": "ferme",
+   "pos": "VERBE3",
+   "categorie": "verbe_conj",
+   "poids": 2
+  },
+  {
+   "idx": 206,
+   "mot": "entre",
+   "pos": "VERBE3",
+   "categorie": "verbe_conj",
+   "poids": 2
+  },
+  {
+   "idx": 207,
+   "mot": "sort",
+   "pos": "VERBE3",
+   "categorie": "verbe_conj",
+   "poids": 2
+  },
+  {
+   "idx": 208,
+   "mot": "monte",
+   "pos": "VERBE3",
+   "categorie": "verbe_conj",
+   "poids": 2
+  },
+  {
+   "idx": 209,
+   "mot": "descend",
+   "pos": "VERBE3",
+   "categorie": "verbe_conj",
+   "poids": 1
+  },
+  {
+   "idx": 210,
+   "mot": "touche",
+   "pos": "VERBE3",
+   "categorie": "verbe_conj",
+   "poids": 1
+  },
+  {
+   "idx": 211,
+   "mot": "tient",
+   "pos": "VERBE3",
+   "categorie": "verbe_conj",
+   "poids": 2
+  },
+  {
+   "idx": 212,
+   "mot": "laisse",
+   "pos": "VERBE3",
+   "categorie": "verbe_conj",
+   "poids": 1
+  },
+  {
+   "idx": 213,
+   "mot": "oublie",
+   "pos": "VERBE3",
+   "categorie": "verbe_conj",
+   "poids": 1
+  },
+  {
+   "idx": 214,
+   "mot": "sait",
+   "pos": "VERBE3",
+   "categorie": "verbe_conj",
+   "poids": 2
+  },
+  {
+   "idx": 215,
+   "mot": "comprend",
+   "pos": "VERBE3",
+   "categorie": "verbe_conj",
+   "poids": 1
+  },
+  {
+   "idx": 216,
+   "mot": "veut",
+   "pos": "VERBE3",
+   "categorie": "verbe_conj",
+   "poids": 2
+  },
+  {
+   "idx": 217,
+   "mot": "peut",
+   "pos": "VERBE3",
+   "categorie": "verbe_conj",
+   "poids": 2
+  },
+  {
+   "idx": 218,
+   "mot": "doit",
+   "pos": "VERBE3",
+   "categorie": "verbe_conj",
+   "poids": 2
+  },
+  {
+   "idx": 219,
+   "mot": "aime",
+   "pos": "VERBE3",
+   "categorie": "verbe_conj",
+   "poids": 2
+  },
+  {
+   "idx": 220,
+   "mot": "brûle",
+   "pos": "VERBE3",
+   "categorie": "verbe_conj",
+   "poids": 2
+  },
+  {
+   "idx": 221,
+   "mot": "tombe",
+   "pos": "VERBE3",
+   "categorie": "verbe_conj",
+   "poids": 2
+  },
+  {
+   "idx": 222,
+   "mot": "court",
+   "pos": "VERBE3",
+   "categorie": "verbe_conj",
+   "poids": 2
+  },
+  {
+   "idx": 223,
+   "mot": "marche",
+   "pos": "VERBE3",
+   "categorie": "verbe_conj",
+   "poids": 1
+  },
+  {
+   "idx": 224,
+   "mot": "fuit",
+   "pos": "VERBE3",
+   "categorie": "verbe_conj",
+   "poids": 2
+  },
+  {
+   "idx": 225,
+   "mot": "arrête",
+   "pos": "VERBE3",
+   "categorie": "verbe_conj",
+   "poids": 1
+  },
+  {
+   "idx": 226,
+   "mot": "revient",
+   "pos": "VERBE3",
+   "categorie": "verbe_conj",
+   "poids": 1
+  },
+  {
+   "idx": 227,
+   "mot": "prie",
+   "pos": "VERBE3",
+   "categorie": "verbe_conj",
+   "poids": 2
+  },
+  {
+   "idx": 228,
+   "mot": "ment",
+   "pos": "VERBE3",
+   "categorie": "verbe_conj",
+   "poids": 2
+  },
+  {
+   "idx": 229,
+   "mot": "suit",
+   "pos": "VERBE3",
+   "categorie": "verbe_conj",
+   "poids": 2
+  },
+  {
+   "idx": 230,
+   "mot": "maison",
+   "pos": "LIEU",
+   "categorie": "lieu",
+   "poids": 1
+  },
+  {
+   "idx": 231,
+   "mot": "chambre",
+   "pos": "LIEU",
+   "categorie": "lieu",
+   "poids": 1
+  },
+  {
+   "idx": 232,
+   "mot": "cuisine",
+   "pos": "LIEU",
+   "categorie": "lieu",
+   "poids": 1
+  },
+  {
+   "idx": 233,
+   "mot": "salon",
+   "pos": "LIEU",
+   "categorie": "lieu",
+   "poids": 2
+  },
+  {
+   "idx": 234,
+   "mot": "cave",
+   "pos": "LIEU",
+   "categorie": "lieu",
+   "poids": 2
+  },
+  {
+   "idx": 235,
+   "mot": "grenier",
+   "pos": "LIEU",
+   "categorie": "lieu",
+   "poids": 1
+  },
+  {
+   "idx": 236,
+   "mot": "couloir",
+   "pos": "LIEU",
+   "categorie": "lieu",
+   "poids": 1
+  },
+  {
+   "idx": 237,
+   "mot": "escalier",
+   "pos": "LIEU",
+   "categorie": "lieu",
+   "poids": 1
+  },
+  {
+   "idx": 238,
+   "mot": "palier",
+   "pos": "LIEU",
+   "categorie": "lieu",
+   "poids": 1
+  },
+  {
+   "idx": 239,
+   "mot": "porte",
+   "pos": "LIEU",
+   "categorie": "lieu",
+   "poids": 2
+  },
+  {
+   "idx": 240,
+   "mot": "fenêtre",
+   "pos": "LIEU",
+   "categorie": "lieu",
+   "poids": 1
+  },
+  {
+   "idx": 241,
+   "mot": "mur",
+   "pos": "LIEU",
+   "categorie": "lieu",
+   "poids": 2
+  },
+  {
+   "idx": 242,
+   "mot": "sol",
+   "pos": "LIEU",
+   "categorie": "lieu",
+   "poids": 2
+  },
+  {
+   "idx": 243,
+   "mot": "plafond",
+   "pos": "LIEU",
+   "categorie": "lieu",
+   "poids": 1
+  },
+  {
+   "idx": 244,
+   "mot": "toit",
+   "pos": "LIEU",
+   "categorie": "lieu",
+   "poids": 2
+  },
+  {
+   "idx": 245,
+   "mot": "cheminée",
+   "pos": "LIEU",
+   "categorie": "lieu",
+   "poids": 1
+  },
+  {
+   "idx": 246,
+   "mot": "jardin",
+   "pos": "LIEU",
+   "categorie": "lieu",
+   "poids": 1
+  },
+  {
+   "idx": 247,
+   "mot": "cour",
+   "pos": "LIEU",
+   "categorie": "lieu",
+   "poids": 2
+  },
+  {
+   "idx": 248,
+   "mot": "bois",
+   "pos": "LIEU",
+   "categorie": "lieu",
+   "poids": 2
+  },
+  {
+   "idx": 249,
+   "mot": "forêt",
+   "pos": "LIEU",
+   "categorie": "lieu",
+   "poids": 2
+  },
+  {
+   "idx": 250,
+   "mot": "champ",
+   "pos": "LIEU",
+   "categorie": "lieu",
+   "poids": 2
+  },
+  {
+   "idx": 251,
+   "mot": "route",
+   "pos": "LIEU",
+   "categorie": "lieu",
+   "poids": 2
+  },
+  {
+   "idx": 252,
+   "mot": "chemin",
+   "pos": "LIEU",
+   "categorie": "lieu",
+   "poids": 1
+  },
+  {
+   "idx": 253,
+   "mot": "pont",
+   "pos": "LIEU",
+   "categorie": "lieu",
+   "poids": 2
+  },
+  {
+   "idx": 254,
+   "mot": "église",
+   "pos": "LIEU",
+   "categorie": "lieu",
+   "poids": 1
+  },
+  {
+   "idx": 255,
+   "mot": "chapelle",
+   "pos": "LIEU",
+   "categorie": "lieu",
+   "poids": 1
+  },
+  {
+   "idx": 256,
+   "mot": "cimetière",
+   "pos": "LIEU",
+   "categorie": "lieu",
+   "poids": 1
+  },
+  {
+   "idx": 257,
+   "mot": "caveau",
+   "pos": "LIEU",
+   "categorie": "lieu",
+   "poids": 1
+  },
+  {
+   "idx": 258,
+   "mot": "hôpital",
+   "pos": "LIEU",
+   "categorie": "lieu",
+   "poids": 1
+  },
+  {
+   "idx": 259,
+   "mot": "asile",
+   "pos": "LIEU",
+   "categorie": "lieu",
+   "poids": 2
+  },
+  {
+   "idx": 260,
+   "mot": "école",
+   "pos": "LIEU",
+   "categorie": "lieu",
+   "poids": 2
+  },
+  {
+   "idx": 261,
+   "mot": "usine",
+   "pos": "LIEU",
+   "categorie": "lieu",
+   "poids": 2
+  },
+  {
+   "idx": 262,
+   "mot": "grange",
+   "pos": "LIEU",
+   "categorie": "lieu",
+   "poids": 1
+  },
+  {
+   "idx": 263,
+   "mot": "puits",
+   "pos": "LIEU",
+   "categorie": "lieu",
+   "poids": 2
+  },
+  {
+   "idx": 264,
+   "mot": "fontaine",
+   "pos": "LIEU",
+   "categorie": "lieu",
+   "poids": 1
+  },
+  {
+   "idx": 265,
+   "mot": "rivière",
+   "pos": "LIEU",
+   "categorie": "lieu",
+   "poids": 1
+  },
+  {
+   "idx": 266,
+   "mot": "étang",
+   "pos": "LIEU",
+   "categorie": "lieu",
+   "poids": 2
+  },
+  {
+   "idx": 267,
+   "mot": "mer",
+   "pos": "LIEU",
+   "categorie": "lieu",
+   "poids": 2
+  },
+  {
+   "idx": 268,
+   "mot": "plage",
+   "pos": "LIEU",
+   "categorie": "lieu",
+   "poids": 2
+  },
+  {
+   "idx": 269,
+   "mot": "montagne",
+   "pos": "LIEU",
+   "categorie": "lieu",
+   "poids": 1
+  },
+  {
+   "idx": 270,
+   "mot": "ville",
+   "pos": "LIEU",
+   "categorie": "lieu",
+   "poids": 2
+  },
+  {
+   "idx": 271,
+   "mot": "village",
+   "pos": "LIEU",
+   "categorie": "lieu",
+   "poids": 1
+  },
+  {
+   "idx": 272,
+   "mot": "rue",
+   "pos": "LIEU",
+   "categorie": "lieu",
+   "poids": 2
+  },
+  {
+   "idx": 273,
+   "mot": "place",
+   "pos": "LIEU",
+   "categorie": "lieu",
+   "poids": 2
+  },
+  {
+   "idx": 274,
+   "mot": "gare",
+   "pos": "LIEU",
+   "categorie": "lieu",
+   "poids": 2
+  },
+  {
+   "idx": 275,
+   "mot": "tunnel",
+   "pos": "LIEU",
+   "categorie": "lieu",
+   "poids": 1
+  },
+  {
+   "idx": 276,
+   "mot": "mine",
+   "pos": "LIEU",
+   "categorie": "lieu",
+   "poids": 2
+  },
+  {
+   "idx": 277,
+   "mot": "prison",
+   "pos": "LIEU",
+   "categorie": "lieu",
+   "poids": 1
+  },
+  {
+   "idx": 278,
+   "mot": "caserne",
+   "pos": "LIEU",
+   "categorie": "lieu",
+   "poids": 1
+  },
+  {
+   "idx": 279,
+   "mot": "théâtre",
+   "pos": "LIEU",
+   "categorie": "lieu",
+   "poids": 1
+  },
+  {
+   "idx": 280,
+   "mot": "hôtel",
+   "pos": "LIEU",
+   "categorie": "lieu",
+   "poids": 2
+  },
+  {
+   "idx": 281,
+   "mot": "auberge",
+   "pos": "LIEU",
+   "categorie": "lieu",
+   "poids": 1
+  },
+  {
+   "idx": 282,
+   "mot": "boutique",
+   "pos": "LIEU",
+   "categorie": "lieu",
+   "poids": 1
+  },
+  {
+   "idx": 283,
+   "mot": "lumière",
+   "pos": "NOM",
+   "categorie": "objet",
+   "poids": 1
+  },
+  {
+   "idx": 284,
+   "mot": "lampe",
+   "pos": "NOM",
+   "categorie": "objet",
+   "poids": 2
+  },
+  {
+   "idx": 285,
+   "mot": "bougie",
+   "pos": "NOM",
+   "categorie": "objet",
+   "poids": 1
+  },
+  {
+   "idx": 286,
+   "mot": "ombre",
+   "pos": "NOM",
+   "categorie": "objet",
+   "poids": 2
+  },
+  {
+   "idx": 287,
+   "mot": "miroir",
+   "pos": "NOM",
+   "categorie": "objet",
+   "poids": 1
+  },
+  {
+   "idx": 288,
+   "mot": "horloge",
+   "pos": "NOM",
+   "categorie": "objet",
+   "poids": 1
+  },
+  {
+   "idx": 289,
+   "mot": "pendule",
+   "pos": "NOM",
+   "categorie": "objet",
+   "poids": 1
+  },
+  {
+   "idx": 290,
+   "mot": "clé",
+   "pos": "NOM",
+   "categorie": "objet",
+   "poids": 2
+  },
+  {
+   "idx": 291,
+   "mot": "serrure",
+   "pos": "NOM",
+   "categorie": "objet",
+   "poids": 1
+  },
+  {
+   "idx": 292,
+   "mot": "boîte",
+   "pos": "NOM",
+   "categorie": "objet",
+   "poids": 2
+  },
+  {
+   "idx": 293,
+   "mot": "coffre",
+   "pos": "NOM",
+   "categorie": "objet",
+   "poids": 1
+  },
+  {
+   "idx": 294,
+   "mot": "lettre",
+   "pos": "NOM",
+   "categorie": "objet",
+   "poids": 1
+  },
+  {
+   "idx": 295,
+   "mot": "papier",
+   "pos": "NOM",
+   "categorie": "objet",
+   "poids": 1
+  },
+  {
+   "idx": 296,
+   "mot": "photo",
+   "pos": "NOM",
+   "categorie": "objet",
+   "poids": 2
+  },
+  {
+   "idx": 297,
+   "mot": "livre",
+   "pos": "NOM",
+   "categorie": "objet",
+   "poids": 2
+  },
+  {
+   "idx": 298,
+   "mot": "cahier",
+   "pos": "NOM",
+   "categorie": "objet",
+   "poids": 1
+  },
+  {
+   "idx": 299,
+   "mot": "lit",
+   "pos": "NOM",
+   "categorie": "objet",
+   "poids": 2
+  },
+  {
+   "idx": 300,
+   "mot": "chaise",
+   "pos": "NOM",
+   "categorie": "objet",
+   "poids": 1
+  },
+  {
+   "idx": 301,
+   "mot": "table",
+   "pos": "NOM",
+   "categorie": "objet",
+   "poids": 2
+  },
+  {
+   "idx": 302,
+   "mot": "armoire",
+   "pos": "NOM",
+   "categorie": "objet",
+   "poids": 1
+  },
+  {
+   "idx": 303,
+   "mot": "tiroir",
+   "pos": "NOM",
+   "categorie": "objet",
+   "poids": 1
+  },
+  {
+   "idx": 304,
+   "mot": "couteau",
+   "pos": "NOM",
+   "categorie": "objet",
+   "poids": 1
+  },
+  {
+   "idx": 305,
+   "mot": "ciseaux",
+   "pos": "NOM",
+   "categorie": "objet",
+   "poids": 1
+  },
+  {
+   "idx": 306,
+   "mot": "corde",
+   "pos": "NOM",
+   "categorie": "objet",
+   "poids": 2
+  },
+  {
+   "idx": 307,
+   "mot": "chaîne",
+   "pos": "NOM",
+   "categorie": "objet",
+   "poids": 1
+  },
+  {
+   "idx": 308,
+   "mot": "clou",
+   "pos": "NOM",
+   "categorie": "objet",
+   "poids": 2
+  },
+  {
+   "idx": 309,
+   "mot": "marteau",
+   "pos": "NOM",
+   "categorie": "objet",
+   "poids": 1
+  },
+  {
+   "idx": 310,
+   "mot": "feu",
+   "pos": "NOM",
+   "categorie": "objet",
+   "poids": 2
+  },
+  {
+   "idx": 311,
+   "mot": "cendre",
+   "pos": "NOM",
+   "categorie": "objet",
+   "poids": 1
+  },
+  {
+   "idx": 312,
+   "mot": "eau",
+   "pos": "NOM",
+   "categorie": "objet",
+   "poids": 2
+  },
+  {
+   "idx": 313,
+   "mot": "sang",
+   "pos": "NOM",
+   "categorie": "objet",
+   "poids": 2
+  },
+  {
+   "idx": 314,
+   "mot": "terre",
+   "pos": "NOM",
+   "categorie": "objet",
+   "poids": 2
+  },
+  {
+   "idx": 315,
+   "mot": "pierre",
+   "pos": "NOM",
+   "categorie": "objet",
+   "poids": 1
+  },
+  {
+   "idx": 316,
+   "mot": "croix",
+   "pos": "NOM",
+   "categorie": "objet",
+   "poids": 2
+  },
+  {
+   "idx": 317,
+   "mot": "anneau",
+   "pos": "NOM",
+   "categorie": "objet",
+   "poids": 1
+  },
+  {
+   "idx": 318,
+   "mot": "bague",
+   "pos": "NOM",
+   "categorie": "objet",
+   "poids": 2
+  },
+  {
+   "idx": 319,
+   "mot": "collier",
+   "pos": "NOM",
+   "categorie": "objet",
+   "poids": 1
+  },
+  {
+   "idx": 320,
+   "mot": "robe",
+   "pos": "NOM",
+   "categorie": "objet",
+   "poids": 2
+  },
+  {
+   "idx": 321,
+   "mot": "manteau",
+   "pos": "NOM",
+   "categorie": "objet",
+   "poids": 1
+  },
+  {
+   "idx": 322,
+   "mot": "chapeau",
+   "pos": "NOM",
+   "categorie": "objet",
+   "poids": 1
+  },
+  {
+   "idx": 323,
+   "mot": "chaussure",
+   "pos": "NOM",
+   "categorie": "objet",
+   "poids": 1
+  },
+  {
+   "idx": 324,
+   "mot": "jouet",
+   "pos": "NOM",
+   "categorie": "objet",
+   "poids": 2
+  },
+  {
+   "idx": 325,
+   "mot": "poupée",
+   "pos": "NOM",
+   "categorie": "objet",
+   "poids": 1
+  },
+  {
+   "idx": 326,
+   "mot": "cheval",
+   "pos": "NOM",
+   "categorie": "objet",
+   "poids": 1
+  },
+  {
+   "idx": 327,
+   "mot": "chien",
+   "pos": "NOM",
+   "categorie": "objet",
+   "poids": 2
+  },
+  {
+   "idx": 328,
+   "mot": "chat",
+   "pos": "NOM",
+   "categorie": "objet",
+   "poids": 2
+  },
+  {
+   "idx": 329,
+   "mot": "oiseau",
+   "pos": "NOM",
+   "categorie": "objet",
+   "poids": 1
+  },
+  {
+   "idx": 330,
+   "mot": "cloche",
+   "pos": "NOM",
+   "categorie": "objet",
+   "poids": 1
+  },
+  {
+   "idx": 331,
+   "mot": "tableau",
+   "pos": "NOM",
+   "categorie": "objet",
+   "poids": 1
+  },
+  {
+   "idx": 332,
+   "mot": "fusil",
+   "pos": "NOM",
+   "categorie": "objet",
+   "poids": 2
+  },
+  {
+   "idx": 333,
+   "mot": "pistolet",
+   "pos": "NOM",
+   "categorie": "objet",
+   "poids": 1
+  },
+  {
+   "idx": 334,
+   "mot": "valise",
+   "pos": "NOM",
+   "categorie": "objet",
+   "poids": 1
+  },
+  {
+   "idx": 335,
+   "mot": "poupon",
+   "pos": "NOM",
+   "categorie": "objet",
+   "poids": 1
+  },
+  {
+   "idx": 336,
+   "mot": "berceau",
+   "pos": "NOM",
+   "categorie": "objet",
+   "poids": 1
+  },
+  {
+   "idx": 337,
+   "mot": "voile",
+   "pos": "NOM",
+   "categorie": "objet",
+   "poids": 2
+  },
+  {
+   "idx": 338,
+   "mot": "drap",
+   "pos": "NOM",
+   "categorie": "objet",
+   "poids": 2
+  },
+  {
+   "idx": 339,
+   "mot": "maintenant",
+   "pos": "TEMPS",
+   "categorie": "temps",
+   "poids": 1
+  },
+  {
+   "idx": 340,
+   "mot": "hier",
+   "pos": "TEMPS",
+   "categorie": "temps",
+   "poids": 2
+  },
+  {
+   "idx": 341,
+   "mot": "demain",
+   "pos": "TEMPS",
+   "categorie": "temps",
+   "poids": 1
+  },
+  {
+   "idx": 342,
+   "mot": "aujourd'hui",
+   "pos": "TEMPS",
+   "categorie": "temps",
+   "poids": 1
+  },
+  {
+   "idx": 343,
+   "mot": "toujours",
+   "pos": "TEMPS",
+   "categorie": "temps",
+   "poids": 1
+  },
+  {
+   "idx": 344,
+   "mot": "jamais",
+   "pos": "TEMPS",
+   "categorie": "temps",
+   "poids": 1
+  },
+  {
+   "idx": 345,
+   "mot": "encore",
+   "pos": "TEMPS",
+   "categorie": "temps",
+   "poids": 1
+  },
+  {
+   "idx": 346,
+   "mot": "bientôt",
+   "pos": "TEMPS",
+   "categorie": "temps",
+   "poids": 1
+  },
+  {
+   "idx": 347,
+   "mot": "tard",
+   "pos": "TEMPS",
+   "categorie": "temps",
+   "poids": 2
+  },
+  {
+   "idx": 348,
+   "mot": "tôt",
+   "pos": "TEMPS",
+   "categorie": "temps",
+   "poids": 2
+  },
+  {
+   "idx": 349,
+   "mot": "avant",
+   "pos": "TEMPS",
+   "categorie": "temps",
+   "poids": 2
+  },
+  {
+   "idx": 350,
+   "mot": "après",
+   "pos": "TEMPS",
+   "categorie": "temps",
+   "poids": 2
+  },
+  {
+   "idx": 351,
+   "mot": "pendant",
+   "pos": "TEMPS",
+   "categorie": "temps",
+   "poids": 1
+  },
+  {
+   "idx": 352,
+   "mot": "nuit",
+   "pos": "TEMPS",
+   "categorie": "temps",
+   "poids": 2
+  },
+  {
+   "idx": 353,
+   "mot": "jour",
+   "pos": "TEMPS",
+   "categorie": "temps",
+   "poids": 2
+  },
+  {
+   "idx": 354,
+   "mot": "matin",
+   "pos": "TEMPS",
+   "categorie": "temps",
+   "poids": 2
+  },
+  {
+   "idx": 355,
+   "mot": "midi",
+   "pos": "TEMPS",
+   "categorie": "temps",
+   "poids": 2
+  },
+  {
+   "idx": 356,
+   "mot": "soir",
+   "pos": "TEMPS",
+   "categorie": "temps",
+   "poids": 2
+  },
+  {
+   "idx": 357,
+   "mot": "minuit",
+   "pos": "TEMPS",
+   "categorie": "temps",
+   "poids": 1
+  },
+  {
+   "idx": 358,
+   "mot": "aube",
+   "pos": "TEMPS",
+   "categorie": "temps",
+   "poids": 2
+  },
+  {
+   "idx": 359,
+   "mot": "crépuscule",
+   "pos": "TEMPS",
+   "categorie": "temps",
+   "poids": 1
+  },
+  {
+   "idx": 360,
+   "mot": "hiver",
+   "pos": "TEMPS",
+   "categorie": "temps",
+   "poids": 2
+  },
+  {
+   "idx": 361,
+   "mot": "été",
+   "pos": "TEMPS",
+   "categorie": "temps",
+   "poids": 2
+  },
+  {
+   "idx": 362,
+   "mot": "printemps",
+   "pos": "TEMPS",
+   "categorie": "temps",
+   "poids": 1
+  },
+  {
+   "idx": 363,
+   "mot": "automne",
+   "pos": "TEMPS",
+   "categorie": "temps",
+   "poids": 1
+  },
+  {
+   "idx": 364,
+   "mot": "année",
+   "pos": "TEMPS",
+   "categorie": "temps",
+   "poids": 2
+  },
+  {
+   "idx": 365,
+   "mot": "mois",
+   "pos": "TEMPS",
+   "categorie": "temps",
+   "poids": 2
+  },
+  {
+   "idx": 366,
+   "mot": "semaine",
+   "pos": "TEMPS",
+   "categorie": "temps",
+   "poids": 1
+  },
+  {
+   "idx": 367,
+   "mot": "heure",
+   "pos": "TEMPS",
+   "categorie": "temps",
+   "poids": 2
+  },
+  {
+   "idx": 368,
+   "mot": "minute",
+   "pos": "TEMPS",
+   "categorie": "temps",
+   "poids": 1
+  },
+  {
+   "idx": 369,
+   "mot": "seconde",
+   "pos": "TEMPS",
+   "categorie": "temps",
+   "poids": 1
+  },
+  {
+   "idx": 370,
+   "mot": "longtemps",
+   "pos": "TEMPS",
+   "categorie": "temps",
+   "poids": 1
+  },
+  {
+   "idx": 371,
+   "mot": "autrefois",
+   "pos": "TEMPS",
+   "categorie": "temps",
+   "poids": 1
+  },
+  {
+   "idx": 372,
+   "mot": "souvent",
+   "pos": "TEMPS",
+   "categorie": "temps",
+   "poids": 1
+  },
+  {
+   "idx": 373,
+   "mot": "parfois",
+   "pos": "TEMPS",
+   "categorie": "temps",
+   "poids": 1
+  },
+  {
+   "idx": 374,
+   "mot": "enfin",
+   "pos": "TEMPS",
+   "categorie": "temps",
+   "poids": 2
+  },
+  {
+   "idx": 375,
+   "mot": "déjà",
+   "pos": "TEMPS",
+   "categorie": "temps",
+   "poids": 2
+  },
+  {
+   "idx": 376,
+   "mot": "froid",
+   "pos": "ADJ",
+   "categorie": "etat",
+   "poids": 2
+  },
+  {
+   "idx": 377,
+   "mot": "chaud",
+   "pos": "ADJ",
+   "categorie": "etat",
+   "poids": 2
+  },
+  {
+   "idx": 378,
+   "mot": "noir",
+   "pos": "ADJ",
+   "categorie": "etat",
+   "poids": 2
+  },
+  {
+   "idx": 379,
+   "mot": "blanc",
+   "pos": "ADJ",
+   "categorie": "etat",
+   "poids": 2
+  },
+  {
+   "idx": 380,
+   "mot": "rouge",
+   "pos": "ADJ",
+   "categorie": "etat",
+   "poids": 2
+  },
+  {
+   "idx": 381,
+   "mot": "bleu",
+   "pos": "ADJ",
+   "categorie": "etat",
+   "poids": 2
+  },
+  {
+   "idx": 382,
+   "mot": "vert",
+   "pos": "ADJ",
+   "categorie": "etat",
+   "poids": 2
+  },
+  {
+   "idx": 383,
+   "mot": "jaune",
+   "pos": "ADJ",
+   "categorie": "etat",
+   "poids": 2
+  },
+  {
+   "idx": 384,
+   "mot": "gris",
+   "pos": "ADJ",
+   "categorie": "etat",
+   "poids": 2
+  },
+  {
+   "idx": 385,
+   "mot": "seul",
+   "pos": "ADJ",
+   "categorie": "etat",
+   "poids": 2
+  },
+  {
+   "idx": 386,
+   "mot": "triste",
+   "pos": "ADJ",
+   "categorie": "etat",
+   "poids": 1
+  },
+  {
+   "idx": 387,
+   "mot": "heureux",
+   "pos": "ADJ",
+   "categorie": "etat",
+   "poids": 1
+  },
+  {
+   "idx": 388,
+   "mot": "fâché",
+   "pos": "ADJ",
+   "categorie": "etat",
+   "poids": 2
+  },
+  {
+   "idx": 389,
+   "mot": "fou",
+   "pos": "ADJ",
+   "categorie": "etat",
+   "poids": 2
+  },
+  {
+   "idx": 390,
+   "mot": "calme",
+   "pos": "ADJ",
+   "categorie": "etat",
+   "poids": 2
+  },
+  {
+   "idx": 391,
+   "mot": "perdu",
+   "pos": "ADJ",
+   "categorie": "etat",
+   "poids": 2
+  },
+  {
+   "idx": 392,
+   "mot": "fatigué",
+   "pos": "ADJ",
+   "categorie": "etat",
+   "poids": 1
+  },
+  {
+   "idx": 393,
+   "mot": "malade",
+   "pos": "ADJ",
+   "categorie": "etat",
+   "poids": 1
+  },
+  {
+   "idx": 394,
+   "mot": "mort",
+   "pos": "ADJ",
+   "categorie": "etat",
+   "poids": 2
+  },
+  {
+   "idx": 395,
+   "mot": "vivant",
+   "pos": "ADJ",
+   "categorie": "etat",
+   "poids": 1
+  },
+  {
+   "idx": 396,
+   "mot": "vide",
+   "pos": "ADJ",
+   "categorie": "etat",
+   "poids": 2
+  },
+  {
+   "idx": 397,
+   "mot": "plein",
+   "pos": "ADJ",
+   "categorie": "etat",
+   "poids": 2
+  },
+  {
+   "idx": 398,
+   "mot": "cassé",
+   "pos": "ADJ",
+   "categorie": "etat",
+   "poids": 2
+  },
+  {
+   "idx": 399,
+   "mot": "vieux",
+   "pos": "ADJ",
+   "categorie": "etat",
+   "poids": 2
+  },
+  {
+   "idx": 400,
+   "mot": "jeune",
+   "pos": "ADJ",
+   "categorie": "etat",
+   "poids": 2
+  },
+  {
+   "idx": 401,
+   "mot": "petit",
+   "pos": "ADJ",
+   "categorie": "etat",
+   "poids": 2
+  },
+  {
+   "idx": 402,
+   "mot": "grand",
+   "pos": "ADJ",
+   "categorie": "etat",
+   "poids": 2
+  },
+  {
+   "idx": 403,
+   "mot": "lourd",
+   "pos": "ADJ",
+   "categorie": "etat",
+   "poids": 2
+  },
+  {
+   "idx": 404,
+   "mot": "léger",
+   "pos": "ADJ",
+   "categorie": "etat",
+   "poids": 2
+  },
+  {
+   "idx": 405,
+   "mot": "sombre",
+   "pos": "ADJ",
+   "categorie": "etat",
+   "poids": 1
+  },
+  {
+   "idx": 406,
+   "mot": "clair",
+   "pos": "ADJ",
+   "categorie": "etat",
+   "poids": 2
+  },
+  {
+   "idx": 407,
+   "mot": "humide",
+   "pos": "ADJ",
+   "categorie": "etat",
+   "poids": 1
+  },
+  {
+   "idx": 408,
+   "mot": "sec",
+   "pos": "ADJ",
+   "categorie": "etat",
+   "poids": 2
+  },
+  {
+   "idx": 409,
+   "mot": "profond",
+   "pos": "ADJ",
+   "categorie": "etat",
+   "poids": 1
+  },
+  {
+   "idx": 410,
+   "mot": "haut",
+   "pos": "ADJ",
+   "categorie": "etat",
+   "poids": 2
+  },
+  {
+   "idx": 411,
+   "mot": "bas",
+   "pos": "ADJ",
+   "categorie": "etat",
+   "poids": 2
+  },
+  {
+   "idx": 412,
+   "mot": "ouvert",
+   "pos": "ADJ",
+   "categorie": "etat",
+   "poids": 1
+  },
+  {
+   "idx": 413,
+   "mot": "fermé",
+   "pos": "ADJ",
+   "categorie": "etat",
+   "poids": 2
+  },
+  {
+   "idx": 414,
+   "mot": "caché",
+   "pos": "ADJ",
+   "categorie": "etat",
+   "poids": 2
+  },
+  {
+   "idx": 415,
+   "mot": "dangereux",
+   "pos": "ADJ",
+   "categorie": "etat",
+   "poids": 1
+  },
+  {
+   "idx": 416,
+   "mot": "gentil",
+   "pos": "ADJ",
+   "categorie": "etat",
+   "poids": 1
+  },
+  {
+   "idx": 417,
+   "mot": "méchant",
+   "pos": "ADJ",
+   "categorie": "etat",
+   "poids": 1
+  },
+  {
+   "idx": 418,
+   "mot": "beau",
+   "pos": "ADJ",
+   "categorie": "etat",
+   "poids": 2
+  },
+  {
+   "idx": 419,
+   "mot": "laid",
+   "pos": "ADJ",
+   "categorie": "etat",
+   "poids": 2
+  },
+  {
+   "idx": 420,
+   "mot": "pauvre",
+   "pos": "ADJ",
+   "categorie": "etat",
+   "poids": 1
+  },
+  {
+   "idx": 421,
+   "mot": "riche",
+   "pos": "ADJ",
+   "categorie": "etat",
+   "poids": 2
+  },
+  {
+   "idx": 422,
+   "mot": "peur",
+   "pos": "NOM",
+   "categorie": "abstrait",
+   "poids": 2
+  },
+  {
+   "idx": 423,
+   "mot": "douleur",
+   "pos": "NOM",
+   "categorie": "abstrait",
+   "poids": 1
+  },
+  {
+   "idx": 424,
+   "mot": "mal",
+   "pos": "NOM",
+   "categorie": "abstrait",
+   "poids": 2
+  },
+  {
+   "idx": 425,
+   "mot": "secret",
+   "pos": "NOM",
+   "categorie": "abstrait",
+   "poids": 1
+  },
+  {
+   "idx": 426,
+   "mot": "mensonge",
+   "pos": "NOM",
+   "categorie": "abstrait",
+   "poids": 1
+  },
+  {
+   "idx": 427,
+   "mot": "vérité",
+   "pos": "NOM",
+   "categorie": "abstrait",
+   "poids": 1
+  },
+  {
+   "idx": 428,
+   "mot": "silence",
+   "pos": "NOM",
+   "categorie": "abstrait",
+   "poids": 1
+  },
+  {
+   "idx": 429,
+   "mot": "bruit",
+   "pos": "NOM",
+   "categorie": "abstrait",
+   "poids": 2
+  },
+  {
+   "idx": 430,
+   "mot": "voix",
+   "pos": "NOM",
+   "categorie": "abstrait",
+   "poids": 2
+  },
+  {
+   "idx": 431,
+   "mot": "cri",
+   "pos": "NOM",
+   "categorie": "abstrait",
+   "poids": 2
+  },
+  {
+   "idx": 432,
+   "mot": "souffle",
+   "pos": "NOM",
+   "categorie": "abstrait",
+   "poids": 1
+  },
+  {
+   "idx": 433,
+   "mot": "âme",
+   "pos": "NOM",
+   "categorie": "abstrait",
+   "poids": 2
+  },
+  {
+   "idx": 434,
+   "mot": "esprit",
+   "pos": "NOM",
+   "categorie": "abstrait",
+   "poids": 1
+  },
+  {
+   "idx": 435,
+   "mot": "fantôme",
+   "pos": "NOM",
+   "categorie": "abstrait",
+   "poids": 1
+  },
+  {
+   "idx": 436,
+   "mot": "mémoire",
+   "pos": "NOM",
+   "categorie": "abstrait",
+   "poids": 1
+  },
+  {
+   "idx": 437,
+   "mot": "souvenir",
+   "pos": "NOM",
+   "categorie": "abstrait",
+   "poids": 1
+  },
+  {
+   "idx": 438,
+   "mot": "oubli",
+   "pos": "NOM",
+   "categorie": "abstrait",
+   "poids": 2
+  },
+  {
+   "idx": 439,
+   "mot": "rêve",
+   "pos": "NOM",
+   "categorie": "abstrait",
+   "poids": 2
+  },
+  {
+   "idx": 440,
+   "mot": "cauchemar",
+   "pos": "NOM",
+   "categorie": "abstrait",
+   "poids": 1
+  },
+  {
+   "idx": 441,
+   "mot": "espoir",
+   "pos": "NOM",
+   "categorie": "abstrait",
+   "poids": 1
+  },
+  {
+   "idx": 442,
+   "mot": "colère",
+   "pos": "NOM",
+   "categorie": "abstrait",
+   "poids": 1
+  },
+  {
+   "idx": 443,
+   "mot": "haine",
+   "pos": "NOM",
+   "categorie": "abstrait",
+   "poids": 2
+  },
+  {
+   "idx": 444,
+   "mot": "amour",
+   "pos": "NOM",
+   "categorie": "abstrait",
+   "poids": 2
+  },
+  {
+   "idx": 445,
+   "mot": "pitié",
+   "pos": "NOM",
+   "categorie": "abstrait",
+   "poids": 2
+  },
+  {
+   "idx": 446,
+   "mot": "pardon",
+   "pos": "NOM",
+   "categorie": "abstrait",
+   "poids": 1
+  },
+  {
+   "idx": 447,
+   "mot": "faute",
+   "pos": "NOM",
+   "categorie": "abstrait",
+   "poids": 2
+  },
+  {
+   "idx": 448,
+   "mot": "crime",
+   "pos": "NOM",
+   "categorie": "abstrait",
+   "poids": 2
+  },
+  {
+   "idx": 449,
+   "mot": "accident",
+   "pos": "NOM",
+   "categorie": "abstrait",
+   "poids": 1
+  },
+  {
+   "idx": 450,
+   "mot": "guerre",
+   "pos": "NOM",
+   "categorie": "abstrait",
+   "poids": 1
+  },
+  {
+   "idx": 451,
+   "mot": "paix",
+   "pos": "NOM",
+   "categorie": "abstrait",
+   "poids": 2
+  },
+  {
+   "idx": 452,
+   "mot": "fin",
+   "pos": "NOM",
+   "categorie": "abstrait",
+   "poids": 2
+  },
+  {
+   "idx": 453,
+   "mot": "début",
+   "pos": "NOM",
+   "categorie": "abstrait",
+   "poids": 2
+  },
+  {
+   "idx": 454,
+   "mot": "danger",
+   "pos": "NOM",
+   "categorie": "abstrait",
+   "poids": 1
+  },
+  {
+   "idx": 455,
+   "mot": "piège",
+   "pos": "NOM",
+   "categorie": "abstrait",
+   "poids": 2
+  },
+  {
+   "idx": 456,
+   "mot": "message",
+   "pos": "NOM",
+   "categorie": "abstrait",
+   "poids": 1
+  },
+  {
+   "idx": 457,
+   "mot": "nom",
+   "pos": "NOM",
+   "categorie": "abstrait",
+   "poids": 2
+  },
+  {
+   "idx": 458,
+   "mot": "âge",
+   "pos": "NOM",
+   "categorie": "abstrait",
+   "poids": 2
+  },
+  {
+   "idx": 459,
+   "mot": "nombre",
+   "pos": "NOM",
+   "categorie": "abstrait",
+   "poids": 1
+  },
+  {
+   "idx": 460,
+   "mot": "chiffre",
+   "pos": "NOM",
+   "categorie": "abstrait",
+   "poids": 1
+  },
+  {
+   "idx": 461,
+   "mot": "signe",
+   "pos": "NOM",
+   "categorie": "abstrait",
+   "poids": 2
+  },
+  {
+   "idx": 462,
+   "mot": "ici",
+   "pos": "ADV",
+   "categorie": "position",
+   "poids": 3
+  },
+  {
+   "idx": 463,
+   "mot": "là",
+   "pos": "ADV",
+   "categorie": "position",
+   "poids": 3
+  },
+  {
+   "idx": 464,
+   "mot": "dedans",
+   "pos": "ADV",
+   "categorie": "position",
+   "poids": 3
+  },
+  {
+   "idx": 465,
+   "mot": "dehors",
+   "pos": "ADV",
+   "categorie": "position",
+   "poids": 3
+  },
+  {
+   "idx": 466,
+   "mot": "derrière",
+   "pos": "ADV",
+   "categorie": "position",
+   "poids": 3
+  },
+  {
+   "idx": 467,
+   "mot": "devant",
+   "pos": "ADV",
+   "categorie": "position",
+   "poids": 3
+  },
+  {
+   "idx": 468,
+   "mot": "dessous",
+   "pos": "ADV",
+   "categorie": "position",
+   "poids": 3
+  },
+  {
+   "idx": 469,
+   "mot": "dessus",
+   "pos": "ADV",
+   "categorie": "position",
+   "poids": 3
+  },
+  {
+   "idx": 470,
+   "mot": "près",
+   "pos": "ADV",
+   "categorie": "position",
+   "poids": 3
+  },
+  {
+   "idx": 471,
+   "mot": "loin",
+   "pos": "ADV",
+   "categorie": "position",
+   "poids": 3
+  },
+  {
+   "idx": 472,
+   "mot": "autour",
+   "pos": "ADV",
+   "categorie": "position",
+   "poids": 3
+  },
+  {
+   "idx": 473,
+   "mot": "partout",
+   "pos": "ADV",
+   "categorie": "position",
+   "poids": 3
+  },
+  {
+   "idx": 474,
+   "mot": "ailleurs",
+   "pos": "ADV",
+   "categorie": "position",
+   "poids": 3
+  },
+  {
+   "idx": 475,
+   "mot": "gauche",
+   "pos": "ADV",
+   "categorie": "position",
+   "poids": 3
+  },
+  {
+   "idx": 476,
+   "mot": "droite",
+   "pos": "ADV",
+   "categorie": "position",
+   "poids": 3
+  },
+  {
+   "idx": 477,
+   "mot": "contre",
+   "pos": "ADV",
+   "categorie": "position",
+   "poids": 3
+  },
+  {
+   "idx": 478,
+   "mot": "vers",
+   "pos": "ADV",
+   "categorie": "position",
+   "poids": 3
+  },
+  {
+   "idx": 479,
+   "mot": "oui",
+   "pos": "REPONSE",
+   "categorie": "reponse",
+   "poids": 3
+  },
+  {
+   "idx": 480,
+   "mot": "non",
+   "pos": "REPONSE",
+   "categorie": "reponse",
+   "poids": 3
+  },
+  {
+   "idx": 481,
+   "mot": "peut-être",
+   "pos": "REPONSE",
+   "categorie": "reponse",
+   "poids": 3
+  },
+  {
+   "idx": 482,
+   "mot": "bien",
+   "pos": "REPONSE",
+   "categorie": "reponse",
+   "poids": 3
+  },
+  {
+   "idx": 483,
+   "mot": "sûr",
+   "pos": "REPONSE",
+   "categorie": "reponse",
+   "poids": 3
+  },
+  {
+   "idx": 484,
+   "mot": "rien",
+   "pos": "REPONSE",
+   "categorie": "reponse",
+   "poids": 3
+  },
+  {
+   "idx": 485,
+   "mot": "tout",
+   "pos": "REPONSE",
+   "categorie": "reponse",
+   "poids": 3
+  },
+  {
+   "idx": 486,
+   "mot": "quelque",
+   "pos": "REPONSE",
+   "categorie": "reponse",
+   "poids": 3
+  },
+  {
+   "idx": 487,
+   "mot": "chose",
+   "pos": "REPONSE",
+   "categorie": "reponse",
+   "poids": 3
+  },
+  {
+   "idx": 488,
+   "mot": "beaucoup",
+   "pos": "REPONSE",
+   "categorie": "reponse",
+   "poids": 3
+  },
+  {
+   "idx": 489,
+   "mot": "assez",
+   "pos": "REPONSE",
+   "categorie": "reponse",
+   "poids": 3
+  },
+  {
+   "idx": 490,
+   "mot": "trop",
+   "pos": "REPONSE",
+   "categorie": "reponse",
+   "poids": 3
+  },
+  {
+   "idx": 491,
+   "mot": "plus",
+   "pos": "REPONSE",
+   "categorie": "reponse",
+   "poids": 3
+  },
+  {
+   "idx": 492,
+   "mot": "moins",
+   "pos": "REPONSE",
+   "categorie": "reponse",
+   "poids": 3
+  },
+  {
+   "idx": 493,
+   "mot": "très",
+   "pos": "REPONSE",
+   "categorie": "reponse",
+   "poids": 3
+  },
+  {
+   "idx": 494,
+   "mot": "aussi",
+   "pos": "REPONSE",
+   "categorie": "reponse",
+   "poids": 3
+  },
+  {
+   "idx": 495,
+   "mot": "qui",
+   "pos": "INTER",
+   "categorie": "question",
+   "poids": 2
+  },
+  {
+   "idx": 496,
+   "mot": "quoi",
+   "pos": "INTER",
+   "categorie": "question",
+   "poids": 2
+  },
+  {
+   "idx": 497,
+   "mot": "où",
+   "pos": "INTER",
+   "categorie": "question",
+   "poids": 2
+  },
+  {
+   "idx": 498,
+   "mot": "quand",
+   "pos": "INTER",
+   "categorie": "question",
+   "poids": 2
+  },
+  {
+   "idx": 499,
+   "mot": "pourquoi",
+   "pos": "INTER",
+   "categorie": "question",
+   "poids": 1
+  },
+  {
+   "idx": 500,
+   "mot": "comment",
+   "pos": "INTER",
+   "categorie": "question",
+   "poids": 1
+  },
+  {
+   "idx": 501,
+   "mot": "combien",
+   "pos": "INTER",
+   "categorie": "question",
+   "poids": 1
+  },
+  {
+   "idx": 502,
+   "mot": "quel",
+   "pos": "INTER",
+   "categorie": "question",
+   "poids": 2
+  },
+  {
+   "idx": 503,
+   "mot": "lequel",
+   "pos": "INTER",
+   "categorie": "question",
+   "poids": 1
+  },
+  {
+   "idx": 504,
+   "mot": "écoute",
+   "pos": "IMPER",
+   "categorie": "imperatif",
+   "poids": 3
+  },
+  {
+   "idx": 505,
+   "mot": "regarde",
+   "pos": "IMPER",
+   "categorie": "imperatif",
+   "poids": 3
+  },
+  {
+   "idx": 506,
+   "mot": "viens",
+   "pos": "IMPER",
+   "categorie": "imperatif",
+   "poids": 3
+  },
+  {
+   "idx": 507,
+   "mot": "pars",
+   "pos": "IMPER",
+   "categorie": "imperatif",
+   "poids": 3
+  },
+  {
+   "idx": 508,
+   "mot": "va-t'en",
+   "pos": "IMPER",
+   "categorie": "imperatif",
+   "poids": 3
+  },
+  {
+   "idx": 509,
+   "mot": "attends",
+   "pos": "IMPER",
+   "categorie": "imperatif",
+   "poids": 3
+  },
+  {
+   "idx": 510,
+   "mot": "aide-moi",
+   "pos": "IMPER",
+   "categorie": "imperatif",
+   "poids": 3
+  },
+  {
+   "idx": 511,
+   "mot": "dis-moi",
+   "pos": "IMPER",
+   "categorie": "imperatif",
+   "poids": 3
+  },
+  {
+   "idx": 512,
+   "mot": "montre",
+   "pos": "IMPER",
+   "categorie": "imperatif",
+   "poids": 3
+  },
+  {
+   "idx": 513,
+   "mot": "cours",
+   "pos": "IMPER",
+   "categorie": "imperatif",
+   "poids": 3
+  },
+  {
+   "idx": 514,
+   "mot": "cache-toi",
+   "pos": "IMPER",
+   "categorie": "imperatif",
+   "poids": 3
+  },
+  {
+   "idx": 515,
+   "mot": "réveille-toi",
+   "pos": "IMPER",
+   "categorie": "imperatif",
+   "poids": 3
+  },
+  {
+   "idx": 516,
+   "mot": "souviens-toi",
+   "pos": "IMPER",
+   "categorie": "imperatif",
+   "poids": 3
+  },
+  {
+   "idx": 517,
+   "mot": "laisse-moi",
+   "pos": "IMPER",
+   "categorie": "imperatif",
+   "poids": 3
+  },
+  {
+   "idx": 518,
+   "mot": "suis-moi",
+   "pos": "IMPER",
+   "categorie": "imperatif",
+   "poids": 3
+  },
+  {
+   "idx": 519,
+   "mot": "ne",
+   "pos": "IMPER",
+   "categorie": "imperatif",
+   "poids": 3
+  },
+  {
+   "idx": 520,
+   "mot": "pas",
+   "pos": "IMPER",
+   "categorie": "imperatif",
+   "poids": 3
+  },
+  {
+   "idx": 521,
+   "mot": "s'il",
+   "pos": "IMPER",
+   "categorie": "imperatif",
+   "poids": 3
+  },
+  {
+   "idx": 522,
+   "mot": "te",
+   "pos": "IMPER",
+   "categorie": "imperatif",
+   "poids": 3
+  },
+  {
+   "idx": 523,
+   "mot": "plaît",
+   "pos": "IMPER",
+   "categorie": "imperatif",
+   "poids": 3
+  },
+  {
+   "idx": 524,
+   "mot": "merci",
+   "pos": "IMPER",
+   "categorie": "imperatif",
+   "poids": 3
+  },
+  {
+   "idx": 525,
+   "mot": "attention",
+   "pos": "IMPER",
+   "categorie": "imperatif",
+   "poids": 3
+  },
+  {
+   "idx": 526,
+   "mot": "un",
+   "pos": "NOMBRE",
+   "categorie": "nombre",
+   "poids": 2
+  },
+  {
+   "idx": 527,
+   "mot": "deux",
+   "pos": "NOMBRE",
+   "categorie": "nombre",
+   "poids": 2
+  },
+  {
+   "idx": 528,
+   "mot": "trois",
+   "pos": "NOMBRE",
+   "categorie": "nombre",
+   "poids": 2
+  },
+  {
+   "idx": 529,
+   "mot": "quatre",
+   "pos": "NOMBRE",
+   "categorie": "nombre",
+   "poids": 1
+  },
+  {
+   "idx": 530,
+   "mot": "cinq",
+   "pos": "NOMBRE",
+   "categorie": "nombre",
+   "poids": 2
+  },
+  {
+   "idx": 531,
+   "mot": "six",
+   "pos": "NOMBRE",
+   "categorie": "nombre",
+   "poids": 2
+  },
+  {
+   "idx": 532,
+   "mot": "sept",
+   "pos": "NOMBRE",
+   "categorie": "nombre",
+   "poids": 2
+  },
+  {
+   "idx": 533,
+   "mot": "huit",
+   "pos": "NOMBRE",
+   "categorie": "nombre",
+   "poids": 2
+  },
+  {
+   "idx": 534,
+   "mot": "neuf",
+   "pos": "NOMBRE",
+   "categorie": "nombre",
+   "poids": 2
+  },
+  {
+   "idx": 535,
+   "mot": "dix",
+   "pos": "NOMBRE",
+   "categorie": "nombre",
+   "poids": 2
+  },
+  {
+   "idx": 536,
+   "mot": "onze",
+   "pos": "NOMBRE",
+   "categorie": "nombre",
+   "poids": 2
+  },
+  {
+   "idx": 537,
+   "mot": "douze",
+   "pos": "NOMBRE",
+   "categorie": "nombre",
+   "poids": 2
+  },
+  {
+   "idx": 538,
+   "mot": "treize",
+   "pos": "NOMBRE",
+   "categorie": "nombre",
+   "poids": 1
+  },
+  {
+   "idx": 539,
+   "mot": "quatorze",
+   "pos": "NOMBRE",
+   "categorie": "nombre",
+   "poids": 1
+  },
+  {
+   "idx": 540,
+   "mot": "quinze",
+   "pos": "NOMBRE",
+   "categorie": "nombre",
+   "poids": 1
+  },
+  {
+   "idx": 541,
+   "mot": "vingt",
+   "pos": "NOMBRE",
+   "categorie": "nombre",
+   "poids": 2
+  },
+  {
+   "idx": 542,
+   "mot": "trente",
+   "pos": "NOMBRE",
+   "categorie": "nombre",
+   "poids": 1
+  },
+  {
+   "idx": 543,
+   "mot": "quarante",
+   "pos": "NOMBRE",
+   "categorie": "nombre",
+   "poids": 1
+  },
+  {
+   "idx": 544,
+   "mot": "cinquante",
+   "pos": "NOMBRE",
+   "categorie": "nombre",
+   "poids": 1
+  },
+  {
+   "idx": 545,
+   "mot": "cent",
+   "pos": "NOMBRE",
+   "categorie": "nombre",
+   "poids": 2
+  },
+  {
+   "idx": 546,
+   "mot": "mille",
+   "pos": "NOMBRE",
+   "categorie": "nombre",
+   "poids": 2
+  },
+  {
+   "idx": 547,
+   "mot": "et",
+   "pos": "PREP",
+   "categorie": "liaison",
+   "poids": 2
+  },
+  {
+   "idx": 548,
+   "mot": "ou",
+   "pos": "PREP",
+   "categorie": "liaison",
+   "poids": 2
+  },
+  {
+   "idx": 549,
+   "mot": "mais",
+   "pos": "PREP",
+   "categorie": "liaison",
+   "poids": 2
+  },
+  {
+   "idx": 550,
+   "mot": "donc",
+   "pos": "PREP",
+   "categorie": "liaison",
+   "poids": 2
+  },
+  {
+   "idx": 551,
+   "mot": "car",
+   "pos": "PREP",
+   "categorie": "liaison",
+   "poids": 2
+  },
+  {
+   "idx": 552,
+   "mot": "si",
+   "pos": "PREP",
+   "categorie": "liaison",
+   "poids": 2
+  },
+  {
+   "idx": 553,
+   "mot": "parce",
+   "pos": "PREP",
+   "categorie": "liaison",
+   "poids": 2
+  },
+  {
+   "idx": 554,
+   "mot": "que",
+   "pos": "PREP",
+   "categorie": "liaison",
+   "poids": 2
+  },
+  {
+   "idx": 555,
+   "mot": "avec",
+   "pos": "PREP",
+   "categorie": "liaison",
+   "poids": 2
+  },
+  {
+   "idx": 556,
+   "mot": "sans",
+   "pos": "PREP",
+   "categorie": "liaison",
+   "poids": 2
+  },
+  {
+   "idx": 557,
+   "mot": "pour",
+   "pos": "PREP",
+   "categorie": "liaison",
+   "poids": 2
+  },
+  {
+   "idx": 558,
+   "mot": "dans",
+   "pos": "PREP",
+   "categorie": "liaison",
+   "poids": 2
+  },
+  {
+   "idx": 559,
+   "mot": "sur",
+   "pos": "PREP",
+   "categorie": "liaison",
+   "poids": 2
+  },
+  {
+   "idx": 560,
+   "mot": "sous",
+   "pos": "PREP",
+   "categorie": "liaison",
+   "poids": 2
+  },
+  {
+   "idx": 561,
+   "mot": "par",
+   "pos": "PREP",
+   "categorie": "liaison",
+   "poids": 2
+  },
+  {
+   "idx": 562,
+   "mot": "de",
+   "pos": "PREP",
+   "categorie": "liaison",
+   "poids": 2
+  },
+  {
+   "idx": 563,
+   "mot": "à",
+   "pos": "PREP",
+   "categorie": "liaison",
+   "poids": 2
+  },
+  {
+   "idx": 564,
+   "mot": "chez",
+   "pos": "PREP",
+   "categorie": "liaison",
+   "poids": 2
+  },
+  {
+   "idx": 565,
+   "mot": "depuis",
+   "pos": "PREP",
+   "categorie": "liaison",
+   "poids": 1
+  },
+  {
+   "idx": 566,
+   "mot": "jusqu'à",
+   "pos": "PREP",
+   "categorie": "liaison",
+   "poids": 1
+  }
+ ],
+ "gabarits": [
+  {
+   "gabarit": "{MOT}",
+   "poids": 40,
+   "note": "mot seul — le mode par défaut, le moins fabriqué"
+  },
+  {
+   "gabarit": "{PRON} {VERBE3}",
+   "poids": 12,
+   "note": "sujet + verbe"
+  },
+  {
+   "gabarit": "{PRON} {VERBE3} {LIEU}",
+   "poids": 6,
+   "note": "sujet + verbe + lieu"
+  },
+  {
+   "gabarit": "{IMPER}",
+   "poids": 10,
+   "note": "ordre"
+  },
+  {
+   "gabarit": "{NOM} {ADJ}",
+   "poids": 8,
+   "note": "nom qualifié"
+  },
+  {
+   "gabarit": "{INTER}",
+   "poids": 6,
+   "note": "question"
+  },
+  {
+   "gabarit": "{ADV}",
+   "poids": 6,
+   "note": "indication de place"
+  },
+  {
+   "gabarit": "{PRENOM}",
+   "poids": 6,
+   "note": "nom propre"
+  },
+  {
+   "gabarit": "{NOMBRE}",
+   "poids": 4,
+   "note": "nombre seul"
+  },
+  {
+   "gabarit": "{PRON} {VERBE3} {NOM}",
+   "poids": 2,
+   "note": "phrase complète — à n'activer qu'en connaissance de cause"
+  }
+ ]
+}
