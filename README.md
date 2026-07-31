@@ -105,6 +105,8 @@ Le moteur du banc ne se contente plus d'une moyenne et d'un écart-type calculé
 
 Le mode témoin et le mode à l'aveugle passent par exactement les mêmes garde-fous : la comparaison reste honnête.
 
+**Tirage du mot.** Le mot n'est plus tiré à partir de *l'amplitude* de l'écart — cette méthode retombait toujours sur les mots du bout de la liste, puisqu'au moment du déclenchement l'écart est par construction grand. Il est désormais tiré par un **hachage** de la valeur brute (FNV-1a → position dans le lexique) : réparti sur les 567 mots, entièrement déterminé par la valeur enregistrée donc reproductible depuis la trace, avec une **anti-répétition** qui interdit les derniers mots sortis. Le champ `rehash` de la trace note le décalage éventuel appliqué par l'anti-répétition.
+
 ---
 
 ## Enregistrement et transcription (banc)
