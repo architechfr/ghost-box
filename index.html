@@ -23,6 +23,8 @@ a.card{display:block;text-decoration:none;color:inherit;background:var(--panel);
   border-left:2px solid var(--signal);border-radius:3px;padding:16px;margin-top:10px}
 a.card:active{transform:translateY(1px)}
 a.card.g{border-left-color:var(--gold)}
+a.card.f{border-left-color:var(--flag)}
+.wip{font-size:10px;color:var(--gold);letter-spacing:.1em;border:1px solid var(--gold);border-radius:2px;padding:1px 5px;margin-left:6px;vertical-align:middle}
 a.card h2{font-family:var(--legend);text-transform:uppercase;letter-spacing:.14em;font-size:16px;margin:0 0 5px;font-weight:600}
 a.card p{margin:0;font-size:13.5px}
 .arrow{float:right;color:var(--dim);font-family:var(--mono)}
@@ -44,7 +46,7 @@ footer a{color:var(--dim)}
 
 <div class="lg" style="margin-top:22px">architechfr / ghost-box</div>
 <h1>Poste de terrain</h1>
-<p>Deux outils de séance. Tout tourne sur l'appareil, rien n'est envoyé nulle part.</p>
+<p>Trois outils de séance. L'enregistreur et le banc tournent entièrement sur l'appareil ; « Contact via IA » est expérimental et, pour la transcription, envoie l'audio à un service externe.</p>
 
 <a class="card" href="enregistreur/">
   <h2>Enregistreur <span class="arrow">→</span></h2>
@@ -53,7 +55,12 @@ footer a{color:var(--dim)}
 
 <a class="card g" href="banc/">
   <h2>Banc d'essai <span class="arrow">→</span></h2>
-  <p>16 capteurs sondés en direct, moteur capteur → mot sur 567 mots français, mode témoin à l'aveugle, trace exportable.</p>
+  <p>Capteurs sondés en direct, moteur capteur → mot sur 567 mots, coïncidence multi-capteurs, caméra avec forme et témoin visuel, enregistrement de la box, mode témoin à l'aveugle, trace exportable.</p>
+</a>
+
+<a class="card f" href="contact-ia/">
+  <h2>Contact via IA <span class="wip">en développement</span><span class="arrow">→</span></h2>
+  <p>Transcription de la box radio (Voxtral) et détection de silhouette en direct (caméra). Expérimental : l'IA fabrique des mots et des formes, à traiter comme des pistes.</p>
 </a>
 
 <hr>

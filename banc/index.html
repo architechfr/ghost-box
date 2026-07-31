@@ -59,11 +59,6 @@ button.ko{border-color:var(--flag);color:var(--flag)}
 #dorm summary{font-family:var(--legend);text-transform:uppercase;letter-spacing:.14em;font-size:11px;
   color:var(--dim);cursor:pointer;padding:6px 0}
 #dorm .cap{opacity:.5}
-#trBox{margin-top:12px}
-#trBox summary{font-family:var(--legend);text-transform:uppercase;letter-spacing:.14em;font-size:11px;
-  color:var(--gold);cursor:pointer;padding:6px 0}
-#trKey{flex:1;min-width:0;background:var(--sunk);border:1px solid var(--line);color:var(--text);
-  font-family:var(--mono);font-size:13px;padding:10px;border-radius:2px}
 #recT{color:var(--flag)}
 
 .fld{display:flex;align-items:center;gap:10px;margin-top:12px}
@@ -110,7 +105,7 @@ video{display:none}
 <body>
 <div class="wrap">
 
-<h1>Banc d'essai <span style="font-size:11px;color:var(--signal);letter-spacing:.12em">v4</span></h1>
+<h1>Banc d'essai <span style="font-size:11px;color:var(--signal);letter-spacing:.12em">v6</span></h1>
 <p class="sub">L'appareil reste <b>silencieux</b> par défaut. Il apprend d'abord le comportement normal du capteur, puis n'émet un mot que si une mesure s'écarte nettement de cette normale.</p>
 
 <div class="step">
@@ -125,10 +120,8 @@ video{display:none}
   </div>
   <div class="grid" id="caps"></div>
   <p id="camWatch" class="ex"></p>
-  <div class="row"><button id="aiBtn" class="tgl">Silhouette IA (expérimental)</button></div>
-  <p id="aiState" class="ex">Détection de personne (squelette) via un modèle embarqué qui tourne sur le téléphone. Active d'abord la caméra. Fragile dans le noir — ce n'est pas un détecteur de fantôme.</p>
   <canvas id="camView" width="320" height="240"></canvas>
-  <p id="camHint" class="ex" style="display:none">Image en direct. Si un mouvement forme une silhouette, un bonhomme bâton s'y dessine ; avec la silhouette IA active, c'est le vrai squelette détecté.</p>
+  <p id="camHint" class="ex" style="display:none">Image en direct. Si un mouvement forme une silhouette, un bonhomme bâton s'y dessine. La détection de squelette par IA est dans l'outil <a href="../contact-ia/" style="color:var(--gold)">Contact via IA</a>.</p>
   <details id="dorm"><summary>Capteurs indisponibles</summary><div class="grid" id="capsOff"></div></details>
 </div>
 
@@ -183,14 +176,7 @@ video{display:none}
     <button id="recDl" disabled>Télécharger WAV</button>
   </div>
   <p id="recState" class="ex">Micro requis. L'audio reste sur l'appareil tant que tu ne l'exportes pas.</p>
-
-  <details id="trBox">
-    <summary>Transcription automatique (Voxtral) — optionnelle</summary>
-    <div class="warn">La transcription <b>invente des mots</b> à partir du bruit : c'est le défaut connu de ces modèles. Traite-la comme une piste à <b>vérifier à l'oreille</b> sur l'audio brut, jamais comme une parole avérée. Pour cette étape, l'audio est envoyé au serveur Mistral — la promesse « rien ne quitte l'appareil » ne s'applique plus.</div>
-    <div class="fld"><span class="lg">clé API</span><input type="password" id="trKey" placeholder="clé Mistral — reste en mémoire, non enregistrée"></div>
-    <div class="row"><button id="trGo" disabled>Transcrire l'enregistrement</button></div>
-    <div id="trOut" class="note"></div>
-  </details>
+  <p class="ex">La <b>transcription automatique</b> de cet enregistrement se fait dans l'outil <a href="../contact-ia/" style="color:var(--gold)">Contact via IA</a> (en cours de développement).</p>
 </div>
 
 <div class="step">
@@ -239,7 +225,6 @@ reg('lumiere','Lumière ambiante','lux','AmbientLightSensor absent');
 reg('cam_lum','Luminance caméra','0-255','caméra non activée');
 reg('cam_diff','Mouvement image','%','caméra non activée');
 reg('cam_forme','Forme caméra','%','caméra non activée');
-reg('cam_pose','Silhouette IA','%','IA non activée');
 reg('batterie','Batterie','%','—');
 reg('rtt','Latence réseau','ms','—');
 reg('debit','Débit estimé','Mb/s','—');
@@ -426,8 +411,7 @@ function largestBlob(mask,W,H){
   return best;
 }
 function shuffleMask(a){ const b=a.slice(); for(let i=b.length-1;i>0;i--){ const j=(Math.random()*(i+1))|0; const t=b[i];b[i]=b[j];b[j]=t; } return b; }
-let lastPose=null, lastPoseT=-1e9;
-/* bonhomme bâton ajusté à une boîte (mouvement détecté sans IA) */
+/* bonhomme bâton ajusté à une boîte (mouvement détecté) */
 function drawStick(g,x,y,w,h){
   g.strokeStyle='#5FD3A6'; g.fillStyle='#5FD3A6'; g.lineWidth=Math.max(2,w*0.035); g.lineCap='round';
   const cx=x+w/2, headR=Math.max(5,Math.min(w,h)*0.13), headY=y+headR;
@@ -438,14 +422,6 @@ function drawStick(g,x,y,w,h){
   g.beginPath(); g.moveTo(cx,sh); g.lineTo(x+w*0.10,sh+h*0.20); g.moveTo(cx,sh); g.lineTo(x+w*0.90,sh+h*0.20); g.stroke();
   g.beginPath(); g.moveTo(cx,hip); g.lineTo(x+w*0.18,foot); g.moveTo(cx,hip); g.lineTo(x+w*0.82,foot); g.stroke();
 }
-/* squelette réel (MediaPipe) : os + articulations */
-const POSE_CONN=[[11,12],[11,13],[13,15],[12,14],[14,16],[11,23],[12,24],[23,24],[23,25],[25,27],[24,26],[26,28],[0,11],[0,12]];
-function drawSkeleton(g,lms,vw,vh){
-  g.strokeStyle='#E9B44C'; g.fillStyle='#E9B44C'; g.lineWidth=3; g.lineCap='round';
-  for(const c of POSE_CONN){ const a=lms[c[0]],b=lms[c[1]]; if(!a||!b) continue;
-    g.beginPath(); g.moveTo(a.x*vw,a.y*vh); g.lineTo(b.x*vw,b.y*vh); g.stroke(); }
-  for(const p of lms){ g.beginPath(); g.arc(p.x*vw,p.y*vh,3.5,0,7); g.fill(); }
-}
 $('pCam').onclick = async () => {
   if(vstream){ stopCam(); return; }
   try{
@@ -454,6 +430,7 @@ $('pCam').onclick = async () => {
     const c=document.createElement('canvas'); c.width=CW; c.height=CH;
     const g=c.getContext('2d',{willReadFrequently:true});
     camActive=true; camStart=performance.now(); camLiveHits=0; camCtrlHits=0; mark('pCam',true);
+    $('camView').style.display='block'; $('camHint').style.display='block';
     (function loop(){
       if(!vstream) return;
       g.drawImage(v,0,0,CW,CH);
@@ -476,24 +453,21 @@ $('pCam').onclick = async () => {
       if(cfrac>=CAM_DET){ if(!camCtrlOn){camCtrlHits++;camCtrlOn=true;} } else camCtrlOn=false;
       // affichage direct + bonhomme(s) bâton
       const view=$('camView'), vg=view.getContext('2d'), vw=view.width, vh=view.height;
-      if(view.style.display==='none'){ view.style.display='block'; $('camHint').style.display='block'; }
+      if(view.style.display!=='block'){ view.style.display='block'; $('camHint').style.display='block'; }
       vg.drawImage(v,0,0,vw,vh);
-      const now2=performance.now();
-      if(aiOn && lastPose && now2-lastPoseT<600){ drawSkeleton(vg,lastPose,vw,vh); }
-      else if(frac>=CAM_DET){ const sx=vw/CW, sy=vh/CH;
+      if(frac>=CAM_DET){ const sx=vw/CW, sy=vh/CH;
         drawStick(vg, live.minx*sx, live.miny*sy, (live.maxx-live.minx+1)*sx, (live.maxy-live.miny+1)*sy); }
       prevFrame=cur; setTimeout(loop,90);
     })();
   }catch(e){ mark('pCam',false); camActive=false; }
 };
 function stopCam(){
-  aiOn=false; markOff('aiBtn'); $('aiState').textContent='IA arrêtée (caméra coupée).';
   if(vstream){ vstream.getTracks().forEach(t=>t.stop()); vstream=null; }
-  camActive=false; camBg=null; prevFrame=null; lastPose=null;
+  camActive=false; camBg=null; prevFrame=null;
   const view=$('camView'); if(view) view.style.display='none';
   const hint=$('camHint'); if(hint) hint.style.display='none';
   $('camWatch').textContent=''; markOff('pCam');
-  deactivate(['cam_lum','cam_diff','cam_forme','cam_pose']);
+  deactivate(['cam_lum','cam_diff','cam_forme']);
 }
 function grabEvidence(){
   if(!camActive) return null;
@@ -511,45 +485,6 @@ setInterval(()=>{ if(!camActive){ return; }
     : ' — au-dessus du bruit.');
   $('camWatch').innerHTML='Caméra — forme détectée <b>'+camLiveHits+'</b>× ('+lr.toFixed(1)+'/min) · témoin visuel, bruit <b>'+camCtrlHits+'</b>× ('+cr.toFixed(1)+'/min)'+verdict;
 },1000);
-
-/* ═══════ silhouette IA (MediaPipe PoseLandmarker, optionnel, hors-ligne après 1er chargement) ═══════ */
-let poseLM=null, aiOn=false;
-$('aiBtn').onclick=async ()=>{
-  if(aiOn){ aiOn=false; $('aiBtn').classList.remove('on'); $('aiState').textContent='IA arrêtée.'; return; }
-  if(!camActive){ $('aiState').textContent="Active d'abord la caméra."; return; }
-  $('aiState').textContent='Chargement du modèle (~5 Mo, une seule fois)…';
-  try{
-    if(!poseLM){
-      const vision=await import('https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10/vision_bundle.mjs');
-      const fs=await vision.FilesetResolver.forVisionTasks('https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10/wasm');
-      poseLM=await vision.PoseLandmarker.createFromOptions(fs,{
-        baseOptions:{modelAssetPath:'https://storage.googleapis.com/mediapipe-models/pose_landmarker/pose_landmarker_lite/float16/1/pose_landmarker_lite.task'},
-        runningMode:'VIDEO', numPoses:1 });
-    }
-    aiOn=true; $('aiBtn').classList.add('on');
-    $('aiState').innerHTML='IA active. <b>Expérimental</b> : dans le noir elle peut ne rien voir, ou accrocher un reflet, un portrait, l\'opérateur. Ce n\'est pas un détecteur de fantôme — traite « Silhouette IA » comme n\'importe quel capteur, avec le mode témoin et la coïncidence.';
-    let lastT=-1;
-    (function aiLoop(){
-      if(!aiOn) return;
-      const v=$('vid');
-      if(v && v.videoWidth && v.currentTime!==lastT){
-        lastT=v.currentTime;
-        try{
-          const res=poseLM.detectForVideo(v, performance.now());
-          let pres=0;
-          if(res && res.landmarks && res.landmarks.length){
-            const lms=res.landmarks[0]; let vis=0,cnt=0;
-            for(const p of lms){ if(p.visibility!=null){ vis+=p.visibility; cnt++; } }
-            pres = cnt? vis/cnt*100 : 100;
-            lastPose=lms; lastPoseT=performance.now();
-          } else { lastPose=null; }
-          push('cam_pose', pres);
-        }catch(e){}
-      }
-      requestAnimationFrame(aiLoop);
-    })();
-  }catch(e){ aiOn=false; $('aiBtn').classList.remove('on'); $('aiState').textContent='IA indisponible (le modèle n\'a pas pu se charger — réseau ?). Tout le reste fonctionne normalement.'; }
-};
 
 let geoWatch=null;
 $('pGeo').onclick = () => {
@@ -588,7 +523,7 @@ $('rec').onclick = async () => {
   mediaRec.onstop=onRecStop;
   mediaRec.start(); recording=true; recStartPerf=performance.now();
   $('rec').textContent='■ Arrêter'; $('rec').classList.add('ko');
-  $('recDl').disabled=true; $('trGo').disabled=true; $('nRec').className='n done';
+  $('recDl').disabled=true; $('nRec').className='n done';
   recTimer=setInterval(()=>{ $('recT').textContent=fmt((performance.now()-recStartPerf)/1000); },250);
   $('recState').textContent="Enregistrement en cours — l'audio reste sur l'appareil.";
 };
@@ -601,11 +536,11 @@ async function onRecStop(){
   try{
     wavBlob=await toWav(recBlob);
     $('recState').textContent='Enregistrement prêt — WAV '+(wavBlob.size/1048576).toFixed(1)+' Mo, 16 kHz mono.';
-    $('recDl').disabled=false; $('trGo').disabled=false;
+    $('recDl').disabled=false;
   }catch(e){
     wavBlob=null;
     $('recState').textContent='Enregistrement prêt (conversion WAV impossible ici — export au format brut).';
-    $('recDl').disabled=false; $('trGo').disabled=false;
+    $('recDl').disabled=false;
   }
 }
 $('recDl').onclick=()=>{ const b=wavBlob||recBlob; if(!b) return;
@@ -635,40 +570,7 @@ function encodeWav(samples,rate){
 function dl2(blob,name){ const u=URL.createObjectURL(blob),a=document.createElement('a');
   a.href=u; a.download=name; a.click(); setTimeout(()=>URL.revokeObjectURL(u),4000); }
 
-/* ═══════ transcription (Voxtral) ═══════ */
 const esc=s=>String(s).replace(/[&<>]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;'}[c]));
-$('trGo').onclick=async ()=>{
-  const key=$('trKey').value.trim(), b=wavBlob||recBlob;
-  if(!key){ $('trOut').innerHTML='<span class="tm">Renseigne ta clé API Mistral.</span>'; return; }
-  if(!b){ $('trOut').innerHTML='<span class="tm">Aucun enregistrement à transcrire.</span>'; return; }
-  $('trGo').disabled=true; $('trOut').textContent="Envoi à Voxtral… (l'audio quitte l'appareil pour cette étape)";
-  const fd=new FormData();
-  fd.append('file', b, wavBlob?'box-radio.wav':'box-radio.webm');
-  fd.append('model','voxtral-mini-latest');
-  fd.append('language','fr');
-  fd.append('timestamp_granularities','segment');
-  try{
-    const r=await fetch('https://api.mistral.ai/v1/audio/transcriptions',{ method:'POST', headers:{'x-api-key':key}, body:fd });
-    if(!r.ok){ const t=await r.text().catch(()=> ''); throw new Error('HTTP '+r.status+' '+t.slice(0,180)); }
-    renderTranscript(await r.json());
-  }catch(e){
-    $('trOut').innerHTML='<span class="tm">Échec : '+esc(String(e.message||e))+'.</span><br>'+
-      "Si l'erreur ressemble à un blocage réseau/CORS, l'appel direct depuis le navigateur est refusé par l'API : "+
-      'il faut alors un petit relais (Cloudflare Worker ou fonction Vercel) qui garde la clé côté serveur.';
-  }
-  $('trGo').disabled=false;
-};
-function renderTranscript(j){
-  const segs=(j&&j.segments)||[];
-  let html='<div class="warn">Transcription automatique <b>non vérifiée</b> — l\'ASR fabrique des mots sur du bruit. À confirmer à l\'oreille sur l\'audio brut.</div>';
-  if(segs.length){
-    html+='<table><thead><tr><th>t</th><th>texte (auto, non vérifié)</th></tr></thead><tbody>'+
-      segs.map(s=>'<tr><td>'+fmt(s.start||0)+'</td><td class="w">'+esc(s.text||'')+'</td></tr>').join('')+'</tbody></table>';
-  } else {
-    html+='<p class="w">'+esc((j&&j.text)||'(transcription vide)')+'</p>';
-  }
-  $('trOut').innerHTML=html;
-}
 
 /* ═══════ sélecteurs ═══════ */
 let srcCount=-1;

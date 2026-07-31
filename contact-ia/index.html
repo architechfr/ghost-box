@@ -1,0 +1,257 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#141A1E">
+<title>Contact via IA — en développement</title>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600&family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bench:#141A1E;--panel:#1D262B;--sunk:#0A0F12;--line:#2C383F;--hair:#212B31;
+  --signal:#5FD3A6;--gold:#E9B44C;--flag:#E2574C;--paper:#CFC6B4;--dim:#78868E;--text:#DDE6EA;
+  --legend:"Barlow Condensed","Arial Narrow",sans-serif;
+  --body:"IBM Plex Sans",system-ui,sans-serif;--mono:"IBM Plex Mono",ui-monospace,monospace;
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;background:var(--bench);color:var(--text);font-family:var(--body);-webkit-font-smoothing:antialiased}
+body{padding:env(safe-area-inset-top) 0 calc(env(safe-area-inset-bottom) + 24px)}
+.wrap{max-width:660px;margin:0 auto;padding:0 14px}
+.lg{font-family:var(--legend);text-transform:uppercase;letter-spacing:.15em;font-size:13px;color:var(--dim);font-weight:600}
+h1{font-family:var(--legend);text-transform:uppercase;letter-spacing:.2em;font-size:17px;font-weight:600;margin:18px 0 3px}
+.wip{font-size:11px;color:var(--gold);letter-spacing:.12em;border:1px solid var(--gold);border-radius:2px;padding:1px 6px;margin-left:6px}
+.sub{font-size:13px;color:var(--dim);line-height:1.55;margin:0}
+.sub b{color:var(--paper);font-weight:500}
+.ex{font-size:12.5px;color:var(--dim);line-height:1.5;margin:5px 0 0}
+.ex b{color:var(--paper);font-weight:500}
+.step{margin-top:24px;border-top:1px solid var(--line);padding-top:14px}
+button{font-family:var(--legend);text-transform:uppercase;letter-spacing:.14em;font-weight:600;
+  border:1px solid var(--line);background:var(--panel);color:var(--text);border-radius:3px;
+  padding:11px 12px;font-size:13px;cursor:pointer}
+button:active{transform:translateY(1px)}
+button:disabled{opacity:.35;cursor:default}
+button.act{border-color:var(--signal);color:var(--signal)}
+button.ko{border-color:var(--flag);color:var(--flag)}
+.row{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}.row>button{flex:1;min-width:120px}
+.fld{display:flex;align-items:center;gap:10px;margin-top:12px}
+.fld .lg{min-width:70px}
+input[type=password]{flex:1;min-width:0;background:var(--sunk);border:1px solid var(--line);color:var(--text);
+  font-family:var(--mono);font-size:13px;padding:10px;border-radius:2px}
+.warn{margin-top:12px;padding:11px 12px;border-left:2px solid var(--gold);background:#1E1A12;
+  font-size:13px;line-height:1.55;color:#E4D3AE}
+.note{font-size:13px;color:var(--dim);line-height:1.6;margin-top:10px}
+.note b{color:var(--paper);font-weight:500}
+.tm{color:var(--flag)}
+.w{font-family:var(--body);color:var(--paper)}
+table{width:100%;border-collapse:collapse;margin-top:10px}
+th{font-family:var(--legend);text-transform:uppercase;letter-spacing:.12em;font-size:10px;color:var(--dim);
+  text-align:left;font-weight:600;padding:0 6px 6px 0;border-bottom:1px solid var(--line)}
+td{padding:8px 6px 8px 0;border-bottom:1px solid var(--hair);font-family:var(--mono);font-size:12px;vertical-align:top}
+#camView{display:none;width:100%;max-width:360px;margin:12px auto 0;border:1px solid var(--line);border-radius:4px;background:#000}
+a.back{display:inline-block;margin-top:26px;color:var(--dim);font-size:13px;text-decoration:none}
+video{display:none}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<h1>Contact via IA <span class="wip">en développement</span></h1>
+<p class="sub">Deux expériences pour « entendre » ou « voir » au-delà des mesures brutes du banc. À traiter comme des <b>pistes à vérifier</b>, jamais comme des preuves : l'IA fabrique des mots à partir du bruit et des silhouettes à partir de reflets. La transcription <b>envoie l'audio au serveur Mistral</b> ; la silhouette tourne entièrement sur l'appareil.</p>
+
+<div class="step">
+  <div class="lg">1 — Transcription de la box radio (Voxtral)</div>
+  <p class="ex">Enregistre le son de ta box, puis tente une transcription automatique. Rappel : sur du bruit radio, ces modèles <b>inventent des mots</b>. Garde l'audio brut et vérifie à l'oreille.</p>
+  <div class="row">
+    <button id="rec">● Enregistrer</button>
+    <button id="recDl" disabled>Télécharger WAV</button>
+  </div>
+  <p id="recState" class="ex">Micro requis. L'audio reste sur l'appareil tant que tu ne lances pas la transcription.</p>
+  <div class="warn">Pour la transcription seulement, l'audio est envoyé au serveur Mistral — la promesse « rien ne quitte l'appareil » ne s'applique pas ici. La clé API reste en mémoire, n'est jamais enregistrée.</div>
+  <div class="fld"><span class="lg">clé API</span><input type="password" id="trKey" placeholder="clé Mistral — reste en mémoire"></div>
+  <div class="row"><button id="trGo" disabled>Transcrire l'enregistrement</button></div>
+  <div id="trOut" class="note"></div>
+</div>
+
+<div class="step">
+  <div class="lg">2 — Silhouette IA (caméra)</div>
+  <p class="ex">La caméra affiche l'image en direct ; un modèle de détection de personne (MediaPipe, sur l'appareil) trace le <b>squelette</b> s'il croit voir quelqu'un. <b>Expérimental</b> : sans capteur de profondeur, dans le noir il ne voit rien ou accroche un reflet, un portrait, toi. Ce n'est pas un détecteur de fantôme.</p>
+  <div class="row">
+    <button id="pCam">Activer la caméra</button>
+    <button id="aiBtn" disabled>Silhouette IA</button>
+  </div>
+  <canvas id="camView" width="320" height="240"></canvas>
+  <p id="poseState" class="ex"></p>
+</div>
+
+<a class="back" href="../">← retour au poste de terrain</a>
+</div>
+
+<video id="vid" playsinline muted></video>
+
+<script>
+(() => {
+"use strict";
+const $ = id => document.getElementById(id);
+const esc = s => String(s).replace(/[&<>]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;'}[c]));
+function fmt(s){s=Math.max(0,s|0);return String(s/60|0).padStart(2,'0')+':'+String(s%60).padStart(2,'0');}
+const stamp=()=>new Date().toISOString().slice(0,19).replace(/[:T]/g,'-');
+function dl2(blob,name){ const u=URL.createObjectURL(blob),a=document.createElement('a');
+  a.href=u; a.download=name; a.click(); setTimeout(()=>URL.revokeObjectURL(u),4000); }
+
+/* ═══════ micro + enregistrement WAV ═══════ */
+let micStream=null, mediaRec=null, recChunks=[], recording=false, recTimer=null, recStartPerf=0, recBlob=null, wavBlob=null;
+async function ensureMic(){
+  if(micStream) return micStream;
+  micStream=await navigator.mediaDevices.getUserMedia({audio:{echoCancellation:false,noiseSuppression:false,autoGainControl:false}});
+  return micStream;
+}
+function pickMime(){ const c=['audio/webm;codecs=opus','audio/webm','audio/mp4','audio/ogg'];
+  for(const m of c) if(window.MediaRecorder && MediaRecorder.isTypeSupported && MediaRecorder.isTypeSupported(m)) return m;
+  return ''; }
+$('rec').onclick = async () => {
+  if(recording){ if(mediaRec) mediaRec.stop(); return; }
+  let st; try{ st=await ensureMic(); }catch(e){ $('recState').textContent="Micro refusé."; return; }
+  if(!window.MediaRecorder){ $('recState').textContent='MediaRecorder non supporté ici.'; return; }
+  recChunks=[]; recBlob=null; wavBlob=null;
+  const mime=pickMime();
+  try{ mediaRec=new MediaRecorder(st, mime?{mimeType:mime}:undefined); }
+  catch(e){ $('recState').textContent='Enregistrement indisponible.'; return; }
+  mediaRec.ondataavailable=e=>{ if(e.data&&e.data.size) recChunks.push(e.data); };
+  mediaRec.onstop=onRecStop;
+  mediaRec.start(); recording=true; recStartPerf=performance.now();
+  $('rec').textContent='■ Arrêter'; $('rec').classList.add('ko');
+  $('recDl').disabled=true; $('trGo').disabled=true;
+  recTimer=setInterval(()=>{ $('recState').textContent='Enregistrement — '+fmt((performance.now()-recStartPerf)/1000); },250);
+};
+async function onRecStop(){
+  recording=false; clearInterval(recTimer);
+  $('rec').textContent='● Enregistrer'; $('rec').classList.remove('ko');
+  const type=(mediaRec&&mediaRec.mimeType)||'audio/webm';
+  recBlob=new Blob(recChunks,{type});
+  $('recState').textContent='Enregistrement prêt ('+(recBlob.size/1048576).toFixed(1)+' Mo). Conversion WAV…';
+  try{ wavBlob=await toWav(recBlob);
+    $('recState').textContent='Prêt — WAV '+(wavBlob.size/1048576).toFixed(1)+' Mo, 16 kHz mono.';
+  }catch(e){ wavBlob=null; $('recState').textContent='Prêt (conversion WAV impossible — format brut).'; }
+  $('recDl').disabled=false; $('trGo').disabled=false;
+}
+$('recDl').onclick=()=>{ const b=wavBlob||recBlob; if(!b) return;
+  const ext=wavBlob?'wav':((recBlob.type||'').indexOf('mp4')>=0?'m4a':'webm');
+  dl2(b,'box-radio-'+stamp()+'.'+ext); };
+async function toWav(blob){
+  const AC=window.AudioContext||window.webkitAudioContext;
+  const ctx=new AC(), ab=await blob.arrayBuffer(), buf=await ctx.decodeAudioData(ab);
+  if(ctx.close) ctx.close();
+  const tgt=16000, ch=buf.getChannelData(0), ratio=buf.sampleRate/tgt;
+  const outLen=Math.max(1,Math.floor(ch.length/ratio)), out=new Float32Array(outLen);
+  for(let i=0;i<outLen;i++){ const p=i*ratio, i0=p|0, f=p-i0, a=ch[i0]||0, b=(i0+1<ch.length?ch[i0+1]:a); out[i]=a+(b-a)*f; }
+  return encodeWav(out,tgt);
+}
+function encodeWav(samples,rate){
+  const n=samples.length, buf=new ArrayBuffer(44+n*2), v=new DataView(buf);
+  const ws=(o,s)=>{ for(let i=0;i<s.length;i++) v.setUint8(o+i,s.charCodeAt(i)); };
+  ws(0,'RIFF'); v.setUint32(4,36+n*2,true); ws(8,'WAVE'); ws(12,'fmt ');
+  v.setUint32(16,16,true); v.setUint16(20,1,true); v.setUint16(22,1,true);
+  v.setUint32(24,rate,true); v.setUint32(28,rate*2,true); v.setUint16(32,2,true); v.setUint16(34,16,true);
+  ws(36,'data'); v.setUint32(40,n*2,true);
+  let o=44; for(let i=0;i<n;i++){ const x=Math.max(-1,Math.min(1,samples[i])); v.setInt16(o,x<0?x*32768:x*32767,true); o+=2; }
+  return new Blob([buf],{type:'audio/wav'});
+}
+
+/* ═══════ transcription Voxtral ═══════ */
+$('trGo').onclick=async ()=>{
+  const key=$('trKey').value.trim(), b=wavBlob||recBlob;
+  if(!key){ $('trOut').innerHTML='<span class="tm">Renseigne ta clé API Mistral.</span>'; return; }
+  if(!b){ $('trOut').innerHTML='<span class="tm">Aucun enregistrement à transcrire.</span>'; return; }
+  $('trGo').disabled=true; $('trOut').textContent="Envoi à Voxtral… (l'audio quitte l'appareil pour cette étape)";
+  const fd=new FormData();
+  fd.append('file', b, wavBlob?'box-radio.wav':'box-radio.webm');
+  fd.append('model','voxtral-mini-latest'); fd.append('language','fr'); fd.append('timestamp_granularities','segment');
+  try{
+    const r=await fetch('https://api.mistral.ai/v1/audio/transcriptions',{ method:'POST', headers:{'x-api-key':key}, body:fd });
+    if(!r.ok){ const t=await r.text().catch(()=> ''); throw new Error('HTTP '+r.status+' '+t.slice(0,180)); }
+    renderTranscript(await r.json());
+  }catch(e){
+    $('trOut').innerHTML='<span class="tm">Échec : '+esc(String(e.message||e))+'.</span><br>'+
+      "Si l'erreur parle de réseau/CORS, l'appel direct depuis le navigateur est refusé par l'API : il faut un petit relais (Cloudflare Worker) qui garde la clé côté serveur.";
+  }
+  $('trGo').disabled=false;
+};
+function renderTranscript(j){
+  const segs=(j&&j.segments)||[];
+  let html='<div class="warn">Transcription <b>non vérifiée</b> — l\'ASR fabrique des mots sur du bruit. À confirmer à l\'oreille sur l\'audio brut.</div>';
+  if(segs.length){
+    html+='<table><thead><tr><th>t</th><th>texte (auto, non vérifié)</th></tr></thead><tbody>'+
+      segs.map(s=>'<tr><td>'+fmt(s.start||0)+'</td><td class="w">'+esc(s.text||'')+'</td></tr>').join('')+'</tbody></table>';
+  } else html+='<p class="w">'+esc((j&&j.text)||'(transcription vide)')+'</p>';
+  $('trOut').innerHTML=html;
+}
+
+/* ═══════ caméra + silhouette IA ═══════ */
+let vstream=null, camActive=false, poseLM=null, aiOn=false, lastPose=null;
+const POSE_CONN=[[11,12],[11,13],[13,15],[12,14],[14,16],[11,23],[12,24],[23,24],[23,25],[25,27],[24,26],[26,28],[0,11],[0,12]];
+function drawSkeleton(g,lms,vw,vh){
+  g.strokeStyle='#E9B44C'; g.fillStyle='#E9B44C'; g.lineWidth=3; g.lineCap='round';
+  for(const c of POSE_CONN){ const a=lms[c[0]],b=lms[c[1]]; if(!a||!b) continue;
+    g.beginPath(); g.moveTo(a.x*vw,a.y*vh); g.lineTo(b.x*vw,b.y*vh); g.stroke(); }
+  for(const p of lms){ g.beginPath(); g.arc(p.x*vw,p.y*vh,3.5,0,7); g.fill(); }
+}
+$('pCam').onclick = async () => {
+  if(vstream){ stopCam(); return; }
+  try{
+    vstream=await navigator.mediaDevices.getUserMedia({video:{facingMode:'environment',width:320,height:240}});
+    const v=$('vid'); v.srcObject=vstream; await v.play();
+    camActive=true; $('pCam').textContent='Couper la caméra'; $('pCam').classList.add('act');
+    $('aiBtn').disabled=false; $('camView').style.display='block';
+    const view=$('camView'), vg=view.getContext('2d'), vw=view.width, vh=view.height;
+    (function loop(){
+      if(!vstream) return;
+      vg.drawImage(v,0,0,vw,vh);
+      if(aiOn && lastPose && performance.now()-lastPoseT<600) drawSkeleton(vg,lastPose,vw,vh);
+      setTimeout(loop,80);
+    })();
+  }catch(e){ $('pCam').classList.add('ko'); camActive=false; }
+};
+function stopCam(){
+  aiOn=false; $('aiBtn').classList.remove('act'); $('aiBtn').disabled=true;
+  if(vstream){ vstream.getTracks().forEach(t=>t.stop()); vstream=null; }
+  camActive=false; lastPose=null; $('camView').style.display='none';
+  $('pCam').textContent='Activer la caméra'; $('pCam').classList.remove('act'); $('poseState').textContent='';
+}
+let lastPoseT=-1e9, lastVT=-1;
+$('aiBtn').onclick=async ()=>{
+  if(aiOn){ aiOn=false; $('aiBtn').classList.remove('act'); $('poseState').textContent='Silhouette IA arrêtée.'; return; }
+  if(!camActive){ $('poseState').textContent="Active d'abord la caméra."; return; }
+  $('poseState').textContent='Chargement du modèle (~5 Mo, une seule fois)…';
+  try{
+    if(!poseLM){
+      const vision=await import('https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10/vision_bundle.mjs');
+      const fsr=await vision.FilesetResolver.forVisionTasks('https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10/wasm');
+      poseLM=await vision.PoseLandmarker.createFromOptions(fsr,{
+        baseOptions:{modelAssetPath:'https://storage.googleapis.com/mediapipe-models/pose_landmarker/pose_landmarker_lite/float16/1/pose_landmarker_lite.task'},
+        runningMode:'VIDEO', numPoses:1 });
+    }
+    aiOn=true; $('aiBtn').classList.add('act');
+    $('poseState').innerHTML='Silhouette IA active — <b>expérimental</b>. Un squelette doré apparaît si le modèle croit voir quelqu\'un.';
+    (function aiLoop(){
+      if(!aiOn) return;
+      const v=$('vid');
+      if(v && v.videoWidth && v.currentTime!==lastVT){
+        lastVT=v.currentTime;
+        try{
+          const res=poseLM.detectForVideo(v, performance.now());
+          if(res && res.landmarks && res.landmarks.length){
+            lastPose=res.landmarks[0]; lastPoseT=performance.now();
+            let vis=0,cnt=0; for(const p of lastPose){ if(p.visibility!=null){ vis+=p.visibility; cnt++; } }
+            $('poseState').innerHTML='Présence estimée <b>'+(cnt?Math.round(vis/cnt*100):100)+'%</b> — à vérifier de tes yeux.';
+          } else { lastPose=null; $('poseState').textContent='Rien détecté.'; }
+        }catch(e){}
+      }
+      requestAnimationFrame(aiLoop);
+    })();
+  }catch(e){ aiOn=false; $('aiBtn').classList.remove('act'); $('poseState').textContent='Silhouette IA indisponible (le modèle n\'a pas pu se charger — réseau ?).'; }
+};
+})();
+</script>
+</body>
+</html>
