@@ -190,11 +190,16 @@ function renderTranscript(j){
 /* ═══════ caméra + silhouette IA ═══════ */
 let vstream=null, camActive=false, poseLM=null, aiOn=false, lastPose=null;
 const POSE_CONN=[[11,12],[11,13],[13,15],[12,14],[14,16],[11,23],[12,24],[23,24],[23,25],[25,27],[24,26],[26,28],[0,11],[0,12]];
+const VIS=0.4;                              // seuil de confiance par point articulaire
+// Kinect-like : os entre points fiables (or), puis les points par-dessus (vert)
 function drawSkeleton(g,lms,vw,vh){
-  g.strokeStyle='#E9B44C'; g.fillStyle='#E9B44C'; g.lineWidth=3; g.lineCap='round';
+  g.strokeStyle='#E9B44C'; g.lineWidth=4; g.lineCap='round';
   for(const c of POSE_CONN){ const a=lms[c[0]],b=lms[c[1]]; if(!a||!b) continue;
+    if((a.visibility!=null&&a.visibility<VIS)||(b.visibility!=null&&b.visibility<VIS)) continue;
     g.beginPath(); g.moveTo(a.x*vw,a.y*vh); g.lineTo(b.x*vw,b.y*vh); g.stroke(); }
-  for(const p of lms){ g.beginPath(); g.arc(p.x*vw,p.y*vh,3.5,0,7); g.fill(); }
+  g.fillStyle='#5FD3A6';
+  for(const p of lms){ if(p.visibility!=null&&p.visibility<VIS) continue;
+    g.beginPath(); g.arc(p.x*vw,p.y*vh,5.5,0,7); g.fill(); }
 }
 $('pCam').onclick = async () => {
   if(vstream){ stopCam(); return; }
@@ -240,11 +245,16 @@ $('aiBtn').onclick=async ()=>{
         lastVT=v.currentTime;
         try{
           const res=poseLM.detectForVideo(v, performance.now());
+          let ok=false, pct=0;
           if(res && res.landmarks && res.landmarks.length){
-            lastPose=res.landmarks[0]; lastPoseT=performance.now();
-            let vis=0,cnt=0; for(const p of lastPose){ if(p.visibility!=null){ vis+=p.visibility; cnt++; } }
-            $('poseState').innerHTML='Présence estimée <b>'+(cnt?Math.round(vis/cnt*100):100)+'%</b> — à vérifier de tes yeux.';
-          } else { lastPose=null; $('poseState').textContent='Rien détecté.'; }
+            const lms=res.landmarks[0]; let vis=0,cnt=0,strong=0;
+            for(const p of lms){ if(p.visibility!=null){ vis+=p.visibility; cnt++; if(p.visibility>=VIS) strong++; } }
+            pct = cnt? Math.round(vis/cnt*100) : 0;
+            ok = strong>=8 && pct>=45;     // assez de points fiables → vraie personne, pas du bruit
+          }
+          if(ok){ lastPose=res.landmarks[0]; lastPoseT=performance.now();
+            $('poseState').innerHTML='Personne détectée — présence <b>'+pct+'%</b>. À vérifier de tes yeux.'; }
+          else { lastPose=null; $('poseState').textContent='Rien de convaincant — aucun squelette tracé.'; }
         }catch(e){}
       }
       requestAnimationFrame(aiLoop);

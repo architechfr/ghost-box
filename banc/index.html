@@ -105,7 +105,7 @@ video{display:none}
 <body>
 <div class="wrap">
 
-<h1>Banc d'essai <span style="font-size:11px;color:var(--signal);letter-spacing:.12em">v6</span></h1>
+<h1>Banc d'essai <span style="font-size:11px;color:var(--signal);letter-spacing:.12em">v7</span></h1>
 <p class="sub">L'appareil reste <b>silencieux</b> par défaut. Il apprend d'abord le comportement normal du capteur, puis n'émet un mot que si une mesure s'écarte nettement de cette normale.</p>
 
 <div class="step">
@@ -121,7 +121,7 @@ video{display:none}
   <div class="grid" id="caps"></div>
   <p id="camWatch" class="ex"></p>
   <canvas id="camView" width="320" height="240"></canvas>
-  <p id="camHint" class="ex" style="display:none">Image en direct. Si un mouvement forme une silhouette, un bonhomme bâton s'y dessine. La détection de squelette par IA est dans l'outil <a href="../contact-ia/" style="color:var(--gold)">Contact via IA</a>.</p>
+  <p id="camHint" class="ex" style="display:none">Image en direct. La détection de mouvement alimente le capteur « Forme caméra » et le témoin visuel — aucun dessin de silhouette ici. Le vrai squelette de personne (points → os, type Kinect, seulement si quelqu'un est détecté) est dans l'outil <a href="../contact-ia/" style="color:var(--gold)">Contact via IA</a>.</p>
   <details id="dorm"><summary>Capteurs indisponibles</summary><div class="grid" id="capsOff"></div></details>
 </div>
 
@@ -411,17 +411,6 @@ function largestBlob(mask,W,H){
   return best;
 }
 function shuffleMask(a){ const b=a.slice(); for(let i=b.length-1;i>0;i--){ const j=(Math.random()*(i+1))|0; const t=b[i];b[i]=b[j];b[j]=t; } return b; }
-/* bonhomme bâton ajusté à une boîte (mouvement détecté) */
-function drawStick(g,x,y,w,h){
-  g.strokeStyle='#5FD3A6'; g.fillStyle='#5FD3A6'; g.lineWidth=Math.max(2,w*0.035); g.lineCap='round';
-  const cx=x+w/2, headR=Math.max(5,Math.min(w,h)*0.13), headY=y+headR;
-  g.beginPath(); g.arc(cx,headY,headR,0,7); g.stroke();
-  const neck=headY+headR, hip=y+h*0.60, foot=y+h;
-  g.beginPath(); g.moveTo(cx,neck); g.lineTo(cx,hip); g.stroke();
-  const sh=neck+(hip-neck)*0.18;
-  g.beginPath(); g.moveTo(cx,sh); g.lineTo(x+w*0.10,sh+h*0.20); g.moveTo(cx,sh); g.lineTo(x+w*0.90,sh+h*0.20); g.stroke();
-  g.beginPath(); g.moveTo(cx,hip); g.lineTo(x+w*0.18,foot); g.moveTo(cx,hip); g.lineTo(x+w*0.82,foot); g.stroke();
-}
 $('pCam').onclick = async () => {
   if(vstream){ stopCam(); return; }
   try{
@@ -455,8 +444,6 @@ $('pCam').onclick = async () => {
       const view=$('camView'), vg=view.getContext('2d'), vw=view.width, vh=view.height;
       if(view.style.display!=='block'){ view.style.display='block'; $('camHint').style.display='block'; }
       vg.drawImage(v,0,0,vw,vh);
-      if(frac>=CAM_DET){ const sx=vw/CW, sy=vh/CH;
-        drawStick(vg, live.minx*sx, live.miny*sy, (live.maxx-live.minx+1)*sx, (live.maxy-live.miny+1)*sy); }
       prevFrame=cur; setTimeout(loop,90);
     })();
   }catch(e){ mark('pCam',false); camActive=false; }
