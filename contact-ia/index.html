@@ -335,7 +335,7 @@ $('aiBtn').onclick=async ()=>{
         if(r){ lastPeople=r.people; lastPoseT=performance.now();
           $('poseState').innerHTML='<b>'+r.count+' personne'+(r.count>1?'s':'')+' détectée'+(r.count>1?'s':'')+'</b> — '
             +r.people.map((p,i)=>'n°'+(i+1)+' '+p.pct+' %').join(' · ')+'. À vérifier de tes yeux.'; }
-        else { lastPeople=null; $('poseState').textContent='Rien de convaincant — aucun squelette tracé.'; }
+        else { lastPeople=null; $('poseState').innerHTML='Aucune personne confirmée — <span style="color:var(--dim)">'+esc(POSE.why()||'…')+'</span>'; }
       }
       requestAnimationFrame(aiLoop);
     })();

@@ -90,7 +90,7 @@ video.player{width:100%;margin-top:8px;border:1px solid var(--line);border-radiu
 
 <div class="top"><div class="topin">
   <a class="back" href="../">←</a>
-  <h1>Vision <span style="font-size:10px;color:var(--signal)">v4</span></h1>
+  <h1>Vision <span style="font-size:10px;color:var(--signal)">v5</span></h1>
   <span class="recdot" id="recDot">● <span id="recT">00:00</span></span>
 </div></div>
 
@@ -131,8 +131,10 @@ video.player{width:100%;margin-top:8px;border:1px solid var(--line);border-radiu
 </div>
 
 <div class="step">
-  <div class="lg">5 — Enregistrements <span id="libCount" style="color:var(--paper)"></span></div>
-  <p class="ex">Vidéos et <b>photos instantanées</b> (bouton ○ flottant), stockées sur cet appareil uniquement. Supprime-les quand tu veux — elles occupent de la place.</p>
+  <div class="lg" id="biblio">5 — Enregistrements <span id="libCount" style="color:var(--paper)"></span></div>
+  <div class="warn">Vidéos et <b>photos instantanées</b> de tous les modes arrivent <b>ici</b>, et nulle part ailleurs : elles sont rangées dans l'application, <b>pas dans la galerie photo du téléphone</b>. Pour qu'un fichier rejoigne la galerie, appuie sur <b>Télécharger</b> — il ira dans les téléchargements de l'appareil, visible depuis la galerie et partageable.</div>
+  <p class="ex">Supprime-les quand tu veux : elles occupent de la place sur l'appareil.</p>
+  <div class="row"><button id="dlAll">Tout envoyer vers le téléphone</button></div>
   <div id="lib"><p class="empty">Aucun enregistrement.</p></div>
   <div class="row">
     <button id="wipe">Tout supprimer</button>
@@ -360,7 +362,7 @@ $('camAi').onclick=async ()=>{
       });
       $('aiState').innerHTML = total
         ? '<b>'+total+' personne'+(total>1?'s':'')+'</b> — '+detail.join(' · ')
-        : 'Aucune personne reconnue pour l\'instant.';
+        : 'Aucune personne confirmée — <span style="color:var(--dim)">'+esc(POSE.why()||'…')+'</span>';
       requestAnimationFrame(loopAi);
     })();
   }catch(e){ aiOn=false; $('camAi').className='';
@@ -485,6 +487,19 @@ async function renderLib(){
   }
   $('libStat').textContent='Total '+mo(total)+quota;
 }
+/* envoyer toute la bibliothèque vers les téléchargements du téléphone (donc la galerie) */
+$('dlAll').onclick=async ()=>{
+  let all=[]; try{ all=await dbAll(); }catch(e){}
+  if(!all.length){ $('libStat').textContent='Rien à envoyer.'; return; }
+  if(!confirm('Envoyer '+all.length+' fichier(s) vers le téléphone ?')) return;
+  all.sort((a,b)=>a.id-b.id);
+  for(let i=0;i<all.length;i++){
+    dl(all[i].blob, all[i].nom);
+    $('libStat').textContent='Envoi '+(i+1)+' / '+all.length+'…';
+    await new Promise(r=>setTimeout(r,700));   // le navigateur refuse les rafales
+  }
+  $('libStat').textContent='Terminé — les fichiers sont dans les téléchargements de l\'appareil.';
+};
 $('wipe').onclick=async ()=>{
   if(!confirm('Supprimer TOUS les enregistrements ? Action définitive.')) return;
   await dbClear(); renderLib();

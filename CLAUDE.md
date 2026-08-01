@@ -38,6 +38,14 @@ Ce projet a une exigence de sincérité qui prime sur toute fonctionnalité. Un 
 8. **Une capture doit être possible à tout instant** — bouton flottant, jamais un bouton qu'il faut aller chercher en faisant défiler la page. Une observation ne prévient pas.
 9. **L'IA ne fabrique pas de sens.** Elle ne relie jamais les mots en phrases. La transcription est marquée « non vérifiée » car ces modèles inventent des mots sur du bruit.
 
+## Architecture — pourquoi elle est ainsi
+
+**Un `index.html` par dossier est voulu**, pas une duplication : c'est la convention des sites statiques, qui donne des URL propres (`/vision/` plutôt que `/vision.html`). GitHub Pages s'appuie dessus. Ne pas « fusionner les index ».
+
+**Ce qui est commun vit dans `lib/`**, jamais recopié dans une page : détection de personne, capture, plein écran, veille écran, messages d'erreur média. Toute logique utilisée par deux pages ou plus doit y être extraite.
+
+**Une donnée n'a qu'une source de vérité.** Le lexique vit dans `data/lexique.json` (régénéré par `data/gen_lexique.py`) et est chargé par `fetch` — il était auparavant recopié en dur dans `banc/index.html` (26 Ko dupliqués), ce qui garantissait une divergence dès la première régénération. Ne jamais réembarquer une donnée déjà fichée.
+
 ## Contraintes techniques connues (ne pas re-promettre)
 
 - **Deux caméras simultanées : possible sur l'appareil de terrain**, contrairement à la règle générale souvent citée. Vérifié en usage réel (« 2 flux actifs » dans Vision, avant + arrière). Le mode réalisateur ouvre donc deux vrais flux composés côte à côte et enregistrés ensemble. Ne jamais revenir à une alternance de flux : essayée, elle figeait l'image et donnait un écran noir.

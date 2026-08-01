@@ -68,7 +68,7 @@ video{display:none}
 <body>
 
 <div class="top"><div class="topin">
-  <a href="../">←</a><h1>Réalisateur <span style="font-size:10px;color:var(--signal)">v6</span></h1>
+  <a href="../">←</a><h1>Réalisateur <span style="font-size:10px;color:var(--signal)">v7</span></h1>
   <span class="lg" id="phase">à préparer</span>
 </div></div>
 
@@ -299,7 +299,8 @@ $('aiBtn').onclick=async ()=>{
         const r=POSE.detect(v);
         if(r){ lastPeople=r.people; lastPoseT=performance.now();
           $('aiState').innerHTML='<b>'+r.count+' personne'+(r.count>1?'s':'')+'</b> suivie'+(r.count>1?'s':'')+' — squelettes incrustés dans la vidéo.'; }
-        else lastPeople=null;
+        else { lastPeople=null;
+          $('aiState').innerHTML='Aucune personne confirmée — <span style="color:var(--dim)">'+esc(POSE.why()||'…')+'</span>'; }
       }
       requestAnimationFrame(aiLoop);
     })();
