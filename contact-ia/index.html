@@ -391,6 +391,12 @@ async function dbPut(o){ const d=await db(); return new Promise((res,rej)=>{
 
 listLenses();
 
+
+/* Une caméra retenue par une page en arrière-plan bloque TOUS les autres modes.
+   On la libère dès que la page n'est plus visible — sauf pendant un enregistrement. */
+addEventListener('visibilitychange',()=>{
+  if(document.hidden && !vRecOn){ try{stopCam();}catch(e){} }
+});
 /* libère la caméra en quittant la page : sinon elle reste prise et les autres
    modes affichent « déjà utilisée » (cause racine du problème constaté) */
 addEventListener('pagehide',()=>{ try{stopCam();}catch(e){} try{if(micStream)micStream.getTracks().forEach(t=>t.stop());}catch(e){} });

@@ -49,7 +49,9 @@ Ce projet a une exigence de sincérité qui prime sur toute fonctionnalité. Un 
 ## Contraintes techniques connues (ne pas re-promettre)
 
 - **Deux caméras simultanées : possible sur l'appareil de terrain**, contrairement à la règle générale souvent citée. Vérifié en usage réel (« 2 flux actifs » dans Vision, avant + arrière). Le mode réalisateur ouvre donc deux vrais flux composés côte à côte et enregistrés ensemble. Ne jamais revenir à une alternance de flux : essayée, elle figeait l'image et donnait un écran noir.
-- **Toujours libérer caméra et micro sur `pagehide`.** Sans ça, la caméra reste prise en changeant de mode et tous les autres modes affichent « déjà utilisée » — cause racine d'une panne constatée.
+- **`lib/pose.js` ne détecte QUE des humains.** MediaPipe PoseLandmarker est un modèle de pose humaine : un chien, un chat, un objet ne seront jamais détectés, quel que soit le réglage. Pour une « présence » au sens large (animal compris), il faudrait un modèle de détection d'objets (COCO-SSD). Ne jamais laisser croire que l'absence de squelette signifie « rien de vivant ».
+- **Ne pas juger une personne sur la moyenne des 33 points** : assise ou partiellement cachée, la moitié de son corps est invisible et la moyenne s'effondre. Juger sur les points RÉELLEMENT vus + une structure de torse (au moins une épaule).
+- **Toujours libérer caméra et micro sur `pagehide` ET sur `visibilitychange`** (page cachée, hors enregistrement). Sans ça, la caméra reste prise en changeant de mode et tous les autres modes affichent « déjà utilisée » — cause racine d'une panne constatée.
 - Certains objectifs listés (macro, profondeur) ne s'ouvrent pas : c'est normal, l'erreur doit être expliquée à l'utilisateur, jamais silencieuse.
 - Un téléphone **n'a pas de récepteur radio** : le micro enregistre le *son* de la box, pas les ondes.
 - Pas de capteur de profondeur : la détection de personne est fragile dans le noir.

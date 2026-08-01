@@ -1101,6 +1101,12 @@ $('camHide').onclick=()=>{
 
 buildCards(); setInterval(paintCards,150); checkReady(); drawZ(0);
 
+
+/* Une caméra retenue par une page en arrière-plan bloque TOUS les autres modes.
+   On la libère dès que la page n'est plus visible — sauf pendant un enregistrement. */
+addEventListener('visibilitychange',()=>{
+  if(document.hidden && !recording){ try{stopCam();}catch(e){} }
+});
 /* libère la caméra en quittant la page : sinon elle reste prise et les autres
    modes affichent « déjà utilisée » (cause racine du problème constaté) */
 addEventListener('pagehide',()=>{ try{stopCam();}catch(e){} try{stopMic();}catch(e){} });
