@@ -932,6 +932,10 @@ $('camHide').onclick=()=>{
 };
 
 buildCards(); setInterval(paintCards,150); checkReady(); drawZ(0);
+
+/* libère la caméra en quittant la page : sinon elle reste prise et les autres
+   modes affichent « déjà utilisée » (cause racine du problème constaté) */
+addEventListener('pagehide',()=>{ try{stopCam();}catch(e){} try{stopMic();}catch(e){} });
 })();
 </script>
 <script>if('serviceWorker' in navigator){window.addEventListener('load',function(){navigator.serviceWorker.register('/ghost-box/sw.js').catch(function(){});});}</script>

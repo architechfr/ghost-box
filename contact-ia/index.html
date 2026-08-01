@@ -388,6 +388,10 @@ async function dbPut(o){ const d=await db(); return new Promise((res,rej)=>{
   t.oncomplete=()=>res(); t.onerror=()=>rej(t.error); }); }
 
 listLenses();
+
+/* libère la caméra en quittant la page : sinon elle reste prise et les autres
+   modes affichent « déjà utilisée » (cause racine du problème constaté) */
+addEventListener('pagehide',()=>{ try{stopCam();}catch(e){} try{if(micStream)micStream.getTracks().forEach(t=>t.stop());}catch(e){} });
 })();
 </script>
 <script>if('serviceWorker' in navigator){window.addEventListener('load',function(){navigator.serviceWorker.register('/ghost-box/sw.js').catch(function(){});});}</script>

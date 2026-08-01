@@ -62,12 +62,13 @@ td.w{font-family:var(--body);font-size:14px;color:var(--paper)}
 .warn{margin-top:10px;padding:10px 12px;border-left:2px solid var(--gold);background:#1E1A12;
   font-size:12.5px;line-height:1.55;color:#E4D3AE}
 video{display:none}
+#vid2{display:none}
 </style>
 </head>
 <body>
 
 <div class="top"><div class="topin">
-  <a href="../">←</a><h1>Réalisateur <span style="font-size:10px;color:var(--signal)">v4</span></h1>
+  <a href="../">←</a><h1>Réalisateur <span style="font-size:10px;color:var(--signal)">v5</span></h1>
   <span class="lg" id="phase">à préparer</span>
 </div></div>
 
@@ -79,8 +80,10 @@ video{display:none}
   <p class="ex"><b>Aucun réglage de fréquence.</b> L'appareil n'a pas de quota de mots : il parle si — et seulement si — une mesure dépasse tout ce que son propre bruit peut produire. Combien de mots sortiront n'est pas un paramètre, c'est le <b>résultat</b>. Souvent zéro.</p>
   <div class="row">
     <button id="prep">Préparer le tournage</button>
+    <button id="twoCam" disabled>Deux caméras</button>
     <button id="selftest" disabled>Tester la chaîne</button>
   </div>
+  <p id="twoState" class="ex"></p>
   <p id="prepState" class="ex">La caméra et le micro sont nécessaires. L'appareil apprendra 45 s le bruit du lieu avant de pouvoir émettre quoi que ce soit.</p>
   <div class="lg" style="margin-top:14px">objectif</div>
   <div id="lenses" class="row"></div>
@@ -109,6 +112,7 @@ video{display:none}
 </div>
 
 <video id="vid" playsinline muted></video>
+<video id="vid2" playsinline muted></video>
 
 <script>
 (() => {
@@ -205,10 +209,51 @@ async function useLens(id){
                 : {facingMode:'environment',width:{ideal:1280},height:{ideal:720}}, audio:false});
     const v=$('vid'); v.srcObject=vstream; await v.play().catch(()=>{});
     curLens=vstream.getVideoTracks()[0].getSettings().deviceId||id;
-    if(v.videoWidth){ const r=v.videoHeight/v.videoWidth;
-      cv.width=Math.min(1280,v.videoWidth); cv.height=Math.round(cv.width*r); }
+    sizeStage();
     bg=null; await listLenses();
   }catch(e){ $('prepState').innerHTML='<b style="color:var(--flag)">Caméra indisponible.</b> '+(window.GBMedia?GBMedia.explain(e):'Accès impossible.'); }
+}
+
+
+/* ── deux caméras en même temps ──
+   Certains téléphones l'acceptent réellement (constaté sur l'appareil de terrain).
+   On tente le double flux ; s'il est refusé, on le dit et on reste à une caméra.
+   Les deux vues sont composées côte à côte, donc ENREGISTRÉES ensemble. */
+let vstream2=null, twoCam=false;
+$('twoCam').onclick=async ()=>{
+  if(twoCam){
+    twoCam=false; $('twoCam').className='';
+    if(vstream2){ vstream2.getTracks().forEach(t=>t.stop()); vstream2=null; }
+    $('twoState').textContent='Vue unique.'; sizeStage(); return;
+  }
+  $('twoState').textContent='Ouverture de la seconde caméra…';
+  try{
+    const back=curLens;
+    const other=lenses.find(d=>d.deviceId!==back);
+    vstream2=await navigator.mediaDevices.getUserMedia({
+      video: other? {deviceId:{exact:other.deviceId},width:{ideal:640}} : {facingMode:'user',width:{ideal:640}},
+      audio:false});
+    const v2=$('vid2'); v2.srcObject=vstream2; await v2.play().catch(()=>{});
+    const t0=$('vid').currentTime;
+    await new Promise(r=>setTimeout(r,1200));
+    const bothLive = v2.videoWidth>0 && $('vid').currentTime>t0+0.05;
+    if(!bothLive) throw new Error('flux coupé');
+    twoCam=true; $('twoCam').className='act';
+    $('twoState').innerHTML='<b style="color:var(--signal)">Deux caméras en direct</b> — les deux vues sont enregistrées côte à côte.';
+    sizeStage();
+  }catch(e){
+    if(vstream2){ vstream2.getTracks().forEach(t=>t.stop()); vstream2=null; }
+    twoCam=false; $('twoCam').className='';
+    $('twoState').innerHTML='Ton téléphone refuse la seconde caméra. '+(window.GBMedia?GBMedia.explain(e):'');
+    sizeStage();
+  }
+};
+/* le cadre s'adapte : une vue, ou deux côte à côte */
+function sizeStage(){
+  const v=$('vid'); if(!v||!v.videoWidth) return;
+  const r=v.videoHeight/v.videoWidth;
+  if(twoCam){ cv.width=Math.min(1280,v.videoWidth); cv.height=Math.round(cv.width*r/2); }
+  else { cv.width=Math.min(1280,v.videoWidth); cv.height=Math.round(cv.width*r); }
 }
 
 /* ── plein écran ── */
@@ -271,7 +316,7 @@ $('prep').onclick=async ()=>{
   WA=mkW('audio','Niveau sonore'); WM=mkW('mouvement','Mouvement');
   learning=true; tLearn=performance.now(); tStart=tLearn; bg=null; mHits=0; cHits=0;
   $('prep').className='act'; $('prep').textContent='Caméra active';
-  $('selftest').disabled=false; $('aiBtn').disabled=false;
+  $('selftest').disabled=false; $('aiBtn').disabled=false; $('twoCam').disabled=false;
   $('phase').textContent='apprentissage';
   $('prepState').innerHTML='Apprentissage du bruit du lieu — <b>ne bouge pas</b> pendant ce temps.';
   render(); measure();
@@ -393,7 +438,15 @@ $('expJ').onclick=()=>{
 function render(){
   if(!vstream) return;
   const v=$('vid'), W=cv.width, H=cv.height, now=performance.now();
-  if(v.videoWidth) g.drawImage(v,0,0,W,H); else { g.fillStyle='#000'; g.fillRect(0,0,W,H); }
+  if(twoCam && $('vid2').videoWidth){
+    const half=W/2;
+    g.fillStyle='#000'; g.fillRect(0,0,W,H);
+    if(v.videoWidth) g.drawImage(v,0,0,half,H);
+    g.drawImage($('vid2'),half,0,half,H);
+    g.strokeStyle='#2C383F'; g.lineWidth=2; g.beginPath(); g.moveTo(half,0); g.lineTo(half,H); g.stroke();
+  }
+  else if(v.videoWidth) g.drawImage(v,0,0,W,H);
+  else { g.fillStyle='#000'; g.fillRect(0,0,W,H); }
   const S=W/960;                                  // échelle des incrustations
   g.textBaseline='top';
   // bandeau haut : lieu + heure
@@ -424,7 +477,7 @@ function render(){
   }
   // squelette réel, incrusté dans l'image enregistrée (seulement si une personne est détectée)
   if(aiOn && lastPeople && now-lastPoseT<600){
-    POSE.drawAll(g,lastPeople,W,H,S);
+    POSE.drawAll(g,lastPeople,twoCam? W/2 : W,H,S);
     g.fillStyle='#E9B44C'; g.font=(13*S|0)+'px monospace';
     g.fillText(lastPeople.length+' PERSONNE'+(lastPeople.length>1?'S':'')+' DÉTECTÉE'+(lastPeople.length>1?'S':''), 10*S, 62*S);
   }
@@ -499,6 +552,10 @@ async function dbPut(o){ const d=await db(); return new Promise((res,rej)=>{
   t.oncomplete=()=>res(); t.onerror=()=>rej(t.error); }); }
 
 renderJ();
+
+/* libère la caméra en quittant la page : sinon elle reste prise et les autres
+   modes affichent « déjà utilisée » (cause racine du problème constaté) */
+addEventListener('pagehide',()=>{ try{if(vstream)vstream.getTracks().forEach(t=>t.stop());}catch(e){} try{if(vstream2)vstream2.getTracks().forEach(t=>t.stop());}catch(e){} try{if(micStream)micStream.getTracks().forEach(t=>t.stop());}catch(e){} });
 })();
 </script>
 <script>if('serviceWorker' in navigator){window.addEventListener('load',function(){navigator.serviceWorker.register('/ghost-box/sw.js').catch(function(){});});}</script>

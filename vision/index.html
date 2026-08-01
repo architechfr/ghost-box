@@ -53,6 +53,11 @@ button.on{background:var(--gold);color:#191204;border-color:var(--gold)}
 #lenses button{flex:1;min-width:96px;font-size:12px;letter-spacing:.08em}
 
 #grid{display:grid;gap:8px;margin-top:12px}
+#grid:fullscreen{margin:0;gap:2px;background:#000;width:100vw;height:100vh;
+  grid-auto-flow:column;grid-template-columns:none;align-items:center;touch-action:none;overflow:hidden}
+#grid:fullscreen .cell{height:100%;border:0;border-radius:0;display:flex;align-items:center;justify-content:center}
+#grid:fullscreen .cell video{width:100%;height:100%;object-fit:contain}
+#grid:fullscreen .cell canvas.ov{inset:0}
 .cell{position:relative;background:#000;border:1px solid var(--line);border-radius:4px;overflow:hidden}
 .cell video{display:block;width:100%;height:auto}
 .cell canvas.ov{position:absolute;inset:0;width:100%;height:100%;pointer-events:none}
@@ -102,6 +107,7 @@ video.player{width:100%;margin-top:8px;border:1px solid var(--line);border-radiu
 
 <div class="step">
   <div class="lg">2 — Aperçu</div>
+  <div class="row"><button id="gridFs">Plein écran des caméras</button></div>
   <div id="grid"></div>
   <p id="camState" class="ex">Caméra éteinte.</p>
 </div>
@@ -281,26 +287,52 @@ function loopMotion(){
     // encadrer la zone qui bouge (un rectangle factuel, pas une silhouette inventée)
     const ov=c.ov, W=ov.width=v.clientWidth||320, H=ov.height=v.clientHeight||240, g=ov.getContext('2d');
     g.clearRect(0,0,W,H);
-    if(aiOn && POSE && lastPeople && performance.now()-lastPoseT<600){
-      POSE.drawAll(g,lastPeople,W,H,W/640);
-      g.fillStyle='#E9B44C'; g.font='12px monospace';
-      g.fillText(lastPeople.length+' PERSONNE'+(lastPeople.length>1?'S':'')+' DÉTECTÉE'+(lastPeople.length>1?'S':''),6,14);
-    }
-    if(prevBox){
-      const sx=W/MW, sy=H/MH;
-      g.strokeStyle='#5FD3A6'; g.lineWidth=2;
-      g.strokeRect(prevBox.minx*sx, prevBox.miny*sy, (prevBox.maxx-prevBox.minx+1)*sx, (prevBox.maxy-prevBox.miny+1)*sy);
-      g.fillStyle='#5FD3A6'; g.font='11px monospace';
-      g.fillText(frac.toFixed(1)+'%', prevBox.minx*sx+2, Math.max(11,prevBox.miny*sy-3));
-    }
     const min=Math.max(.05,(performance.now()-mStart)/60000);
     const verdict = mHits<3? '' : (mHits/min <= (cHits/min)*1.5
       ? ' — au niveau du bruit.' : ' — au-dessus du bruit.');
     $('motionStat').innerHTML='Mouvement <b>'+mHits+'</b>× ('+(mHits/min).toFixed(1)+'/min) · témoin, bruit <b>'+cHits+'</b>× ('+(cHits/min).toFixed(1)+'/min)'+verdict;
   }
+  paintOverlays();
   setTimeout(loopMotion,110);
 }
+/* squelettes sur CHAQUE vue (c'est le but du mode), rectangle de mouvement sur la principale */
+function paintOverlays(){
+  const now=performance.now();
+  cells.forEach((c,i)=>{
+    const v=c.v, ov=c.ov; if(!ov||!v) return;
+    const W=ov.width=v.clientWidth||320, H=ov.height=v.clientHeight||240, g=ov.getContext('2d');
+    g.clearRect(0,0,W,H);
+    if(i===0 && prevBox){
+      const sx=W/MW, sy=H/MH;
+      g.strokeStyle='#5FD3A6'; g.lineWidth=2;
+      g.strokeRect(prevBox.minx*sx,prevBox.miny*sy,(prevBox.maxx-prevBox.minx+1)*sx,(prevBox.maxy-prevBox.miny+1)*sy);
+    }
+    if(aiOn && POSE && c.people && now-c.peopleT<600){
+      POSE.drawAll(g,c.people,W,H,W/640);
+      g.fillStyle='#E9B44C'; g.font='12px monospace';
+      g.fillText(c.people.length+' PERSONNE'+(c.people.length>1?'S':''),6,14);
+    }
+  });
+}
 
+
+
+/* plein écran des caméras : les vues occupent tout l'écran, sans défilement */
+$('gridFs').onclick=()=>{
+  const el=$('grid');
+  if(document.fullscreenElement||document.webkitFullscreenElement){
+    (document.exitFullscreen||document.webkitExitFullscreen).call(document);
+  } else {
+    const rq=el.requestFullscreen||el.webkitRequestFullscreen;
+    if(rq){ const r=rq.call(el,{navigationUI:'hide'}); if(r&&r.catch) r.catch(()=>{}); }
+    else $('camState').textContent="Plein écran non disponible ici — installe l'application.";
+  }
+};
+document.addEventListener('fullscreenchange',()=>{
+  const on=!!document.fullscreenElement;
+  $('gridFs').textContent = on? 'Quitter le plein écran' : 'Plein écran des caméras';
+  $('gridFs').className = on? 'act' : '';
+});
 
 /* détection de personne — module partagé, règle de base de l'application */
 let POSE=null, aiOn=false, lastPeople=null, lastPoseT=-1e9, lastVT=-1;
@@ -316,15 +348,18 @@ $('camAi').onclick=async ()=>{
     $('aiState').innerHTML='Détection active — un squelette n\'apparaît que si une <b>personne réelle</b> est reconnue. Il s\'affiche à l\'écran ; pour l\'avoir <b>incrusté dans le fichier vidéo</b>, utilise le mode <a href="../realisateur/" style="color:var(--signal)">Réalisateur</a>.';
     (function loopAi(){
       if(!aiOn) return;
-      const v=cells[0] && cells[0].v;
-      if(v && v.videoWidth && v.currentTime!==lastVT){
-        lastVT=v.currentTime;
+      let total=0, detail=[];
+      cells.forEach((c,i)=>{                       // chaque vue est analysée séparément
+        const v=c.v;
+        if(!v || !v.videoWidth) return;
         const r=POSE.detect(v);
-        if(r){ lastPeople=r.people; lastPoseT=performance.now();
-          $('aiState').innerHTML='<b>'+r.count+' personne'+(r.count>1?'s':'')+'</b> — '
-            +r.people.map((p,i)=>'n°'+(i+1)+' '+p.pct+' %').join(' · '); }
-        else lastPeople=null;
-      }
+        if(r){ c.people=r.people; c.peopleT=performance.now();
+          total+=r.count; detail.push(esc(c.label)+' : '+r.count); }
+        else if(!c.peopleT || performance.now()-c.peopleT>600){ c.people=null; }
+      });
+      $('aiState').innerHTML = total
+        ? '<b>'+total+' personne'+(total>1?'s':'')+'</b> — '+detail.join(' · ')
+        : 'Aucune personne reconnue pour l\'instant.';
       requestAnimationFrame(loopAi);
     })();
   }catch(e){ aiOn=false; $('camAi').className='';
@@ -448,6 +483,10 @@ $('wipe').onclick=async ()=>{
 };
 
 listDevices(); renderLib();
+
+/* libère la caméra en quittant la page : sinon elle reste prise et les autres
+   modes affichent « déjà utilisée » (cause racine du problème constaté) */
+addEventListener('pagehide',()=>{ stopAll(); });
 })();
 </script>
 <script>if('serviceWorker' in navigator){window.addEventListener('load',function(){navigator.serviceWorker.register('/ghost-box/sw.js').catch(function(){});});}</script>
