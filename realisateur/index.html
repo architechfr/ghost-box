@@ -63,19 +63,41 @@ td.w{font-family:var(--body);font-size:14px;color:var(--paper)}
   font-size:12.5px;line-height:1.55;color:#E4D3AE}
 video{display:none}
 #vid2{display:none}
+/* ── écran fixe de tournage (mobile) ──
+   Pendant le tournage l'écran ne doit plus bouger : pas de défilement, pas de
+   rebond élastique, pas de barre qui apparaît. L'image occupe tout l'écran et
+   les seules commandes qui restent flottent par-dessus. */
+html.filming{height:100%;overflow:hidden}
+body.filming{position:fixed;inset:0;width:100%;height:100%;padding:0;margin:0;
+  overflow:hidden;overscroll-behavior:none;touch-action:none}
+body.filming .top,body.filming #setup,body.filming #jSec,
+body.filming #aiState,body.filming #sonState,body.filming .row{display:none}
+body.filming .wrap{max-width:none;padding:0;margin:0}
+body.filming #stageWrap{position:fixed;inset:0;margin:0;border:0;border-radius:0;background:#000;
+  display:flex;align-items:center;justify-content:center;z-index:40}
+body.filming #stage{width:auto;height:auto;max-width:100%;max-height:100%}
+body.filming #recBtn{position:fixed;z-index:60;left:10px;right:86px;width:auto;margin:0;
+  bottom:calc(14px + env(safe-area-inset-bottom));padding:16px 0;opacity:.94}
+body.filming #live{position:fixed;z-index:60;left:0;right:0;top:0;margin:0;
+  padding:6px 10px calc(6px) 10px;padding-top:calc(6px + env(safe-area-inset-top));
+  background:rgba(10,15,18,.6);font-size:11px;line-height:1.45}
+#quitFix{display:none}
+body.filming #quitFix{display:block;position:fixed;z-index:61;right:10px;
+  top:calc(46px + env(safe-area-inset-top));padding:8px 10px;font-size:11px;
+  background:rgba(20,26,30,.85)}
 </style>
 </head>
 <body>
 
 <div class="top"><div class="topin">
-  <a href="../">←</a><h1>Réalisateur <span style="font-size:10px;color:var(--signal)">v7</span></h1>
+  <a href="../">←</a><h1>Réalisateur <span style="font-size:10px;color:var(--signal)">v8</span></h1>
   <span class="lg" id="phase">à préparer</span>
 </div></div>
 
 <div class="wrap">
 
-<div class="step" style="border-top:0">
-  <p class="ex">Mode tournage : la caméra filme ce que tu vois, et l'appareil <b>incruste dans la vidéo</b> l'heure, le lieu, le niveau sonore, la détection de présence et les mots émis. Un seul fichier, lisible plus tard sans rien d'autre. Idéal au bout d'une perche, en déplacement.</p>
+<div class="step" id="setup" style="border-top:0">
+  <p class="ex">Mode tournage : la caméra filme ce que tu vois, le micro enregistre <b>le son de la ghost box radio</b>, et l'appareil <b>incruste dans la vidéo</b> l'heure, le lieu, le niveau sonore, la détection de présence et les mots émis. Un seul fichier, lisible plus tard sans rien d'autre. Idéal au bout d'une perche, en déplacement.</p>
   <div class="fld"><span class="lg">lieu</span><input type="text" id="lieu" placeholder="ex. Château de… — salle des gardes"></div>
   <p class="ex"><b>Aucun réglage de fréquence.</b> L'appareil n'a pas de quota de mots : il parle si — et seulement si — une mesure dépasse tout ce que son propre bruit peut produire. Combien de mots sortiront n'est pas un paramètre, c'est le <b>résultat</b>. Souvent zéro.</p>
   <div class="row">
@@ -85,6 +107,7 @@ video{display:none}
   </div>
   <p id="twoState" class="ex"></p>
   <p id="prepState" class="ex">La caméra et le micro sont nécessaires. L'appareil apprendra 45 s le bruit du lieu avant de pouvoir émettre quoi que ce soit.</p>
+  <p id="sonState" class="ex">Le micro est ouvert <b>sans réduction de bruit ni gain automatique</b> : le balayage de la box radio est enregistré tel qu'il sonne, sans traitement. <button id="micBtn" style="margin-left:6px;padding:6px 9px;font-size:11px">Micro</button></p>
   <div class="lg" style="margin-top:14px">objectif</div>
   <div id="lenses" class="row"></div>
   <p class="ex">Choisis l'objectif : par défaut le téléphone donne parfois l'ultra grand-angle, plus flou.</p>
@@ -92,14 +115,16 @@ video{display:none}
 
 <div id="stageWrap"><canvas id="stage" width="960" height="540"></canvas></div>
 <button id="recBtn" disabled>● Enregistrer</button>
+<button id="quitFix" type="button">Quitter l'écran fixe</button>
 <div class="row">
   <button id="aiBtn" disabled>Silhouette IA</button>
+  <button id="fixBtn">Écran fixe</button>
   <button id="fsBtn">Plein écran</button>
 </div>
 <p id="aiState" class="ex"></p>
 <div class="stat" id="live">—</div>
 
-<div class="step">
+<div class="step" id="jSec">
   <div class="lg">Journal de tournage <span id="jCount" style="color:var(--paper)"></span></div>
   <div id="jTbl"><p class="empty">Rien pour l'instant.</p></div>
   <div class="row">
@@ -114,6 +139,9 @@ video{display:none}
 <video id="vid" playsinline muted></video>
 <video id="vid2" playsinline muted></video>
 
+<script src="/ghost-box/lib/moteur.js"></script>
+<script src="/ghost-box/lib/media.js"></script>
+<script src="/ghost-box/lib/wakelock.js"></script>
 <script>
 (() => {
 "use strict";
@@ -131,55 +159,73 @@ fetch('../data/lexique.json').then(r=>r.json()).then(j=>{
   MOTS=m.map(x=>({mot:x.mot,pos:x.pos,poids:x.poids||1}));
 }).catch(()=>{ MOTS=[]; });
 
-/* ═══════ statistique robuste + seuil auto (même principe que la séance capteurs) ═══════ */
-function robustStats(a){
-  const s=[...a].sort((x,y)=>x-y),n=s.length,med=n%2?s[(n-1)/2]:(s[n/2-1]+s[n/2])/2;
-  const dev=s.map(x=>Math.abs(x-med)).sort((x,y)=>x-y);
-  let mad=n%2?dev[(n-1)/2]:(dev[n/2-1]+dev[n/2])/2, sc=mad*1.4826;
-  if(!(sc>1e-9)){ const m=a.reduce((p,c)=>p+c,0)/n; sc=Math.sqrt(a.reduce((p,c)=>p+(c-m)*(c-m),0)/n); }
-  return {center:med,scale:sc};
-}
-const NEED=4, ADAPT=.004, NOISE_MAX=4000, BLOCK=30, RAISE=1.15, CTL=4;
+/* ═══════ moteur : une seule implémentation, dans lib/moteur.js ═══════
+   Statistique robuste, seuil auto-calibré, épreuve du témoin avant armement,
+   refus d'armer un capteur plat. Ne jamais recopier ce code ici : l'étendre là-bas. */
+const M=window.GBMoteur;
 const ANTI_RAFALE=60000;   // un même événement physique ne produit qu'un mot (ce n'est pas un quota)
-function mkW(code,label){ return {code,label,samples:[],noise:[],moy:0,sd:1,ev:1,thr:8,raises:0,
-  persist:0,cPersist:0,cPtr:0,cLeft:0,z:0,v:0,ready:false}; }
-function ctlNext(w){ const n=w.noise.length; if(n<20) return null;
-  if(w.cLeft<=0){ w.cPtr=(Math.random()*n)|0; w.cLeft=BLOCK; }
-  const v=w.noise[w.cPtr%n]; w.cPtr++; w.cLeft--; return v; }
-function feed(w,v,learning){
-  if(!isFinite(v)) return false;
-  w.v=v;
-  if(learning){ w.samples.push(v); return false; }
-  const z=Math.abs(v-w.moy)/w.sd; w.z=z;
-  if(z>=w.thr) w.persist++; else w.persist=0;
-  w.noise.push(v); if(w.noise.length>NOISE_MAX) w.noise.shift();
-  if(z<w.thr*.5){ const dv=v-w.moy; w.moy+=ADAPT*dv; w.ev+=ADAPT*(dv*dv-w.ev);
-    w.sd=Math.sqrt(Math.max(w.ev,1e-18)); if(w.sd<1e-9) w.sd=1e-9; }
-  for(let k=0;k<CTL;k++){ const cv=ctlNext(w); if(cv==null) break;
-    const cz=Math.abs(cv-w.moy)/w.sd;
-    if(cz>=w.thr) w.cPersist++; else w.cPersist=0;
-    if(w.cPersist>=NEED){ w.thr*=RAISE; w.raises++; w.cPersist=0; w.persist=0; } }
-  const fired = w.persist>=NEED;
-  if(fired) w.persist=0;
-  return fired;
-}
-function seal(w){
-  if(w.samples.length<30) return false;
-  const r=robustStats(w.samples); w.moy=r.center; w.sd=r.scale>1e-9?r.scale:1e-9; w.ev=w.sd*w.sd;
-  w.noise=w.samples.slice(-NOISE_MAX);
-  let zmax=0; for(const s of w.samples){ const z=Math.abs(s-w.moy)/w.sd; if(z>zmax) zmax=z; }
-  w.thr=Math.max(5,zmax*1.4); w.ready=true; return true;
-}
+const mkW=(code,label)=>M.mk(code,label);
+const feed=(w,v,learning)=>M.feed(w,v,learning);
+const seal=w=>M.seal(w);
+
 function hash01(str){ let h=2166136261>>>0;
   for(let i=0;i<str.length;i++){ h^=str.charCodeAt(i); h=Math.imul(h,16777619)>>>0; }
   return (h>>>0)/4294967296; }
 
 /* ═══════ capture ═══════ */
 let vstream=null, micStream=null, actx=null, ana=null, tdata=null, camLibre=false;
+
+/* ── le son de la ghost box radio ──
+   Le téléphone n'a pas de récepteur radio : il enregistre le SON de la box, pas les
+   ondes. Pour que ce son soit fidèle, le micro est ouvert brut — sans réduction de
+   bruit, sans gain automatique, sans annulation d'écho : ces traitements sont faits
+   pour la voix et effaceraient justement le souffle du balayage. Si les contraintes
+   sont refusées, on retombe sur un micro ordinaire plutôt que de tourner muet. */
+let micBrut=false;
+async function getMic(){
+  if(micStream){ try{ micStream.getTracks().forEach(t=>t.stop()); }catch(e){} micStream=null; }
+  micBrut=true;
+  try{
+    micStream=await navigator.mediaDevices.getUserMedia({audio:{
+      echoCancellation:false,noiseSuppression:false,autoGainControl:false,voiceIsolation:false}});
+  }catch(e){
+    micBrut=false;
+    micStream=await navigator.mediaDevices.getUserMedia({audio:true});   // relance : mieux vaut du son traité que pas de son
+  }
+  if(!actx) actx=new (window.AudioContext||window.webkitAudioContext)();
+  try{ await actx.resume(); }catch(e){}
+  const src=actx.createMediaStreamSource(micStream);
+  ana=actx.createAnalyser(); ana.fftSize=1024; ana.smoothingTimeConstant=.4; src.connect(ana);
+  tdata=new Float32Array(ana.fftSize);
+  return micStream;
+}
+function micVivant(){
+  return !!(micStream && micStream.getAudioTracks().some(t=>t.readyState==='live'));
+}
+function sonOK(){
+  $('sonState').innerHTML='<b style="color:var(--signal)">Son de la box capté</b> — '
+    +(micBrut? 'micro brut (aucune réduction de bruit, aucun gain automatique) : le balayage radio est enregistré tel quel'
+             : 'micro ordinaire : le téléphone a refusé le mode brut, un traitement de voix peut atténuer le souffle')
+    +'. Il part dans le même fichier que l\'image.'
+    +' <button id="micBtn" style="margin-left:6px;padding:6px 9px;font-size:11px">Rouvrir le micro</button>';
+  bindMic();
+}
+function sonKO(e){
+  $('sonState').innerHTML='<b style="color:var(--flag)">Pas de son</b> — la vidéo serait muette, '
+    +'la box radio ne serait pas enregistrée. '+(window.GBMedia?GBMedia.explain(e):'Accès micro impossible.')
+    +' <button id="micBtn" style="margin-left:6px;padding:6px 9px;font-size:11px">Réessayer le micro</button>';
+  bindMic();
+}
+function bindMic(){
+  const b=$('micBtn'); if(!b) return;
+  b.onclick=async ()=>{ b.disabled=true; try{ await getMic(); sonOK(); }catch(e){ sonKO(e); } };
+}
+bindMic();
+
 /* ── choix de l'objectif ──
    Le téléphone donne parfois l'ultra grand-angle par défaut (image molle). On liste
-   les objectifs réels et on laisse choisir. Un seul flux à la fois : Android et iOS
-   n'autorisent pas deux caméras simultanées, donc pas de fausse « double vue ». */
+   les objectifs réels et on laisse choisir. La seconde caméra se règle plus bas :
+   cet appareil accepte réellement deux flux simultanés. */
 let lenses=[], curLens=null;
 function lensName(d,i){
   const l=(d.label||'').toLowerCase();
@@ -219,7 +265,19 @@ async function useLens(id){
    Certains téléphones l'acceptent réellement (constaté sur l'appareil de terrain).
    On tente le double flux ; s'il est refusé, on le dit et on reste à une caméra.
    Les deux vues sont composées côte à côte, donc ENREGISTRÉES ensemble. */
-let vstream2=null, twoCam=false, pendingSecond=null;
+let vstream2=null, twoCam=false, pendingSecond=null, secondId=null;
+async function openSecond(chosen){
+  vstream2=await navigator.mediaDevices.getUserMedia({
+    video: chosen? {deviceId:{exact:chosen},width:{ideal:640}} : {facingMode:'user',width:{ideal:640}},
+    audio:false});
+  const v2=$('vid2'); v2.srcObject=vstream2; await v2.play().catch(()=>{});
+  const t0=$('vid').currentTime;
+  await new Promise(r=>setTimeout(r,1200));
+  // les DEUX doivent être vivants : si ouvrir la seconde a tué la première, c'est un refus déguisé
+  if(!(v2.videoWidth>0 && $('vid').currentTime>t0+0.05)) throw new Error('flux coupé');
+  secondId=chosen||null;
+  return true;
+}
 $('twoCam').onclick=async ()=>{
   if(twoCam){
     twoCam=false; $('twoCam').className='';
@@ -242,16 +300,9 @@ $('twoCam').onclick=async ()=>{
   pendingSecond=null;
   $('twoState').textContent='Ouverture de la seconde caméra…';
   try{
-    vstream2=await navigator.mediaDevices.getUserMedia({
-      video: chosen? {deviceId:{exact:chosen},width:{ideal:640}} : {facingMode:'user',width:{ideal:640}},
-      audio:false});
-    const v2=$('vid2'); v2.srcObject=vstream2; await v2.play().catch(()=>{});
-    const t0=$('vid').currentTime;
-    await new Promise(r=>setTimeout(r,1200));
-    const bothLive = v2.videoWidth>0 && $('vid').currentTime>t0+0.05;
-    if(!bothLive) throw new Error('flux coupé');
+    await openSecond(chosen);
     twoCam=true; $('twoCam').className='act';
-    $('twoState').innerHTML='<b style="color:var(--signal)">Deux caméras en direct</b> — les deux vues sont enregistrées côte à côte.';
+    $('twoState').innerHTML='<b style="color:var(--signal)">Deux caméras en direct</b> — les deux vues et le son de la box partent dans le même fichier.';
     sizeStage();
   }catch(e){
     if(vstream2){ vstream2.getTracks().forEach(t=>t.stop()); vstream2=null; }
@@ -260,13 +311,54 @@ $('twoCam').onclick=async ()=>{
     sizeStage();
   }
 };
-/* le cadre s'adapte : une vue, ou deux côte à côte */
+/* ── le cadre s'adapte à l'appareil, pas l'inverse ──
+   Deux vues côte à côte sur un téléphone tenu debout donnent deux images minuscules.
+   En portrait on les EMPILE : chacune prend toute la largeur. En paysage, côte à côte.
+   Dans les deux cas chaque vue garde ses proportions — rien n'est écrasé. */
+let stackV=false;
 function sizeStage(){
   const v=$('vid'); if(!v||!v.videoWidth) return;
+  if(recording) return;   // changer la taille du canvas en cours d'enregistrement casse le fichier
   const r=v.videoHeight/v.videoWidth;
-  if(twoCam){ cv.width=Math.min(1280,v.videoWidth); cv.height=Math.round(cv.width*r/2); }
-  else { cv.width=Math.min(1280,v.videoWidth); cv.height=Math.round(cv.width*r); }
+  if(twoCam){
+    stackV = window.innerHeight >= window.innerWidth;
+    if(stackV){ cv.width=Math.min(720,v.videoWidth); cv.height=Math.round(cv.width*r)*2; }
+    else { cv.width=Math.min(1280,v.videoWidth); cv.height=Math.round(cv.width*r/2); }
+  } else {
+    stackV=false;
+    cv.width=Math.min(1280,v.videoWidth); cv.height=Math.round(cv.width*r);
+  }
 }
+addEventListener('resize',()=>{ try{ sizeStage(); }catch(e){} });
+addEventListener('orientationchange',()=>{ setTimeout(()=>{ try{ sizeStage(); }catch(e){} },350); });
+
+/* ── écran fixe de tournage ──
+   Sur un téléphone au bout d'une perche, la page ne doit plus bouger : pas de
+   défilement, pas de rebond, pas de barre d'adresse qui remonte. L'image occupe
+   tout l'écran, seuls restent le bouton d'enregistrement et la capture. */
+let filming=false;
+function setFilming(on){
+  filming=!!on;
+  document.documentElement.classList.toggle('filming',filming);
+  document.body.classList.toggle('filming',filming);
+  $('fixBtn').className=filming?'act':'';
+  $('fixBtn').textContent=filming?'Quitter':'Écran fixe';
+  if(filming){
+    try{ GBWake.on(); }catch(e){}
+    const el=document.documentElement, rq=el.requestFullscreen||el.webkitRequestFullscreen;
+    if(rq){ const r=rq.call(el,{navigationUI:'hide'}); if(r&&r.catch) r.catch(()=>{}); }
+    try{ window.scrollTo(0,0); }catch(e){}
+  } else if(document.fullscreenElement||document.webkitFullscreenElement){
+    try{ (document.exitFullscreen||document.webkitExitFullscreen).call(document); }catch(e){}
+  }
+  setTimeout(()=>{ try{ sizeStage(); }catch(e){} },80);
+}
+$('fixBtn').onclick=()=>setFilming(!filming);
+$('quitFix').onclick=()=>setFilming(false);
+addEventListener('fullscreenchange',()=>{ if(!document.fullscreenElement && filming) setFilming(false); });
+addEventListener('webkitfullscreenchange',()=>{ if(!document.webkitFullscreenElement && filming) setFilming(false); });
+/* aucun glissement de page tant qu'on tourne */
+addEventListener('touchmove',e=>{ if(filming) e.preventDefault(); },{passive:false});
 
 /* ── plein écran ── */
 $('fsBtn').onclick=()=>{
@@ -316,25 +408,25 @@ $('prep').onclick=async ()=>{
   $('prepState').textContent='Autorisations…';
   try{ await useLens(null); if(!vstream) throw new Error('aucun flux'); }
   catch(e){ return; }   // useLens a déjà affiché la raison exacte
-  try{
-    micStream=await navigator.mediaDevices.getUserMedia({audio:{echoCancellation:false,noiseSuppression:false,autoGainControl:false}});
-    actx=new (window.AudioContext||window.webkitAudioContext)(); await actx.resume();
-    const src=actx.createMediaStreamSource(micStream);
-    ana=actx.createAnalyser(); ana.fftSize=1024; ana.smoothingTimeConstant=.4; src.connect(ana);
-    tdata=new Float32Array(ana.fftSize);
-  }catch(e){ $('prepState').innerHTML='<b style="color:var(--gold)">Micro indisponible</b> — la vidéo sera muette. '+(window.GBMedia?GBMedia.explain(e):'Accès impossible.'); }
-  const v=$('vid');
-  if(v.videoWidth){ const r=v.videoHeight/v.videoWidth;
-    cv.width=Math.min(1280,v.videoWidth); cv.height=Math.round(cv.width*r); }
+  try{ await getMic(); sonOK(); }
+  catch(e){ sonKO(e); }
+  sizeStage();
   WA=mkW('audio','Niveau sonore'); WM=mkW('mouvement','Mouvement');
   learning=true; tLearn=performance.now(); tStart=tLearn; bg=null; mHits=0; cHits=0;
   $('prep').className='act'; $('prep').textContent='Caméra active';
   try{GBWake.on();}catch(e){}
-  $('selftest').disabled=false; $('aiBtn').disabled=false; $('twoCam').disabled=false;
+  // filmer ne dépend pas du moteur de mots : la caméra tourne, donc on peut enregistrer.
+  $('selftest').disabled=false; $('aiBtn').disabled=false; $('twoCam').disabled=false; $('recBtn').disabled=false;
   $('phase').textContent='apprentissage';
   $('prepState').innerHTML='Apprentissage du bruit du lieu — <b>ne bouge pas</b> pendant ce temps.';
-  render(); measure();
+  startLoops();
 };
+
+/* ── les deux boucles (image et mesure) ──
+   Un jeton empêche qu'une reprise après arrière-plan en lance une seconde en
+   parallèle : deux boucles feraient compter les mesures deux fois. */
+let loopTok=0;
+function startLoops(){ loopTok++; const t=loopTok; render(t); measure(t); }
 
 /* ── mesures : audio + mouvement ── */
 let bg=null;
@@ -355,19 +447,19 @@ function largestBlob(mask,W,H){
   return best;
 }
 function shuffled(a){ const b=a.slice(); for(let i=b.length-1;i>0;i--){const j=(Math.random()*(i+1))|0;const t=b[i];b[i]=b[j];b[j]=t;} return b; }
-let level=-100;
-function measure(){
-  if(!vstream) return;
+let level=-100, silence=0;
+function measure(tok){
+  if(tok!==loopTok || !vstream) return;
   const now=performance.now();
-  if(camLibre && !vstream){
-    $('prepState').innerHTML='<b style="color:var(--gold)">Caméra libérée</b> pendant que tu étais ailleurs '
-      +'(pour ne pas bloquer les autres modes). Appuie sur « Préparer le tournage » pour reprendre.';
-    camLibre=false; return;
-  }
   // audio
-  if(ana){ ana.getFloatTimeDomainData(tdata);
+  const anaVive = !!(ana && actx && actx.state==='running');
+  if(anaVive){ ana.getFloatTimeDomainData(tdata);
     let s=0; for(let i=0;i<tdata.length;i++) s+=tdata[i]*tdata[i];
     level=20*Math.log10(Math.sqrt(s/tdata.length)+1e-9); }
+  else { level=-100; if(actx && actx.state!=='running'){ try{ actx.resume(); }catch(e){} } }
+  // témoin de son : un micro coupé ou une box éteinte doivent se voir tout de suite.
+  // Une analyse en pause n'est PAS un silence : on ne l'annonce pas comme tel.
+  if(anaVive && (level<-85 || !micVivant())) silence++; else silence=0;
   // mouvement
   const v=$('vid'); let frac=0;
   if(v.videoWidth){
@@ -390,9 +482,11 @@ function measure(){
       learning=false; tReady=now;
       $('phase').textContent='prêt';
       $('prepState').innerHTML = (a||m)
-        ? 'Prêt à tourner. Seuils appris — l\'appareil ne parlera que si une mesure dépasse tout ce qu\'il a vu de normal.'
-        : 'Pas assez de mesures — relance la préparation.';
-      $('recBtn').disabled=!(a||m);
+        ? 'Prêt à tourner. Témoins armés : <b>'+[a?'son':'',m?'image':''].filter(Boolean).join(' + ')
+          +'</b> — l\'appareil ne parlera que si une mesure dépasse tout ce qu\'il a vu de normal.'
+        : 'Aucun témoin armé — les mesures n\'ont pas varié d\'un cheveu (micro absent, image figée). '
+          +'<b>Le tournage fonctionne quand même</b> : image, son et détection de personne sont enregistrés, '
+          +'simplement aucun mot ne peut sortir. C\'est la règle : sans bruit à comparer, on se tait.';
     }
   } else {
     const fa=WA.ready&&feed(WA,level,false), fm=WM.ready&&feed(WM,frac,false);
@@ -402,13 +496,16 @@ function measure(){
       lastEmit=now; emitWord(fa?WA:WM, now, false);
     }
   }
-  const src=WA.ready?WA:WM;
+  const mute = silence>50   // 5 s de silence complet : ce n'est pas une ambiance, c'est une panne
+    ? ' · <b style="color:var(--flag)">aucun son ne parvient au micro</b>' : '';
+  const cams = twoCam ? ' · <b>2 caméras</b>'+(stackV?' empilées':' côte à côte') : '';
   $('live').innerHTML = learning
-    ? 'Apprentissage — reste <b>'+Math.ceil((LEARN_MS-(now-tLearn))/1000)+' s</b>. Niveau '+level.toFixed(0)+' dBFS, mouvement '+frac.toFixed(1)+' %.'
+    ? 'Apprentissage — reste <b>'+Math.ceil((LEARN_MS-(now-tLearn))/1000)+' s</b>. Niveau '+level.toFixed(0)+' dBFS, mouvement '+frac.toFixed(1)+' %.'+mute+cams
     : 'Niveau <b>'+level.toFixed(0)+'</b> dBFS · mouvement <b>'+frac.toFixed(1)+'</b> % · seuils auto : son '
-      +WA.thr.toFixed(1)+' σ, image '+WM.thr.toFixed(1)+' σ (relevés '+(WA.raises+WM.raises)+'×) · présence '
-      +mHits+'× vs témoin de bruit '+cHits+'×';
-  setTimeout(measure,100);
+      +(WA.ready? WA.thr.toFixed(1)+' σ' : 'non armé')+', image '+(WM.ready? WM.thr.toFixed(1)+' σ' : 'non armé')
+      +' (relevés '+(WA.raises+WM.raises)+'×) · présence '
+      +mHits+'× vs témoin de bruit '+cHits+'×'+mute+cams;
+  setTimeout(()=>measure(tok),100);
 }
 
 function emitWord(w,now,isTest){
@@ -454,15 +551,23 @@ $('expJ').onclick=()=>{
 };
 
 /* ═══════ rendu de l'image composée (c'est ELLE qui est enregistrée) ═══════ */
-function render(){
-  if(!vstream) return;
+function render(tok){
+  if(tok!==loopTok || !vstream) return;
   const v=$('vid'), W=cv.width, H=cv.height, now=performance.now();
-  if(twoCam && $('vid2').videoWidth){
-    const half=W/2;
+  const deux = twoCam && $('vid2').videoWidth;
+  // sous-cadre de la PREMIÈRE vue : c'est elle qui est mesurée et analysée
+  const vW = deux && !stackV ? W/2 : W, vH = deux && stackV ? H/2 : H;
+  if(deux){
     g.fillStyle='#000'; g.fillRect(0,0,W,H);
-    if(v.videoWidth) g.drawImage(v,0,0,half,H);
-    g.drawImage($('vid2'),half,0,half,H);
-    g.strokeStyle='#2C383F'; g.lineWidth=2; g.beginPath(); g.moveTo(half,0); g.lineTo(half,H); g.stroke();
+    if(stackV){                                   // téléphone debout : l'une au-dessus de l'autre
+      if(v.videoWidth) g.drawImage(v,0,0,W,H/2);
+      g.drawImage($('vid2'),0,H/2,W,H/2);
+      g.strokeStyle='#2C383F'; g.lineWidth=2; g.beginPath(); g.moveTo(0,H/2); g.lineTo(W,H/2); g.stroke();
+    } else {                                      // téléphone couché : côte à côte
+      if(v.videoWidth) g.drawImage(v,0,0,W/2,H);
+      g.drawImage($('vid2'),W/2,0,W/2,H);
+      g.strokeStyle='#2C383F'; g.lineWidth=2; g.beginPath(); g.moveTo(W/2,0); g.lineTo(W/2,H); g.stroke();
+    }
   }
   else if(v.videoWidth) g.drawImage(v,0,0,W,H);
   else { g.fillStyle='#000'; g.fillRect(0,0,W,H); }
@@ -488,7 +593,7 @@ function render(){
   g.fillStyle='#78868E'; g.font=(11*S|0)+'px monospace'; g.fillText(level.toFixed(0)+' dBFS', lx, ly+10*S);
   // présence : cadre autour de ce qui bouge (factuel, jamais de silhouette inventée)
   if(box){
-    const sx=W/64, sy=H/48;
+    const sx=vW/64, sy=vH/48;   // le mouvement est mesuré sur la première vue seulement
     g.strokeStyle='#5FD3A6'; g.lineWidth=2*S;
     g.strokeRect(box.minx*sx, box.miny*sy, (box.maxx-box.minx+1)*sx, (box.maxy-box.miny+1)*sy);
     g.fillStyle='#5FD3A6'; g.font=(13*S|0)+'px monospace';
@@ -496,7 +601,7 @@ function render(){
   }
   // squelette réel, incrusté dans l'image enregistrée (seulement si une personne est détectée)
   if(aiOn && lastPeople && now-lastPoseT<600){
-    POSE.drawAll(g,lastPeople,twoCam? W/2 : W,H,S);
+    POSE.drawAll(g,lastPeople,vW,vH,S);
     g.fillStyle='#E9B44C'; g.font=(13*S|0)+'px monospace';
     g.fillText(lastPeople.length+' PERSONNE'+(lastPeople.length>1?'S':'')+' DÉTECTÉE'+(lastPeople.length>1?'S':''), 10*S, 62*S);
   }
@@ -516,32 +621,39 @@ function render(){
     g.fillText(lastWordTest? 'TEST — émission forcée, aucune mesure derrière' : 'mot émis par le capteur', W/2, H*.44+58*S);
     g.textAlign='left'; g.globalAlpha=1;
   }
-  requestAnimationFrame(render);
+  requestAnimationFrame(()=>render(tok));
 }
 
 /* ═══════ enregistrement de l'image composée + micro ═══════ */
-let rec=null, chunks=[], recording=false, recStart=0, recMime='';
+let rec=null, chunks=[], recording=false, recStart=0, recMime='', recAudio=false;
 function pickMime(){
   const c=['video/mp4;codecs=avc1','video/mp4','video/webm;codecs=vp9,opus','video/webm;codecs=vp8,opus','video/webm'];
   for(const m of c) if(window.MediaRecorder&&MediaRecorder.isTypeSupported&&MediaRecorder.isTypeSupported(m)) return m;
   return '';
 }
-$('recBtn').onclick=()=>{
+$('recBtn').onclick=async ()=>{
   if(recording){ try{ rec.stop(); }catch(e){} return; }
   if(!vstream) return;
+  // le son de la box radio doit être dans le fichier : dernière vérification avant de tourner.
+  // Un micro perdu en arrière-plan donnerait une vidéo muette sans prévenir.
+  if(!micVivant()){ try{ await getMic(); sonOK(); }catch(e){ sonKO(e); } }
   let cs; try{ cs=cv.captureStream(30); }
   catch(e){ $('live').textContent='Ce navigateur ne sait pas enregistrer l\'image composée.'; return; }
   const tracks=[...cs.getVideoTracks()];
-  if(micStream) tracks.push(...micStream.getAudioTracks());
+  const audio = micStream ? micStream.getAudioTracks().filter(t=>t.readyState==='live') : [];
+  tracks.push(...audio);
   recMime=pickMime(); chunks=[];
   try{ rec=new MediaRecorder(new MediaStream(tracks), recMime?{mimeType:recMime}:undefined); }
   catch(e){ $('live').textContent='Enregistrement indisponible sur ce navigateur.'; return; }
   rec.ondataavailable=e=>{ if(e.data&&e.data.size) chunks.push(e.data); };
   rec.onstop=onStop;
-  rec.start(1000); recording=true; recStart=performance.now();
+  rec.start(1000); recording=true; recAudio=audio.length>0; recStart=performance.now();
   $('recBtn').textContent='■ Arrêter'; $('recBtn').classList.add('on');
   $('phase').textContent='tournage';
-  addJ(recStart,'départ','enregistrement lancé');
+  addJ(recStart,'départ','enregistrement lancé — '
+    +(audio.length? (micBrut?'son de la box (micro brut)':'son de la box (micro traité)') : 'SANS SON, micro indisponible')
+    +(twoCam? ' — deux caméras'+(stackV?' empilées':' côte à côte') : ' — une caméra'));
+  if(!audio.length) $('live').innerHTML='<b style="color:var(--flag)">Tu enregistres sans son</b> — la box radio ne sera pas sur la vidéo.';
 };
 async function onStop(){
   recording=false;
@@ -555,7 +667,7 @@ async function onStop(){
     c.getContext('2d').drawImage(cv,0,0,c.width,c.height); thumb=c.toDataURL('image/jpeg',.5); }catch(e){}
   const clip={ id:Date.now(), nom:'tournage-'+stamp()+'.'+ext, mime:type, taille:blob.size,
     duree:Math.round(dur), vignette:thumb, cam:($('lieu').value||'tournage'), blob,
-    source:'realisateur', journal:[...journal].reverse() };
+    source:'realisateur', son:recAudio, cameras:(twoCam?2:1), journal:[...journal].reverse() };
   try{ await dbPut(clip); addJ(performance.now(),'fin','vidéo sauvegardée ('+mo(blob.size)+')'); }
   catch(e){ addJ(performance.now(),'fin','sauvegarde impossible — téléchargement direct');
     const u=URL.createObjectURL(blob),a=document.createElement('a'); a.href=u;a.download=clip.nom;a.click();
@@ -576,8 +688,35 @@ renderJ();
 /* Une caméra retenue par une page en arrière-plan bloque TOUS les autres modes.
    On la libère dès que la page n'est plus visible — sauf pendant un enregistrement. */
 addEventListener('visibilitychange',()=>{
-  if(document.hidden && !recording){ try{if(vstream)vstream.getTracks().forEach(t=>t.stop()); vstream=null;}catch(e){} try{if(vstream2)vstream2.getTracks().forEach(t=>t.stop()); vstream2=null;}catch(e){} camLibre=true; }
+  if(document.hidden && !recording){
+    try{ if(vstream) vstream.getTracks().forEach(t=>t.stop()); vstream=null; }catch(e){}
+    try{ if(vstream2) vstream2.getTracks().forEach(t=>t.stop()); vstream2=null; }catch(e){}
+    camLibre=true;
+    $('prepState').innerHTML='<b style="color:var(--gold)">Caméra libérée</b> pendant que tu étais ailleurs '
+      +'(pour ne pas bloquer les autres modes). Elle reviendra toute seule au retour.';
+  }
+  else if(!document.hidden && camLibre){ reprise(); }
 });
+/* Reprise automatique au retour : caméra(s) et micro rouverts tels qu'ils étaient,
+   SANS relancer l'apprentissage — les seuils déjà appris restent valables. */
+async function reprise(){
+  camLibre=false;
+  const voulaitDeux=twoCam, quelleSeconde=secondId;
+  twoCam=false; $('twoCam').className='';
+  $('prepState').textContent='Retour — réouverture de la caméra…';
+  try{ await useLens(curLens); }catch(e){}
+  if(!vstream){ $('prepState').innerHTML='<b style="color:var(--flag)">Caméra non reprise.</b> Appuie sur « Préparer le tournage ».'; return; }
+  if(!micVivant()){ try{ await getMic(); sonOK(); }catch(e){ sonKO(e); } }
+  if(voulaitDeux){
+    try{ await openSecond(quelleSeconde); twoCam=true; $('twoCam').className='act';
+         $('twoState').innerHTML='<b style="color:var(--signal)">Deux caméras reprises.</b>'; }
+    catch(e){ if(vstream2){ try{vstream2.getTracks().forEach(t=>t.stop());}catch(e2){} vstream2=null; }
+              $('twoState').textContent='Seconde caméra non reprise — vue unique.'; }
+  }
+  sizeStage();
+  $('prepState').innerHTML='Reprise — seuils conservés, aucun réapprentissage.';
+  startLoops();
+}
 /* libère la caméra en quittant la page : sinon elle reste prise et les autres
    modes affichent « déjà utilisée » (cause racine du problème constaté) */
 addEventListener('pagehide',()=>{ try{if(vstream)vstream.getTracks().forEach(t=>t.stop());}catch(e){} try{if(vstream2)vstream2.getTracks().forEach(t=>t.stop());}catch(e){} try{if(micStream)micStream.getTracks().forEach(t=>t.stop());}catch(e){} });
@@ -587,8 +726,6 @@ addEventListener('load',function(){ try{ GBCapture.init({label:($('lieu').value|
 })();
 </script>
 <script>if('serviceWorker' in navigator){window.addEventListener('load',function(){navigator.serviceWorker.register('/ghost-box/sw.js').catch(function(){});});}</script>
-<script src="/ghost-box/lib/wakelock.js"></script>
-<script src="/ghost-box/lib/media.js"></script>
 <script src="/ghost-box/lib/capture.js"></script>
 <script src="/ghost-box/lib/fullscreen.js"></script>
 </body>

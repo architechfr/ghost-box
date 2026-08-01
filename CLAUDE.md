@@ -6,14 +6,16 @@ Ce fichier existe pour qu'une session Claude repartant de zéro comprenne le pro
 
 Application web (HTML/CSS/JS pur, sans dépendance ni build) pour séances de ghost box, publiée par GitHub Pages sur `architechfr.github.io/ghost-box`. Tout tourne dans le navigateur du téléphone.
 
-Cinq outils, un par moment de séance :
+Six outils, un par moment de séance :
 
 | Dossier | Rôle |
 |---|---|
 | `realisateur/` | Mode tournage en déplacement : image composée (vidéo + incrustations + squelette) enregistrée avec le micro, choix de l'objectif, journal |
 | `vision/` | Caméras : objectifs, bascule, enregistrement vidéo, bibliothèque IndexedDB, détection de mouvement + témoin |
+| `mur/` | Mur de mots : tout le lexique montré en colonnes qui défilent vite, case de lecture qui les parcourt, gel à l'instant d'une mesure |
 | `banc/` | Séance capteurs : veille silencieuse, moteur capteur → mot, coïncidence, mode à l'aveugle, trace |
 | `enregistreur/` | Écoute : micro brut, spectrogramme, marqueurs, export WAV |
+| `lib/moteur.js` | **Moteur de détection partagé** (statistique robuste, seuil auto, témoin de bruit) — banc, réalisateur, mur |
 | `lib/pose.js` | Détection de personne partagée (MediaPipe, plusieurs personnes), utilisée par les quatre modes caméra |
 | `lib/capture.js` | Boutons flottants photo ○ / vidéo ● — capture à tout instant, suivent le plein écran |
 | `lib/wakelock.js` | Empêche la mise en veille tant qu'une caméra tourne (repli vidéo si l'API manque) |
@@ -27,7 +29,8 @@ Ce projet a une exigence de sincérité qui prime sur toute fonctionnalité. Un 
 
 1. **Zéro faux positif.** « Un mot ne doit jamais sortir pour rien. S'il n'y a rien, c'est ainsi. » La plupart des séances doivent produire **zéro mot**, et l'interface le présente comme le résultat normal.
 2. **Jamais de quota de fréquence.** Un réglage « au plus N mots par heure » a été explicitement rejeté comme malhonnête : ce n'est pas un critère de détection, et ça garantit qu'un faux positif finit par passer sous couvert d'un plafond d'apparence sérieuse. **La fréquence est un résultat, pas un paramètre.** Seul subsiste un anti-rafale d'une minute, justifié physiquement (un même événement ne produit qu'un mot).
-3. **Pas de seuil théorique.** « 3 σ » est un mensonge sur un capteur réel (bruit à queues lourdes, mesures corrélées). Le seuil est **auto-calibré** : ancré sur le pire pic observé pendant l'apprentissage, puis **relevé de 15 %** chaque fois qu'un témoin de bruit (bootstrap par blocs du bruit réel enregistré) aurait suffi à déclencher un mot.
+3. **Pas de seuil théorique.** « 3 σ » est un mensonge sur un capteur réel (bruit à queues lourdes, mesures corrélées). Le seuil est **auto-calibré** : ancré sur le pire pic observé pendant l'apprentissage (× 1,4), puis **relevé de 15 %** chaque fois qu'un témoin de bruit (bootstrap par blocs du bruit réel enregistré) aurait suffi à déclencher un mot. Deux chiffres sont **mesurés, pas choisis** : le plancher de **6,5 σ** et le témoin éprouvé **16× par mesure**. Sur 900 h de bruit simulé (trois générateurs : autocorrélé à queues lourdes, très corrélé, à bouffées), le réglage précédent (5 σ, témoin 4×) laissait encore sortir **74 mots** ; le réglage actuel en sort **zéro**, tout en détectant une excursion franche de 8 σ **100 fois sur 100**. Ne jamais baisser ces valeurs sans refaire cette simulation.
+3bis. **Un capteur plat n'est jamais armé.** Micro coupé, capteur absent ou gelé : la valeur ne varie pas, le bruit est nul, et la moindre reprise vaudrait des milliers de σ — un mot sortirait instantanément pour rien. `seal()` refuse d'armer si la dispersion est nulle ou s'il y a moins de 4 valeurs différentes, et l'écran le dit. Le reste de l'outil continue de fonctionner : c'est l'émission qui se tait, pas l'appareil.
 4. **Un témoin partout.** Mode à l'aveugle pour les capteurs, témoin visuel pour la caméra (même détecteur sur une image mélangée), témoin de bruit pour le seuil. Sans chiffre de comparaison, une détection ne prouve rien.
 5. **Jamais de forme inventée.** La caméra encadre factuellement ce qui bouge (rectangle + pourcentage). Pas de silhouette dessinée à partir d'une boîte. Le squelette n'apparaît que si le modèle détecte réellement une personne (≥ 8 points fiables).
 6bis. **La détection visuelle est réglée SÉVÈRE, volontairement.** Laissé à ses valeurs par défaut, MediaPipe plaque un squelette sur un fauteuil ou un rideau. Sont donc imposés : seuils du modèle à 0,80 / 0,80 / 0,70, 14 points fiables sur 33, confiance moyenne 0,62, plausibilité géométrique (plus haut que large, ≥ 14 % de la hauteur d'image) et surtout une **persistance de 5 images consécutives** — une détection d'un éclair est du bruit. Vérifié par simulation : fauteuil, forme écrasée, silhouette minuscule et détection fugace sont tous rejetés ; une vraie personne passe. Ne pas relâcher ces seuils sans refaire ces tests.
@@ -36,18 +39,20 @@ Ce projet a une exigence de sincérité qui prime sur toute fonctionnalité. Un 
 7bis. **L'écran ne doit jamais s'éteindre pendant une séance** — le verrou est pris dès qu'une caméra tourne et repris automatiquement au retour d'arrière-plan. Une veille interrompt caméra, enregistrement et détection.
 7ter. **Tout élément flottant doit être déplaçable** et ne jamais recouvrir un bouton : la vue caméra du banc se déplace au doigt, sa position est mémorisée.
 8. **Une capture doit être possible à tout instant** — bouton flottant, jamais un bouton qu'il faut aller chercher en faisant défiler la page. Une observation ne prévient pas.
+8bis. **Montrer, plutôt que garder pour soi.** Le mur de mots existe parce qu'un lexique caché dans un fichier ne se propose à personne : les 567 mots défilent à l'écran, rangés par famille (réponses, personnes, lieux, actions, états), et une case de lecture les parcourt en continu. Quand une mesure dépasse le seuil, **le mur se fige à cet instant et le mot de la case est retenu — c'est l'instant qui désigne, rien d'autre**. Aucun tirage caché, et la trace conserve colonne, index, graine de session : le choix se refait à la main.
 9. **L'IA ne fabrique pas de sens.** Elle ne relie jamais les mots en phrases. La transcription est marquée « non vérifiée » car ces modèles inventent des mots sur du bruit.
 
 ## Architecture — pourquoi elle est ainsi
 
 **Un `index.html` par dossier est voulu**, pas une duplication : c'est la convention des sites statiques, qui donne des URL propres (`/vision/` plutôt que `/vision.html`). GitHub Pages s'appuie dessus. Ne pas « fusionner les index ».
 
-**Ce qui est commun vit dans `lib/`**, jamais recopié dans une page : détection de personne, capture, plein écran, veille écran, messages d'erreur média. Toute logique utilisée par deux pages ou plus doit y être extraite.
+**Ce qui est commun vit dans `lib/`**, jamais recopié dans une page : **moteur de détection**, détection de personne, capture, plein écran, veille écran, messages d'erreur média. Toute logique utilisée par deux pages ou plus doit y être extraite. Le moteur a longtemps existé en deux exemplaires (banc + réalisateur) : ils avaient déjà divergé. Il vit maintenant dans `lib/moteur.js` et les pages n'en gardent que leur politique propre (quels capteurs, quelles fenêtres, quel affichage). **Ne jamais le recopier dans une page** — si le principe change, il doit changer partout à la fois.
 
 **Une donnée n'a qu'une source de vérité.** Le lexique vit dans `data/lexique.json` (régénéré par `data/gen_lexique.py`) et est chargé par `fetch` — il était auparavant recopié en dur dans `banc/index.html` (26 Ko dupliqués), ce qui garantissait une divergence dès la première régénération. Ne jamais réembarquer une donnée déjà fichée.
 
 ## Contraintes techniques connues (ne pas re-promettre)
 
+- **Mode réalisateur = son de la box + deux caméras + écran fixe.** Le micro est ouvert brut (ni réduction de bruit, ni gain automatique, ni annulation d'écho, ni isolation de voix : ces traitements sont faits pour la voix et effaceraient le souffle du balayage) et ses pistes partent dans le même fichier que l'image composée. Avant chaque enregistrement, le micro est revérifié et rouvert s'il a été perdu ; le journal note « son de la box » ou « SANS SON ». En portrait, les deux vues sont **empilées** (chacune pleine largeur), en paysage côte à côte — deux vues côte à côte sur un téléphone debout donnaient deux images minuscules. Le bouton « Écran fixe » gèle la page : plus de défilement, plus de rebond, l'image occupe tout l'écran, seuls restent l'enregistrement et la capture.
 - **Deux caméras simultanées : possible sur l'appareil de terrain**, contrairement à la règle générale souvent citée. Vérifié en usage réel (« 2 flux actifs » dans Vision, avant + arrière). Le mode réalisateur ouvre donc deux vrais flux composés côte à côte et enregistrés ensemble. Ne jamais revenir à une alternance de flux : essayée, elle figeait l'image et donnait un écran noir.
 - **`lib/pose.js` ne détecte QUE des humains.** MediaPipe PoseLandmarker est un modèle de pose humaine : un chien, un chat, un objet ne seront jamais détectés, quel que soit le réglage. Pour une « présence » au sens large (animal compris), il faudrait un modèle de détection d'objets (COCO-SSD). Ne jamais laisser croire que l'absence de squelette signifie « rien de vivant ».
 - **Ne pas juger une personne sur la moyenne des 33 points** : assise ou partiellement cachée, la moitié de son corps est invisible et la moyenne s'effondre. Juger sur les points RÉELLEMENT vus + une structure de torse (au moins une épaule).
@@ -64,4 +69,8 @@ Penser à **incrémenter le numéro de version** affiché en haut des pages modi
 
 ## Vérifier avant de livrer
 
-Extraire le `<script>` et lancer `node --check`. Pour toute modification du moteur de détection, **simuler** sur du bruit autocorrélé à queues lourdes et vérifier qu'il reste silencieux.
+Extraire le `<script>` et lancer `node --check`.
+
+Pour toute modification du moteur de détection : **simuler**. Charger `lib/moteur.js` dans Node (`new Function('window', source)`), lui faire avaler des centaines d'heures de bruit autocorrélé à queues lourdes — plusieurs générateurs différents, pas un seul — et exiger **zéro mot**, puis vérifier qu'une excursion franche de 8 σ passe encore. Un moteur muet parce qu'il est sourd n'est pas un progrès.
+
+Pour les pages caméra : Playwright + Chromium headless avec `--use-fake-device-for-media-stream` et `--use-fake-ui-for-media-stream` — on vérifie que la piste audio est bien dans le fichier enregistré (`clip.son`), que les deux caméras s'ouvrent, que l'écran fixe ne défile plus, et qu'aucune erreur de page ne remonte.
