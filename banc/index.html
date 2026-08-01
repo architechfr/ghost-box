@@ -73,7 +73,8 @@ button.ko{border-color:var(--flag);color:var(--flag)}
 select{flex:1;min-width:0;background:var(--sunk);border:1px solid var(--line);color:var(--text);
   font-family:var(--body);font-size:14px;padding:10px;border-radius:2px}
 select option:disabled{color:#4E5C64}
-input[type=range]{flex:1;accent-color:var(--gold);height:26px;min-width:0}
+/* pan-y : faire défiler la page au-dessus d'un curseur ne doit jamais le déplacer */
+input[type=range]{flex:1;accent-color:var(--gold);height:26px;min-width:0;touch-action:pan-y}
 .val{font-family:var(--mono);font-size:12.5px;color:var(--gold);min-width:66px;text-align:right}
 
 .stage{margin-top:14px;background:var(--sunk);border:1px solid var(--line);border-radius:3px;
@@ -128,7 +129,7 @@ video{display:none}
 <div class="wrap">
 
 <p style="margin:14px 0 0"><a href="../" style="color:var(--dim);text-decoration:none;font-family:var(--mono);font-size:13px">← poste de terrain</a></p>
-<h1>Séance capteurs <span style="font-size:11px;color:var(--signal);letter-spacing:.12em">v16</span></h1>
+<h1>Séance capteurs <span style="font-size:11px;color:var(--signal);letter-spacing:.12em">v17</span></h1>
 <p class="sub">L'appareil est fait pour <b>se taire</b>. Il apprend le bruit normal du capteur, puis relève son seuil tant que ce bruit pourrait le faire parler. Un mot ne sort que si une mesure dépasse tout ce que l'appareil a vu de normal — <b>et le silence est le résultat attendu</b>. S'il n'y a rien, il n'y a rien.</p>
 
 <div class="step">
@@ -172,8 +173,13 @@ video{display:none}
 
   <p class="ex"><b>Aucun réglage de fréquence, aucun réglage de sensibilité.</b> Le seuil se calibre tout seul contre le bruit réel de ton appareil, et il <b>monte</b> chaque fois que ce bruit aurait suffi à faire sortir un mot. L'appareil parle si — et seulement si — une mesure dépasse tout ce qu'il a vu de normal. Combien de mots sortiront n'est pas un paramètre : c'est le <b>résultat</b>, et il est très souvent zéro.</p>
 
-  <div class="fld"><span class="lg">apprentissage</span><input type="range" id="learn" min="30" max="180" step="10" value="60"><span class="val" id="learnV">60 s</span></div>
-  <p class="ex">Durée pendant laquelle l'appareil écoute sans rien dire, pour apprendre le bruit normal <b>ici et maintenant</b>. Plus c'est long, plus le seuil est juste. Ne touche pas au téléphone pendant ce temps.</p>
+  <input type="hidden" id="learn" value="30">
+  <div class="fld"><span class="lg">apprentissage</span>
+    <button id="lr30" class="tgl on" style="flex:1;min-width:56px">30 s</button>
+    <button id="lr60" class="tgl" style="flex:1;min-width:56px">60 s</button>
+    <button id="lr120" class="tgl" style="flex:1;min-width:56px">2 min</button>
+  </div>
+  <p class="ex">Au démarrage, l'appareil écoute sans rien dire pendant ce temps-là : il mesure le bruit normal de l'endroit, <b>ici et maintenant</b>. Ce bruit devient la référence — tout ce qui suivra lui sera comparé, et lui seul décide de ce qui compte comme « anormal ». Sans cette référence, l'appareil n'aurait aucun moyen de savoir ce qui est ordinaire. <b>30 s suffisent dans un endroit calme</b> ; allonge seulement si le lieu remue (vent, circulation, machines) pour que la référence les intègre. Ne touche pas au téléphone pendant ce temps.</p>
 
   <input type="hidden" id="ref" value="8">
 
@@ -659,7 +665,13 @@ function remplirClasses(){
   Object.keys(BY_POS).sort().forEach(k=>{ const o=document.createElement('option');
     o.value=k; o.textContent=k+' — '+BY_POS[k].length+' mots'; p.appendChild(o); });
 }
-$('learn').oninput=e=>{ $('learnV').textContent=e.target.value+' s'; checkReady(); };
+/* boutons plutôt qu'un curseur : un curseur se déplace tout seul quand on fait
+   défiler la page avec le pouce, et ce réglage n'a pas à être touché en naviguant */
+[['lr30',30],['lr60',60],['lr120',120]].forEach(([id,s])=>{
+  $(id).onclick=()=>{ if(running) return;
+    $('learn').value=s; ['lr30','lr60','lr120'].forEach(x=>$(x).classList.remove('on'));
+    $(id).classList.add('on'); checkReady(); };
+});
 let speak=false, blind=false, coinc=false;
 const coincSel=new Set();
 $('tSpeak').onclick=e=>{speak=!speak;e.target.classList.toggle('on',speak);};

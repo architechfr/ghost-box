@@ -71,7 +71,8 @@ button:focus-visible{outline:2px solid var(--gold);outline-offset:2px}
 #mark:active:not(:disabled){background:var(--gold);color:#191204}
 #go{border-color:var(--signal);color:var(--signal)} #halt{border-color:var(--flag);color:var(--flag)}
 .slide{display:flex;align-items:center;gap:12px;margin-top:14px}
-input[type=range]{flex:1;accent-color:var(--gold);height:26px;min-width:0}
+/* pan-y : faire défiler la page au-dessus d'un curseur ne doit jamais le déplacer */
+input[type=range]{flex:1;accent-color:var(--gold);height:26px;min-width:0;touch-action:pan-y}
 .val{font-family:var(--mono);font-size:12px;color:var(--gold);min-width:58px;text-align:right}
 .fields{display:flex;gap:8px;margin-top:12px}
 input[type=text]{flex:1;min-width:0;background:var(--sunk);border:1px solid var(--line);color:var(--paper);

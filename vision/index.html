@@ -90,7 +90,7 @@ video.player{width:100%;margin-top:8px;border:1px solid var(--line);border-radiu
 
 <div class="top"><div class="topin">
   <a class="back" href="../">←</a>
-  <h1>Vision <span style="font-size:10px;color:var(--signal)">v5</span></h1>
+  <h1>Vision <span style="font-size:10px;color:var(--signal)">v6</span></h1>
   <span class="recdot" id="recDot">● <span id="recT">00:00</span></span>
 </div></div>
 
@@ -120,6 +120,15 @@ video.player{width:100%;margin-top:8px;border:1px solid var(--line);border-radiu
     <button id="camAi">Détection de personne</button>
   </div>
   <p id="aiState" class="ex"></p>
+  <div class="lg" style="margin-top:14px">mémoire tampon — revenir en arrière</div>
+  <p class="ex">L'appareil encode en permanence mais <b>ne garde rien</b> : à chaque instant seules les dernières secondes existent, en mémoire, et le reste est effacé au fur et à mesure. Rien n'est écrit sur le téléphone tant que tu n'appuies pas. <b>Si tu appuies sur Enregistrer, ces secondes-là sont déjà dedans</b> — celles d'avant ton geste. Pour un téléphone posé quelque part et laissé seul.</p>
+  <div class="row">
+    <button id="tampBtn">Mémoire tampon</button>
+    <button id="t5" style="flex:0 0 auto;min-width:56px">5 s</button>
+    <button id="t10" class="on" style="flex:0 0 auto;min-width:56px">10 s</button>
+    <button id="t20" style="flex:0 0 auto;min-width:56px">20 s</button>
+  </div>
+  <p id="tampState" class="ex">Éteinte.</p>
   <button id="recBtn" disabled>● Enregistrer</button>
   <p id="recState" class="ex">Active d'abord la caméra.</p>
 </div>
@@ -377,18 +386,70 @@ function pickMime(){
   for(const m of c) if(window.MediaRecorder&&MediaRecorder.isTypeSupported&&MediaRecorder.isTypeSupported(m)) return m;
   return '';
 }
-$('recBtn').onclick=async ()=>{
-  if(recording){ try{ rec.stop(); }catch(e){} return; }
-  if(!streams.length){ $('recState').textContent="Active d'abord la caméra."; return; }
-  if(!window.MediaRecorder){ $('recState').textContent='Enregistrement vidéo non supporté par ce navigateur.'; return; }
+/* ═══════ mémoire tampon : les secondes d'AVANT le geste ═══════ */
+let tampon=null, tampSec=10, prerollDernier=0;
+async function fluxBrut(){
+  if(!streams.length) return null;
   const tracks=[...streams[0].getVideoTracks()];
   if($('withAudio').classList.contains('on')){
     try{
-      if(!micStream) micStream=await navigator.mediaDevices.getUserMedia({audio:{echoCancellation:false,noiseSuppression:false,autoGainControl:false}});
-      tracks.push(...micStream.getAudioTracks());
+      if(!micStream) micStream=await navigator.mediaDevices.getUserMedia({audio:{echoCancellation:false,noiseSuppression:false,autoGainControl:false,voiceIsolation:false}});
+      tracks.push(...micStream.getAudioTracks().filter(t=>t.readyState==='live'));
     }catch(e){ $('recState').textContent='Micro refusé — enregistrement sans son.'; }
   }
-  const mix=new MediaStream(tracks);
+  return new MediaStream(tracks);
+}
+function tampEtat(e){
+  if(!tampon || !tampon.actif()){ $('tampState').textContent='Éteinte.'; return; }
+  $('tampState').innerHTML = (e&&e.garde)
+    ? '<b style="color:var(--flag)">Enregistrement en cours</b> — les '+prerollDernier+' s qui ont précédé ton geste sont dedans.'
+    : '<b style="color:var(--signal)">'+Math.round(e?e.dispo:0)+' s en mémoire</b> sur '+tampSec
+      +' — effacées en continu, rien n\'est écrit sur le téléphone.';
+}
+async function tampDemarre(){
+  if(!window.GBTampon || !GBTampon.supporte()){
+    $('tampState').innerHTML='<b style="color:var(--gold)">Impossible sur ce navigateur.</b> Revenir en arrière demande le WebM ; '
+      +'cet appareil n\'enregistre qu\'en MP4, qui ne se recolle pas. L\'enregistrement normal fonctionne.';
+    return false;
+  }
+  const f=await fluxBrut();
+  if(!f){ $('tampState').textContent='Active d\'abord la caméra.'; return false; }
+  tampon=GBTampon.creer({secondes:tampSec, onEtat:tampEtat});
+  if(!tampon.demarrer(f)){ tampon=null; $('tampState').textContent='Le tampon n\'a pas pu démarrer.'; return false; }
+  $('tampBtn').classList.add('on'); return true;
+}
+function tampArrete(){
+  if(tampon){ try{ tampon.arreter(); }catch(e){} tampon=null; }
+  $('tampBtn').classList.remove('on'); tampEtat(null);
+}
+$('tampBtn').onclick=()=>{
+  if(tampon && tampon.actif()){
+    if(tampon.enGarde()){ $('tampState').textContent='Arrête d\'abord l\'enregistrement en cours.'; return; }
+    tampArrete();
+  } else tampDemarre();
+};
+[['t5',5],['t10',10],['t20',20]].forEach(([id,s])=>{
+  $(id).onclick=()=>{ if(tampon && tampon.enGarde()) return;
+    tampSec=s; ['t5','t10','t20'].forEach(x=>$(x).classList.remove('on')); $(id).classList.add('on');
+    if(tampon && tampon.actif()){ tampArrete(); tampDemarre(); } };
+});
+
+$('recBtn').onclick=async ()=>{
+  if(recording){ if(tampon && tampon.enGarde()) return finTampon(); try{ rec.stop(); }catch(e){} return; }
+  if(!streams.length){ $('recState').textContent="Active d'abord la caméra."; return; }
+  if(!window.MediaRecorder){ $('recState').textContent='Enregistrement vidéo non supporté par ce navigateur.'; return; }
+  // ── tampon actif : les secondes d'avant sont déjà là, on les garde ──
+  if(tampon && tampon.actif() && !tampon.enGarde()){
+    prerollDernier=Math.round(tampon.garder());
+    recording=true; recStart=performance.now()-prerollDernier*1000;
+    $('recBtn').textContent='■ Arrêter'; $('recBtn').classList.add('on');
+    $('recDot').classList.add('on');
+    recTimer=setInterval(()=>{ const t=(performance.now()-recStart)/1000;
+      $('recT').textContent=fmt(t); $('recState').textContent='Enregistrement — '+fmt(t)+' (dont '+prerollDernier+' s d\'avant)'; },250);
+    return;
+  }
+  const mix=await fluxBrut();
+  if(!mix) return;
   recMime=pickMime(); chunks=[];
   try{ rec=new MediaRecorder(mix, recMime?{mimeType:recMime}:undefined); }
   catch(e){ $('recState').textContent='Enregistrement indisponible sur ce navigateur.'; return; }
@@ -401,17 +462,29 @@ $('recBtn').onclick=async ()=>{
     $('recT').textContent=fmt(t); $('recState').textContent='Enregistrement en cours — '+fmt(t); },250);
 };
 async function onStop(){
+  const dur=(performance.now()-recStart)/1000;
+  const type=(rec&&rec.mimeType)||recMime||'video/webm';
+  await sauver(new Blob(chunks,{type}), type, dur, 0);
+}
+/* fin d'une prise venue du tampon : le fichier contient déjà les secondes d'avant */
+async function finTampon(){
+  const r=await tampon.terminer();
+  tampon=null; $('tampBtn').classList.remove('on');
+  if(r && r.blob && r.blob.size) await sauver(r.blob, r.type, r.duree, r.preroll);
+  else { recording=false; clearInterval(recTimer); $('recState').textContent='Rien à sauvegarder.'; }
+  tampDemarre();      // la mémoire repart tout de suite
+}
+async function sauver(blob, type, dur, preroll){
   recording=false; clearInterval(recTimer);
   $('recBtn').textContent='● Enregistrer'; $('recBtn').classList.remove('on');
   $('recDot').classList.remove('on');
-  const dur=(performance.now()-recStart)/1000;
-  const type=(rec&&rec.mimeType)||recMime||'video/webm';
-  const blob=new Blob(chunks,{type});
   const thumb=grabThumb();
   const ext = type.indexOf('mp4')>=0? 'mp4':'webm';
   const clip={ id:Date.now(), nom:'vision-'+stamp()+'.'+ext, mime:type, taille:blob.size,
-               duree:Math.round(dur), vignette:thumb, cam:(cells[0]&&cells[0].label)||'—', blob };
-  try{ await dbPut(clip); $('recState').textContent='Enregistrement sauvegardé ('+mo(blob.size)+').'; }
+               duree:Math.round(dur), vignette:thumb, cam:(cells[0]&&cells[0].label)||'—',
+               avant_s:preroll||0, blob };
+  try{ await dbPut(clip); $('recState').textContent='Enregistrement sauvegardé ('+mo(blob.size)+')'
+        +(preroll? ' — dont '+preroll+' s d\'avant ton geste.':'.'); }
   catch(e){ $('recState').textContent='Sauvegarde impossible (espace insuffisant ?) — télécharge-le tout de suite.';
             dl(blob, clip.nom); }
   renderLib();
@@ -511,11 +584,14 @@ listDevices(); renderLib();
 /* Une caméra retenue par une page en arrière-plan bloque TOUS les autres modes.
    On la libère dès que la page n'est plus visible — sauf pendant un enregistrement. */
 addEventListener('visibilitychange',()=>{
-  if(document.hidden && !recording){ try{stopAll();}catch(e){} }
+  if(document.hidden && !recording){
+    if(tampon && tampon.actif() && !tampon.enGarde()) tampArrete();   // rien n'était gardé : rien n'est perdu
+    try{stopAll();}catch(e){}
+  }
 });
 /* libère la caméra en quittant la page : sinon elle reste prise et les autres
    modes affichent « déjà utilisée » (cause racine du problème constaté) */
-addEventListener('pagehide',()=>{ stopAll(); });
+addEventListener('pagehide',()=>{ try{ if(tampon) tampon.arreter(); }catch(e){} stopAll(); });
 
 /* bouton de capture flottant, disponible à tout instant */
 addEventListener('load',function(){ try{ GBCapture.init({label:'vision', rec:'#recBtn', frame:function(){ return cells.length? {video:cells[0].v, overlay:cells[0].ov} : null; }}); }catch(e){} });
@@ -523,6 +599,7 @@ addEventListener('load',function(){ try{ GBCapture.init({label:'vision', rec:'#r
 </script>
 <script>if('serviceWorker' in navigator){window.addEventListener('load',function(){navigator.serviceWorker.register('/ghost-box/sw.js').catch(function(){});});}</script>
 <script src="/ghost-box/lib/wakelock.js"></script>
+<script src="/ghost-box/lib/tampon.js"></script>
 <script src="/ghost-box/lib/media.js"></script>
 <script src="/ghost-box/lib/capture.js"></script>
 <script src="/ghost-box/lib/fullscreen.js"></script>

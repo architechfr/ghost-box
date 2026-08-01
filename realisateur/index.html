@@ -90,7 +90,7 @@ body.filming #quitFix{display:block;position:fixed;z-index:61;right:10px;
 <body>
 
 <div class="top"><div class="topin">
-  <a href="../">←</a><h1>Réalisateur <span style="font-size:10px;color:var(--signal)">v8</span></h1>
+  <a href="../">←</a><h1>Réalisateur <span style="font-size:10px;color:var(--signal)">v9</span></h1>
   <span class="lg" id="phase">à préparer</span>
 </div></div>
 
@@ -108,6 +108,16 @@ body.filming #quitFix{display:block;position:fixed;z-index:61;right:10px;
   <p id="twoState" class="ex"></p>
   <p id="prepState" class="ex">La caméra et le micro sont nécessaires. L'appareil apprendra 45 s le bruit du lieu avant de pouvoir émettre quoi que ce soit.</p>
   <p id="sonState" class="ex">Le micro est ouvert <b>sans réduction de bruit ni gain automatique</b> : le balayage de la box radio est enregistré tel qu'il sonne, sans traitement. <button id="micBtn" style="margin-left:6px;padding:6px 9px;font-size:11px">Micro</button></p>
+
+  <div class="lg" style="margin-top:16px">mémoire tampon — revenir en arrière</div>
+  <p class="ex">L'appareil encode en permanence mais <b>ne garde rien</b> : à chaque instant, seules les dernières secondes existent, en mémoire, et tout ce qui est plus vieux est effacé au fur et à mesure. Rien n'est écrit sur le téléphone tant que tu n'appuies pas. <b>Si tu appuies sur Enregistrer, ces secondes-là sont déjà dedans</b> — celles d'avant ton geste. C'est fait pour ce qui arrive avant qu'on ait le temps de réagir.</p>
+  <div class="row">
+    <button id="tampBtn">Mémoire tampon</button>
+    <button id="t5" style="flex:0 0 auto;min-width:56px">5 s</button>
+    <button id="t10" class="act" style="flex:0 0 auto;min-width:56px">10 s</button>
+    <button id="t20" style="flex:0 0 auto;min-width:56px">20 s</button>
+  </div>
+  <p id="tampState" class="ex">Éteinte. À allumer quand tu poses le téléphone quelque part et que tu le laisses seul.</p>
   <div class="lg" style="margin-top:14px">objectif</div>
   <div id="lenses" class="row"></div>
   <p class="ex">Choisis l'objectif : par défaut le téléphone donne parfois l'ultra grand-angle, plus flou.</p>
@@ -140,6 +150,7 @@ body.filming #quitFix{display:block;position:fixed;z-index:61;right:10px;
 <video id="vid2" playsinline muted></video>
 
 <script src="/ghost-box/lib/moteur.js"></script>
+<script src="/ghost-box/lib/tampon.js"></script>
 <script src="/ghost-box/lib/media.js"></script>
 <script src="/ghost-box/lib/wakelock.js"></script>
 <script>
@@ -319,7 +330,7 @@ let stackV=false;
 function sizeStage(){
   const v=$('vid'); if(!v||!v.videoWidth) return;
   if(recording) return;   // changer la taille du canvas en cours d'enregistrement casse le fichier
-  const r=v.videoHeight/v.videoWidth;
+  const r=v.videoHeight/v.videoWidth, avant=cv.width+'x'+cv.height;
   if(twoCam){
     stackV = window.innerHeight >= window.innerWidth;
     if(stackV){ cv.width=Math.min(720,v.videoWidth); cv.height=Math.round(cv.width*r)*2; }
@@ -328,6 +339,8 @@ function sizeStage(){
     stackV=false;
     cv.width=Math.min(1280,v.videoWidth); cv.height=Math.round(cv.width*r);
   }
+  // le tampon encode le canvas : s'il change de taille, il faut repartir proprement
+  if(avant!==cv.width+'x'+cv.height && typeof tampRelance==='function') tampRelance();
 }
 addEventListener('resize',()=>{ try{ sizeStage(); }catch(e){} });
 addEventListener('orientationchange',()=>{ setTimeout(()=>{ try{ sizeStage(); }catch(e){} },350); });
@@ -631,12 +644,78 @@ function pickMime(){
   for(const m of c) if(window.MediaRecorder&&MediaRecorder.isTypeSupported&&MediaRecorder.isTypeSupported(m)) return m;
   return '';
 }
+/* ═══════ mémoire tampon : les secondes d'AVANT le geste ═══════ */
+let tampon=null, tampSec=10, prerollDernier=0;
+function fluxCompose(){
+  let cs; try{ cs=cv.captureStream(30); }catch(e){ return null; }
+  const tracks=[...cs.getVideoTracks()];
+  if(micStream) tracks.push(...micStream.getAudioTracks().filter(t=>t.readyState==='live'));
+  return new MediaStream(tracks);
+}
+function tampEtat(e){
+  if(!tampon || !tampon.actif()){
+    $('tampState').innerHTML='Éteinte. À allumer quand tu poses le téléphone quelque part et que tu le laisses seul.';
+    return;
+  }
+  if(e && e.garde){
+    $('tampState').innerHTML='<b style="color:var(--flag)">Enregistrement en cours</b> — les '
+      +prerollDernier+' s qui ont précédé ton geste sont dedans.';
+  } else {
+    $('tampState').innerHTML='<b style="color:var(--signal)">'+Math.round(e?e.dispo:0)+' s en mémoire</b> sur '
+      +tampSec+' — effacées en continu, rien n\'est écrit sur le téléphone. Appuie sur Enregistrer et elles sont gardées.';
+  }
+}
+function tampDemarre(){
+  if(!window.GBTampon || !GBTampon.supporte()){
+    $('tampState').innerHTML='<b style="color:var(--gold)">Impossible sur ce navigateur.</b> Revenir en arrière demande le format WebM ; '
+      +'cet appareil n\'enregistre qu\'en MP4, qui ne se recolle pas. L\'enregistrement normal, lui, fonctionne.';
+    return false;
+  }
+  const f=fluxCompose();
+  if(!f){ $('tampState').textContent='Image composée indisponible — prépare d\'abord le tournage.'; return false; }
+  tampon=GBTampon.creer({secondes:tampSec, onEtat:tampEtat});
+  if(!tampon.demarrer(f)){ tampon=null; $('tampState').textContent='Le tampon n\'a pas pu démarrer.'; return false; }
+  $('tampBtn').className='act';
+  return true;
+}
+function tampArrete(){
+  if(tampon){ try{ tampon.arreter(); }catch(e){} tampon=null; }
+  $('tampBtn').className=''; tampEtat(null);
+}
+/* la taille du canvas ne peut pas changer en cours d'encodage : on repart proprement */
+function tampRelance(){
+  if(tampon && tampon.actif() && !tampon.enGarde()){ tampArrete(); tampDemarre(); }
+}
+$('tampBtn').onclick=()=>{
+  if(tampon && tampon.actif()){
+    if(tampon.enGarde()){ $('tampState').textContent='Arrête d\'abord l\'enregistrement en cours.'; return; }
+    $('tampBtn').dataset.voulu='0'; tampArrete();
+  } else { $('tampBtn').dataset.voulu='1'; tampDemarre(); }
+};
+[['t5',5],['t10',10],['t20',20]].forEach(([id,s])=>{
+  $(id).onclick=()=>{
+    if(tampon && tampon.enGarde()){ return; }
+    tampSec=s; ['t5','t10','t20'].forEach(x=>$(x).className=''); $(id).className='act';
+    if(tampon && tampon.actif()){ tampArrete(); tampDemarre(); }
+  };
+});
+
 $('recBtn').onclick=async ()=>{
-  if(recording){ try{ rec.stop(); }catch(e){} return; }
+  if(recording){ if(tampon && tampon.enGarde()) return finTampon(); try{ rec.stop(); }catch(e){} return; }
   if(!vstream) return;
   // le son de la box radio doit être dans le fichier : dernière vérification avant de tourner.
   // Un micro perdu en arrière-plan donnerait une vidéo muette sans prévenir.
   if(!micVivant()){ try{ await getMic(); sonOK(); }catch(e){ sonKO(e); } }
+  // ── tampon actif : les secondes d'avant sont déjà là, on les garde ──
+  if(tampon && tampon.actif() && !tampon.enGarde()){
+    prerollDernier=Math.round(tampon.garder());
+    recording=true; recAudio=micVivant(); recStart=performance.now()-prerollDernier*1000;
+    $('recBtn').textContent='■ Arrêter'; $('recBtn').classList.add('on');
+    $('phase').textContent='tournage';
+    addJ(performance.now(),'départ','enregistrement lancé — '+prerollDernier+' s récupérées AVANT le geste'
+      +(recAudio? ' — son de la box':' — SANS SON')+(twoCam?' — deux caméras':''));
+    return;
+  }
   let cs; try{ cs=cv.captureStream(30); }
   catch(e){ $('live').textContent='Ce navigateur ne sait pas enregistrer l\'image composée.'; return; }
   const tracks=[...cs.getVideoTracks()];
@@ -656,19 +735,31 @@ $('recBtn').onclick=async ()=>{
   if(!audio.length) $('live').innerHTML='<b style="color:var(--flag)">Tu enregistres sans son</b> — la box radio ne sera pas sur la vidéo.';
 };
 async function onStop(){
+  const dur=(performance.now()-recStart)/1000;
+  const type=(rec&&rec.mimeType)||recMime||'video/webm';
+  await sauver(new Blob(chunks,{type}), type, dur, 0);
+}
+/* fin d'une prise venue du tampon : le fichier contient déjà les secondes d'avant */
+async function finTampon(){
+  const r=await tampon.terminer();
+  tampon=null; $('tampBtn').className='';
+  if(r && r.blob && r.blob.size) await sauver(r.blob, r.type, r.duree, r.preroll);
+  else addJ(performance.now(),'fin','rien à sauvegarder');
+  tampDemarre();      // on remet la mémoire en route tout de suite
+}
+async function sauver(blob, type, dur, preroll){
   recording=false;
   $('recBtn').textContent='● Enregistrer'; $('recBtn').classList.remove('on');
   $('phase').textContent='prêt';
-  const dur=(performance.now()-recStart)/1000;
-  const type=(rec&&rec.mimeType)||recMime||'video/webm';
-  const blob=new Blob(chunks,{type});
   const ext=type.indexOf('mp4')>=0?'mp4':'webm';
   let thumb=''; try{ const c=document.createElement('canvas'); c.width=156; c.height=Math.round(156*cv.height/cv.width);
     c.getContext('2d').drawImage(cv,0,0,c.width,c.height); thumb=c.toDataURL('image/jpeg',.5); }catch(e){}
   const clip={ id:Date.now(), nom:'tournage-'+stamp()+'.'+ext, mime:type, taille:blob.size,
     duree:Math.round(dur), vignette:thumb, cam:($('lieu').value||'tournage'), blob,
-    source:'realisateur', son:recAudio, cameras:(twoCam?2:1), journal:[...journal].reverse() };
-  try{ await dbPut(clip); addJ(performance.now(),'fin','vidéo sauvegardée ('+mo(blob.size)+')'); }
+    source:'realisateur', son:recAudio, cameras:(twoCam?2:1), avant_s:preroll||0,
+    journal:[...journal].reverse() };
+  try{ await dbPut(clip); addJ(performance.now(),'fin','vidéo sauvegardée ('+mo(blob.size)+')'
+      +(preroll? ' — dont '+preroll+' s d\'avant le geste':'')); }
   catch(e){ addJ(performance.now(),'fin','sauvegarde impossible — téléchargement direct');
     const u=URL.createObjectURL(blob),a=document.createElement('a'); a.href=u;a.download=clip.nom;a.click();
     setTimeout(()=>URL.revokeObjectURL(u),6000); }
@@ -689,6 +780,7 @@ renderJ();
    On la libère dès que la page n'est plus visible — sauf pendant un enregistrement. */
 addEventListener('visibilitychange',()=>{
   if(document.hidden && !recording){
+    if(tampon && tampon.actif() && !tampon.enGarde()) tampArrete();   // rien n'était gardé : rien n'est perdu
     try{ if(vstream) vstream.getTracks().forEach(t=>t.stop()); vstream=null; }catch(e){}
     try{ if(vstream2) vstream2.getTracks().forEach(t=>t.stop()); vstream2=null; }catch(e){}
     camLibre=true;
@@ -716,10 +808,11 @@ async function reprise(){
   sizeStage();
   $('prepState').innerHTML='Reprise — seuils conservés, aucun réapprentissage.';
   startLoops();
+  if($('tampBtn').dataset.voulu==='1') setTimeout(tampDemarre,400);
 }
 /* libère la caméra en quittant la page : sinon elle reste prise et les autres
    modes affichent « déjà utilisée » (cause racine du problème constaté) */
-addEventListener('pagehide',()=>{ try{if(vstream)vstream.getTracks().forEach(t=>t.stop());}catch(e){} try{if(vstream2)vstream2.getTracks().forEach(t=>t.stop());}catch(e){} try{if(micStream)micStream.getTracks().forEach(t=>t.stop());}catch(e){} });
+addEventListener('pagehide',()=>{ try{ if(tampon) tampon.arreter(); }catch(e){} try{if(vstream)vstream.getTracks().forEach(t=>t.stop());}catch(e){} try{if(vstream2)vstream2.getTracks().forEach(t=>t.stop());}catch(e){} try{if(micStream)micStream.getTracks().forEach(t=>t.stop());}catch(e){} });
 
 /* bouton de capture flottant, disponible à tout instant */
 addEventListener('load',function(){ try{ GBCapture.init({label:($('lieu').value||'tournage'), rec:'#recBtn', frame:function(){ return cv; }}); }catch(e){} });
