@@ -7,6 +7,11 @@
 <title>Contact via IA — en développement</title>
 <link rel="icon" type="image/png" href="/ghost-box/favicon.png">
 <link rel="apple-touch-icon" href="/ghost-box/apple-touch-icon.png">
+<link rel="manifest" href="/ghost-box/manifest.json">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Ghost Box">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600&family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500&display=swap" rel="stylesheet">
 <style>
@@ -62,7 +67,7 @@ video{display:none}
 <body>
 <div class="wrap">
 
-<h1>Contact via IA <span class="wip">en développement · v3</span></h1>
+<h1>Contact via IA <span class="wip">en développement · v4</span></h1>
 <p class="sub">Deux expériences pour « entendre » ou « voir » au-delà des mesures brutes du banc. À traiter comme des <b>pistes à vérifier</b>, jamais comme des preuves : l'IA fabrique des mots à partir du bruit et des silhouettes à partir de reflets. La transcription <b>envoie l'audio au serveur Mistral</b> ; la silhouette tourne entièrement sur l'appareil.</p>
 
 <div class="step">
@@ -92,8 +97,13 @@ video{display:none}
     <button id="pCam">Activer la caméra</button>
     <button id="aiBtn" disabled>Silhouette IA</button>
   </div>
-  <canvas id="camView" width="320" height="240"></canvas>
+  <div class="lg" style="margin-top:12px;font-size:11px">objectif</div>
+  <div id="lenses" class="row"></div>
+  <p class="ex">Le téléphone choisit parfois l'<b>ultra grand-angle</b> tout seul — image molle et déformée. Prends « Arrière » pour l'objectif principal.</p>
+  <canvas id="camView" width="960" height="720"></canvas>
   <p id="poseState" class="ex"></p>
+  <div class="row"><button id="vRec" disabled>● Enregistrer la vidéo</button></div>
+  <p id="vRecState" class="ex">L'enregistrement contient le squelette incrusté et le son du micro. Les fichiers sont rangés dans la bibliothèque de <a href="../vision/" style="color:var(--signal)">Vision</a>.</p>
 </div>
 
 <a class="back" href="../">← retour au poste de terrain</a>
@@ -265,14 +275,40 @@ function drawSkeleton(g,lms,vw,vh){
   for(const p of lms){ if(p.visibility!=null&&p.visibility<VIS) continue;
     g.beginPath(); g.arc(p.x*vw,p.y*vh,5.5,0,7); g.fill(); }
 }
-$('pCam').onclick = async () => {
-  if(vstream){ stopCam(); return; }
+let lensId=null, lenses=[];
+function lensName(d,i){
+  const l=(d.label||'').toLowerCase();
+  if(l.includes('front')||l.includes('avant')||l.includes('user')) return 'Avant';
+  if(l.includes('ultra')||l.includes('wide')) return 'Ultra grand-angle';
+  if(l.includes('tele')) return 'Téléobjectif';
+  if(l.includes('back')||l.includes('arrière')||l.includes('environment')) return 'Arrière'+(i?' '+i:'');
+  return d.label? d.label.slice(0,16) : 'Objectif '+(i+1);
+}
+async function listLenses(){
+  try{ lenses=(await navigator.mediaDevices.enumerateDevices()).filter(d=>d.kind==='videoinput'); }catch(e){ lenses=[]; }
+  const box=$('lenses'); box.innerHTML='';
+  lenses.forEach((d,i)=>{ const b=document.createElement('button');
+    b.textContent=lensName(d,i); b.style.minWidth='100px'; b.style.fontSize='12px';
+    if(d.deviceId===lensId) b.className='act';
+    b.onclick=()=>{ lensId=d.deviceId; startCam(); };
+    box.appendChild(b); });
+}
+$('pCam').onclick = () => { if(vstream){ stopCam(); return; } startCam(); };
+async function startCam(){
+  if(vstream){ vstream.getTracks().forEach(t=>t.stop()); vstream=null; }
   try{
-    vstream=await navigator.mediaDevices.getUserMedia({video:{facingMode:'environment',width:320,height:240}});
+    vstream=await navigator.mediaDevices.getUserMedia({video: lensId
+      ? {deviceId:{exact:lensId},width:{ideal:1280},height:{ideal:960}}
+      : {facingMode:'environment',width:{ideal:1280},height:{ideal:960}}});
     const v=$('vid'); v.srcObject=vstream; await v.play();
     camActive=true; $('pCam').textContent='Couper la caméra'; $('pCam').classList.add('act');
-    $('aiBtn').disabled=false; $('camView').style.display='block';
-    const view=$('camView'), vg=view.getContext('2d'), vw=view.width, vh=view.height;
+    $('aiBtn').disabled=false; $('vRec').disabled=false; $('camView').style.display='block';
+    const view=$('camView');
+    if(v.videoWidth){ view.width=Math.min(1280,v.videoWidth);
+      view.height=Math.round(view.width*v.videoHeight/v.videoWidth); }
+    lensId=vstream.getVideoTracks()[0].getSettings().deviceId||lensId;
+    await listLenses();
+    const vg=view.getContext('2d'), vw=view.width, vh=view.height;
     (function loop(){
       if(!vstream) return;
       vg.drawImage(v,0,0,vw,vh);
@@ -280,9 +316,10 @@ $('pCam').onclick = async () => {
       setTimeout(loop,80);
     })();
   }catch(e){ $('pCam').classList.add('ko'); camActive=false; }
-};
+}
 function stopCam(){
-  aiOn=false; $('aiBtn').classList.remove('act'); $('aiBtn').disabled=true;
+  if(vRecOn){ try{ vRec.stop(); }catch(e){} }
+  aiOn=false; $('aiBtn').classList.remove('act'); $('aiBtn').disabled=true; $('vRec').disabled=true;
   if(vstream){ vstream.getTracks().forEach(t=>t.stop()); vstream=null; }
   camActive=false; lastPose=null; $('camView').style.display='none';
   $('pCam').textContent='Activer la caméra'; $('pCam').classList.remove('act'); $('poseState').textContent='';
@@ -325,7 +362,57 @@ $('aiBtn').onclick=async ()=>{
     })();
   }catch(e){ aiOn=false; $('aiBtn').classList.remove('act'); $('poseState').textContent='Silhouette IA indisponible (le modèle n\'a pas pu se charger — réseau ?).'; }
 };
+
+/* ═══════ enregistrement vidéo (image + squelette incrustés) ═══════ */
+let vRec=null, vChunks=[], vRecOn=false, vStart=0, vTimer=null;
+function pickVMime(){
+  const c=['video/mp4;codecs=avc1','video/mp4','video/webm;codecs=vp9,opus','video/webm;codecs=vp8,opus','video/webm'];
+  for(const m of c) if(window.MediaRecorder&&MediaRecorder.isTypeSupported&&MediaRecorder.isTypeSupported(m)) return m;
+  return '';
+}
+$('vRec').onclick=async ()=>{
+  if(vRecOn){ try{ vRec.stop(); }catch(e){} return; }
+  if(!camActive){ $('vRecState').textContent="Active d'abord la caméra."; return; }
+  let cs; try{ cs=$('camView').captureStream(30); }
+  catch(e){ $('vRecState').textContent="Ce navigateur ne sait pas enregistrer l'image composée."; return; }
+  const tracks=[...cs.getVideoTracks()];
+  try{ const ms=await ensureMic(); tracks.push(...ms.getAudioTracks()); }catch(e){}
+  vChunks=[]; const mime=pickVMime();
+  try{ vRec=new MediaRecorder(new MediaStream(tracks), mime?{mimeType:mime}:undefined); }
+  catch(e){ $('vRecState').textContent='Enregistrement vidéo indisponible ici.'; return; }
+  vRec.ondataavailable=e=>{ if(e.data&&e.data.size) vChunks.push(e.data); };
+  vRec.onstop=onVStop;
+  vRec.start(1000); vRecOn=true; vStart=performance.now();
+  $('vRec').textContent='■ Arrêter'; $('vRec').classList.add('ko');
+  vTimer=setInterval(()=>{ $('vRecState').textContent='Enregistrement — '+fmt((performance.now()-vStart)/1000); },250);
+};
+async function onVStop(){
+  vRecOn=false; clearInterval(vTimer);
+  $('vRec').textContent='● Enregistrer la vidéo'; $('vRec').classList.remove('ko');
+  const dur=(performance.now()-vStart)/1000;
+  const type=(vRec&&vRec.mimeType)||'video/webm';
+  const blob=new Blob(vChunks,{type});
+  const ext=type.indexOf('mp4')>=0?'mp4':'webm';
+  let thumb=''; try{ const cvs=$('camView'), c=document.createElement('canvas');
+    c.width=156; c.height=Math.round(156*cvs.height/cvs.width);
+    c.getContext('2d').drawImage(cvs,0,0,c.width,c.height); thumb=c.toDataURL('image/jpeg',.5); }catch(e){}
+  const clip={ id:Date.now(), nom:'silhouette-'+stamp()+'.'+ext, mime:type, taille:blob.size,
+    duree:Math.round(dur), vignette:thumb, cam:'contact-ia', blob, source:'contact-ia' };
+  try{ await dbPut(clip);
+    $('vRecState').innerHTML='Vidéo sauvegardée ('+(blob.size/1048576).toFixed(1)+' Mo) — visible dans <a href="../vision/" style="color:var(--signal)">Vision</a>.'; }
+  catch(e){ $('vRecState').textContent='Sauvegarde impossible — téléchargement direct.'; dl2(blob,clip.nom); }
+}
+const DBN='ghostbox-vision', ST='clips';
+function db(){ return new Promise((res,rej)=>{ const r=indexedDB.open(DBN,1);
+  r.onupgradeneeded=()=>{ if(!r.result.objectStoreNames.contains(ST)) r.result.createObjectStore(ST,{keyPath:'id'}); };
+  r.onsuccess=()=>res(r.result); r.onerror=()=>rej(r.error); }); }
+async function dbPut(o){ const d=await db(); return new Promise((res,rej)=>{
+  const t=d.transaction(ST,'readwrite'); t.objectStore(ST).put(o);
+  t.oncomplete=()=>res(); t.onerror=()=>rej(t.error); }); }
+
+listLenses();
 })();
 </script>
+<script>if('serviceWorker' in navigator){window.addEventListener('load',function(){navigator.serviceWorker.register('/ghost-box/sw.js').catch(function(){});});}</script>
 </body>
 </html>

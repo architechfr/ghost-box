@@ -7,6 +7,11 @@
 <title>Réalisateur — tournage de séance</title>
 <link rel="icon" type="image/png" href="/ghost-box/favicon.png">
 <link rel="apple-touch-icon" href="/ghost-box/apple-touch-icon.png">
+<link rel="manifest" href="/ghost-box/manifest.json">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Ghost Box">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600&family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500&display=swap" rel="stylesheet">
 <style>
@@ -62,7 +67,7 @@ video{display:none}
 <body>
 
 <div class="top"><div class="topin">
-  <a href="../">←</a><h1>Réalisateur</h1>
+  <a href="../">←</a><h1>Réalisateur <span style="font-size:10px;color:var(--signal)">v2</span></h1>
   <span class="lg" id="phase">à préparer</span>
 </div></div>
 
@@ -74,15 +79,21 @@ video{display:none}
   <p class="ex"><b>Aucun réglage de fréquence.</b> L'appareil n'a pas de quota de mots : il parle si — et seulement si — une mesure dépasse tout ce que son propre bruit peut produire. Combien de mots sortiront n'est pas un paramètre, c'est le <b>résultat</b>. Souvent zéro.</p>
   <div class="row">
     <button id="prep">Préparer le tournage</button>
-    <button id="twoView" disabled>Deux vues</button>
     <button id="selftest" disabled>Tester la chaîne</button>
   </div>
-  <p id="twoState" class="ex"></p>
   <p id="prepState" class="ex">La caméra et le micro sont nécessaires. L'appareil apprendra 45 s le bruit du lieu avant de pouvoir émettre quoi que ce soit.</p>
+  <div class="lg" style="margin-top:14px">objectif</div>
+  <div id="lenses" class="row"></div>
+  <p class="ex">Choisis l'objectif : par défaut le téléphone donne parfois l'ultra grand-angle, plus flou.</p>
 </div>
 
 <div id="stageWrap"><canvas id="stage" width="960" height="540"></canvas></div>
 <button id="recBtn" disabled>● Enregistrer</button>
+<div class="row">
+  <button id="aiBtn" disabled>Silhouette IA</button>
+  <button id="fsBtn">Plein écran</button>
+</div>
+<p id="aiState" class="ex"></p>
 <div class="stat" id="live">—</div>
 
 <div class="step">
@@ -161,60 +172,105 @@ function hash01(str){ let h=2166136261>>>0;
 
 /* ═══════ capture ═══════ */
 let vstream=null, micStream=null, actx=null, ana=null, tdata=null;
-/* ── deux vues ──
-   Android et iOS interdisent deux flux caméra simultanés. On tente quand même le vrai
-   double direct ; s'il est refusé, on alterne : la vue principale reste en direct et
-   l'autre est une image rafraîchie à chaque passage, avec son âge affiché. */
-let dualLive=false, twoView=false, frontStream=null;
-const fvid=document.createElement('video'); fvid.playsInline=true; fvid.muted=true;
-const pipC=document.createElement('canvas'); pipC.width=320; pipC.height=240;
-const pipG=pipC.getContext('2d');
-let pipAt=0, swapping=false, lastSwap=0;
-const SWAP_EVERY=6000, PIP_MS=900;
-
-async function tryDualLive(){
-  try{
-    frontStream=await navigator.mediaDevices.getUserMedia({video:{facingMode:'user',width:{ideal:640}},audio:false});
-    fvid.srcObject=frontStream; await fvid.play().catch(()=>{});
-    const t0=fvid.currentTime, b0=$('vid').currentTime;
-    await new Promise(r=>setTimeout(r,1500));
-    const frontOk=fvid.currentTime>t0+.05 && fvid.videoWidth>0;
-    const backOk=$('vid').currentTime>b0+.05;
-    if(frontOk&&backOk){ dualLive=true; return true; }
-  }catch(e){}
-  if(frontStream){ frontStream.getTracks().forEach(t=>t.stop()); frontStream=null; }
-  dualLive=false; return false;
+/* ── choix de l'objectif ──
+   Le téléphone donne parfois l'ultra grand-angle par défaut (image molle). On liste
+   les objectifs réels et on laisse choisir. Un seul flux à la fois : Android et iOS
+   n'autorisent pas deux caméras simultanées, donc pas de fausse « double vue ». */
+let lenses=[], curLens=null;
+function lensName(d,i){
+  const l=(d.label||'').toLowerCase();
+  if(l.includes('front')||l.includes('avant')||l.includes('user')) return 'Avant';
+  if(l.includes('ultra')||l.includes('wide')) return 'Ultra grand-angle';
+  if(l.includes('tele')) return 'Téléobjectif';
+  if(l.includes('back')||l.includes('arrière')||l.includes('environment')) return 'Arrière'+(i?' '+i:'');
+  return d.label? d.label.slice(0,16) : 'Objectif '+(i+1);
 }
-/* alternance : on emprunte la caméra avant une seconde, on garde l'image, on revient */
-async function swapGrab(){
-  if(swapping||dualLive||!twoView) return;
-  swapping=true;
+async function listLenses(){
+  try{ lenses=(await navigator.mediaDevices.enumerateDevices()).filter(d=>d.kind==='videoinput'); }
+  catch(e){ lenses=[]; }
+  const box=$('lenses'); box.innerHTML='';
+  lenses.forEach((d,i)=>{
+    const b=document.createElement('button');
+    b.textContent=lensName(d,i); b.style.minWidth='100px'; b.style.fontSize='12px';
+    if(d.deviceId===curLens) b.className='act';
+    b.onclick=()=>useLens(d.deviceId);
+    box.appendChild(b);
+  });
+}
+async function useLens(id){
   try{
-    if(vstream){ vstream.getTracks().forEach(t=>t.stop()); vstream=null; }
-    const st=await navigator.mediaDevices.getUserMedia({video:{facingMode:'user',width:{ideal:640}},audio:false});
-    fvid.srcObject=st; await fvid.play().catch(()=>{});
-    await new Promise(r=>setTimeout(r,PIP_MS));
-    if(fvid.videoWidth){ pipG.drawImage(fvid,0,0,pipC.width,pipC.height); pipAt=performance.now(); }
-    st.getTracks().forEach(t=>t.stop());
-    vstream=await navigator.mediaDevices.getUserMedia({video:{facingMode:'environment',width:{ideal:1280},height:{ideal:720}},audio:false});
+    if(vstream) vstream.getTracks().forEach(t=>t.stop());
+    vstream=await navigator.mediaDevices.getUserMedia({
+      video: id? {deviceId:{exact:id},width:{ideal:1280},height:{ideal:720}}
+                : {facingMode:'environment',width:{ideal:1280},height:{ideal:720}}, audio:false});
     const v=$('vid'); v.srcObject=vstream; await v.play().catch(()=>{});
-  }catch(e){
-    try{ vstream=await navigator.mediaDevices.getUserMedia({video:{facingMode:'environment'},audio:false});
-      $('vid').srcObject=vstream; await $('vid').play().catch(()=>{}); }catch(e2){}
-  }
-  lastSwap=performance.now(); swapping=false;
+    curLens=vstream.getVideoTracks()[0].getSettings().deviceId||id;
+    if(v.videoWidth){ const r=v.videoHeight/v.videoWidth;
+      cv.width=Math.min(1280,v.videoWidth); cv.height=Math.round(cv.width*r); }
+    bg=null; await listLenses();
+  }catch(e){ $('prepState').textContent='Cet objectif est refusé par l\'appareil.'; }
 }
-$('twoView').onclick=async ()=>{
-  if(twoView){ twoView=false; $('twoView').className='';
-    if(frontStream){ frontStream.getTracks().forEach(t=>t.stop()); frontStream=null; }
-    dualLive=false; $('twoState').textContent='Vue unique.'; return; }
-  twoView=true; $('twoView').className='act'; $('twoState').textContent='Test du double direct…';
-  const ok=await tryDualLive();
-  $('twoState').innerHTML = ok
-    ? '<b style="color:var(--signal)">Double direct accepté</b> — les deux caméras filment en même temps.'
-    : 'Ton téléphone refuse deux caméras à la fois (limite Android/iOS). La vue arrière reste en <b>direct</b> et ta vue passe en vignette, <b>rafraîchie toutes les 6 s</b> — son âge est affiché dessus, rien n\'est maquillé.';
-  if(!ok){ lastSwap=performance.now(); }
+
+/* ── plein écran ── */
+$('fsBtn').onclick=()=>{
+  const el=$('stageWrap');
+  if(document.fullscreenElement||document.webkitFullscreenElement){
+    (document.exitFullscreen||document.webkitExitFullscreen).call(document);
+  } else {
+    const rq=el.requestFullscreen||el.webkitRequestFullscreen;
+    if(rq) rq.call(el).catch(()=>{});
+    else $('aiState').textContent="Le plein écran n'est pas disponible dans ce navigateur — installe l'application depuis le menu du navigateur (« Ajouter à l'écran d'accueil ») pour un vrai plein écran.";
+  }
 };
+
+/* ── silhouette IA : le vrai squelette, incrusté dans la vidéo enregistrée ── */
+let poseLM=null, aiOn=false, lastPose=null, lastPoseT=-1e9, lastVT=-1;
+const VIS=0.4;
+const POSE_CONN=[[11,12],[11,13],[13,15],[12,14],[14,16],[11,23],[12,24],[23,24],[23,25],[25,27],[24,26],[26,28],[0,11],[0,12]];
+$('aiBtn').onclick=async ()=>{
+  if(aiOn){ aiOn=false; $('aiBtn').className=''; $('aiState').textContent='Silhouette IA arrêtée.'; return; }
+  if(!vstream){ $('aiState').textContent="Prépare d'abord le tournage."; return; }
+  $('aiState').textContent='Chargement du modèle (~5 Mo, une seule fois)…';
+  try{
+    if(!poseLM){
+      const vision=await import('https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10/vision_bundle.mjs');
+      const fsr=await vision.FilesetResolver.forVisionTasks('https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10/wasm');
+      poseLM=await vision.PoseLandmarker.createFromOptions(fsr,{
+        baseOptions:{modelAssetPath:'https://storage.googleapis.com/mediapipe-models/pose_landmarker/pose_landmarker_lite/float16/1/pose_landmarker_lite.task'},
+        runningMode:'VIDEO', numPoses:1 });
+    }
+    aiOn=true; $('aiBtn').className='act';
+    $('aiState').innerHTML='Silhouette IA active — le squelette s\'incruste dans la vidéo enregistrée. <b>Expérimental</b> : dans le noir il ne voit rien, ou accroche un reflet.';
+    (function aiLoop(){
+      if(!aiOn) return;
+      const v=$('vid');
+      if(v && v.videoWidth && v.currentTime!==lastVT){
+        lastVT=v.currentTime;
+        try{
+          const res=poseLM.detectForVideo(v, performance.now());
+          let ok=false;
+          if(res && res.landmarks && res.landmarks.length){
+            const lms=res.landmarks[0]; let vis=0,cnt=0,strong=0;
+            for(const p of lms){ if(p.visibility!=null){ vis+=p.visibility; cnt++; if(p.visibility>=VIS) strong++; } }
+            ok = strong>=8 && (cnt? vis/cnt : 0)>=0.45;   // une vraie personne, pas du bruit
+            if(ok){ lastPose=lms; lastPoseT=performance.now(); }
+          }
+          if(!ok) lastPose=null;
+        }catch(e){}
+      }
+      requestAnimationFrame(aiLoop);
+    })();
+  }catch(e){ aiOn=false; $('aiBtn').className=''; $('aiState').textContent='Modèle indisponible (réseau ?). Tout le reste fonctionne.'; }
+};
+function drawSkeleton(g,lms,W,H,S){
+  g.strokeStyle='#E9B44C'; g.lineWidth=4*S; g.lineCap='round';
+  for(const c of POSE_CONN){ const a=lms[c[0]],b=lms[c[1]]; if(!a||!b) continue;
+    if((a.visibility!=null&&a.visibility<VIS)||(b.visibility!=null&&b.visibility<VIS)) continue;
+    g.beginPath(); g.moveTo(a.x*W,a.y*H); g.lineTo(b.x*W,b.y*H); g.stroke(); }
+  g.fillStyle='#5FD3A6';
+  for(const p of lms){ if(p.visibility!=null&&p.visibility<VIS) continue;
+    g.beginPath(); g.arc(p.x*W,p.y*H,5*S,0,7); g.fill(); }
+}
 let WA=mkW('audio','Niveau sonore'), WM=mkW('mouvement','Mouvement');
 let learning=false, tLearn=0, LEARN_MS=45000, tReady=0;
 const cv=$('stage'), g=cv.getContext('2d');
@@ -223,10 +279,8 @@ let mHits=0, cHits=0, mOn=false, cOn=false, tStart=0, box=null, lastPresence=-1e
 
 $('prep').onclick=async ()=>{
   $('prepState').textContent='Autorisations…';
-  try{
-    vstream=await navigator.mediaDevices.getUserMedia({video:{facingMode:'environment',width:{ideal:1280},height:{ideal:720}},audio:false});
-    const v=$('vid'); v.srcObject=vstream; await v.play();
-  }catch(e){ $('prepState').textContent='Caméra refusée — impossible de tourner.'; return; }
+  try{ await useLens(null); if(!vstream) throw 0; }
+  catch(e){ $('prepState').textContent='Caméra refusée — impossible de tourner.'; return; }
   try{
     micStream=await navigator.mediaDevices.getUserMedia({audio:{echoCancellation:false,noiseSuppression:false,autoGainControl:false}});
     actx=new (window.AudioContext||window.webkitAudioContext)(); await actx.resume();
@@ -240,7 +294,7 @@ $('prep').onclick=async ()=>{
   WA=mkW('audio','Niveau sonore'); WM=mkW('mouvement','Mouvement');
   learning=true; tLearn=performance.now(); tStart=tLearn; bg=null; mHits=0; cHits=0;
   $('prep').className='act'; $('prep').textContent='Caméra active';
-  $('selftest').disabled=false; $('twoView').disabled=false;
+  $('selftest').disabled=false; $('aiBtn').disabled=false;
   $('phase').textContent='apprentissage';
   $('prepState').innerHTML='Apprentissage du bruit du lieu — <b>ne bouge pas</b> pendant ce temps.';
   render(); measure();
@@ -391,20 +445,11 @@ function render(){
     g.fillStyle='#5FD3A6'; g.font=(13*S|0)+'px monospace';
     g.fillText('MOUVEMENT', box.minx*sx, Math.max(0,box.miny*sy-16*S));
   }
-  // vignette « moi » : direct si l'appareil l'accepte, sinon image datée
-  if(twoView){
-    const pw=Math.round(W*0.26), ph=Math.round(pw*0.75), px=W-pw-10*S, py=44*S;
-    g.save();
-    g.fillStyle='#000'; g.fillRect(px,py,pw,ph);
-    if(dualLive && fvid.videoWidth) g.drawImage(fvid,px,py,pw,ph);
-    else if(pipAt) g.drawImage(pipC,px,py,pw,ph);
-    g.strokeStyle='#5FD3A6'; g.lineWidth=2*S; g.strokeRect(px,py,pw,ph);
-    g.fillStyle='rgba(10,15,18,.7)'; g.fillRect(px,py+ph-15*S,pw,15*S);
-    g.fillStyle= dualLive? '#5FD3A6' : '#E9B44C'; g.font=(10*S|0)+'px monospace';
-    const age=pipAt? Math.round((now-pipAt)/1000) : 0;
-    g.fillText(dualLive? 'DIRECT' : (swapping? 'capture…' : 'il y a '+age+' s'), px+4*S, py+ph-13*S);
-    g.restore();
-    if(!dualLive && !swapping && now-lastSwap>SWAP_EVERY) swapGrab();
+  // squelette réel, incrusté dans l'image enregistrée (seulement si une personne est détectée)
+  if(aiOn && lastPose && now-lastPoseT<600){
+    drawSkeleton(g,lastPose,W,H,S);
+    g.fillStyle='#E9B44C'; g.font=(13*S|0)+'px monospace';
+    g.fillText('PERSONNE DÉTECTÉE', 10*S, 62*S);
   }
   // compteur présence vs témoin, en bas à droite
   g.textAlign='right'; g.fillStyle='#78868E'; g.font=(11*S|0)+'px monospace';
@@ -479,5 +524,6 @@ async function dbPut(o){ const d=await db(); return new Promise((res,rej)=>{
 renderJ();
 })();
 </script>
+<script>if('serviceWorker' in navigator){window.addEventListener('load',function(){navigator.serviceWorker.register('/ghost-box/sw.js').catch(function(){});});}</script>
 </body>
 </html>
