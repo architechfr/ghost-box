@@ -132,7 +132,7 @@ video{display:none}
 <div class="wrap">
 
 <p style="margin:14px 0 0"><a href="../" style="color:var(--dim);text-decoration:none;font-family:var(--mono);font-size:13px">← poste de terrain</a></p>
-<h1>Séance capteurs <span style="font-size:11px;color:var(--signal);letter-spacing:.12em">v17</span></h1>
+<h1>Séance capteurs <span style="font-size:11px;color:var(--signal);letter-spacing:.12em">v18</span></h1>
 <p class="sub">L'appareil est fait pour <b>se taire</b>. Il apprend le bruit normal du capteur, puis relève son seuil tant que ce bruit pourrait le faire parler. Un mot ne sort que si une mesure dépasse tout ce que l'appareil a vu de normal — <b>et le silence est le résultat attendu</b>. S'il n'y a rien, il n'y a rien.</p>
 
 <div class="step">
@@ -246,8 +246,8 @@ video{display:none}
 <video id="vid2" playsinline muted></video>
 </div>
 
-<script src="/ghost-box/lib/moteur.js"></script>
-<script src="/ghost-box/lib/mur.js"></script>
+<script src="/ghost-box/lib/moteur.js?v=4"></script>
+<script src="/ghost-box/lib/mur.js?v=4"></script>
 <script>
 (() => {
 "use strict";
@@ -759,6 +759,14 @@ function stop(){
   $('stage').classList.remove('alert'); checkReady();
 }
 
+/* Une durée doit se lire d'un coup d'œil : « 157:11 » ne dit rien à personne. */
+function dureeLisible(sec){
+  sec=Math.max(0,Math.round(sec));
+  const h=Math.floor(sec/3600), m=Math.floor((sec%3600)/60), s2=sec%60;
+  if(h) return h+' h '+String(m).padStart(2,'0');
+  if(m) return m+' min '+String(s2).padStart(2,'0');
+  return s2+' s';
+}
 function tick(){
   if(!W.length) return;
   const now=performance.now(), dur=+$('learn').value*1000;
@@ -771,6 +779,7 @@ function tick(){
     $('deriv').innerHTML='Mesure du bruit normal de <b>'+esc(W.map(w=>w.label).join(' + '))+'</b>. Ne touche pas au téléphone.';
     $('zfill').style.background='var(--signal)';
     $('zfill').style.width=Math.min(100,(now-tPhase)/dur*100).toFixed(0)+'%';
+    $('upt').textContent='apprentissage · '+dureeLisible((now-tPhase)/1000);
     if(now-tPhase>=dur){
       for(const w of W){
         if(w.samples.length<30){ $('deriv').textContent='Pas assez de relevés sur '+w.label+' — choisis un autre capteur.'; stop(); return; }
@@ -793,6 +802,10 @@ function tick(){
         w.persist=0; w.cPersist=0; w.lastAbove=-1e9; w.lastCtl=now;
       }
       phase='watch'; tWatch=now; $('n3').className='n done';
+      // sinon l'écran restait figé sur « 0 s » et « ne touche pas au téléphone »
+      // pendant des heures, sans qu'on sache que la veille avait commencé
+      $('word').className='q'; $('word').textContent='···';
+      $('state').textContent='en veille';
     }
     return;
   }
@@ -826,8 +839,24 @@ function tick(){
     if(z>maxz){ maxz=z; primary=w; }
   }
   lastZ=maxz; drawZ(maxz);
-  $('upt').textContent=fmt((now-t0)/1000);
+  $('upt').textContent='veille · '+dureeLisible((now-t0)/1000);
   $('zNow').textContent=maxz.toFixed(1).replace('.',',')+' σ';
+  /* ── état vivant : depuis quand ça tourne, et ce que ça a donné ──
+     Le plus souvent il ne se passe rien pendant des heures : il faut quand même
+     que l'écran dise que l'appareil veille, depuis combien de temps, et que
+     zéro mot est le résultat NORMAL. Sinon on ne sait plus si ça marche. */
+  if(now-lastEmit>10000){
+    if($('word').textContent!=='···'){ $('word').className='q'; $('word').textContent='···'; }
+    const nMots=trace.filter(t=>!t.est_temoin).length;
+    const seuils=W.map(w=>w.thr.toFixed(1)+' σ').join(' · ');
+    const relev=W.reduce((p,w)=>p+w.raises,0);
+    $('deriv').innerHTML='<b>En veille depuis '+dureeLisible((now-t0)/1000)+'</b> — '
+      +(nMots
+        ? nMots+' mot'+(nMots>1?'s':'')+' retenu'+(nMots>1?'s':'')+', le dernier il y a '+dureeLisible((now-lastEmit)/1000)
+        : '<b>aucun mot</b>, et c\'est le résultat normal')
+      +' · seuil '+seuils+(relev? ' (relevé '+relev+'× par le témoin)':'')
+      +' · écart courant '+maxz.toFixed(1).replace('.',',')+' σ';
+  }
 
   const multi=W.length>1;
   const hot=W.filter(w=> now-w.lastAbove <= COINC_WIN).length;
@@ -980,7 +1009,7 @@ $('camAi').onclick=async ()=>{
   if(!camActive){ $('aiState').textContent="Active d'abord la caméra."; return; }
   $('aiState').textContent='Chargement du modèle (~5 Mo, une seule fois)…';
   try{
-    if(!POSE) POSE=await import('/ghost-box/lib/pose.js');
+    if(!POSE) POSE=await import('/ghost-box/lib/pose.js?v=4');
     await POSE.load();
     aiOn=true; $('camAi').className='act';
     $('aiState').innerHTML='Détection active — un squelette n\'apparaît que si une <b>personne réelle</b> est reconnue. Dans le noir, le modèle ne voit rien : c\'est normal.';
@@ -1164,9 +1193,9 @@ addEventListener('load',function(){ try{ GBCapture.init({label:'seance-capteurs'
 })();
 </script>
 <script>if('serviceWorker' in navigator){window.addEventListener('load',function(){navigator.serviceWorker.register('/ghost-box/sw.js').catch(function(){});});}</script>
-<script src="/ghost-box/lib/wakelock.js"></script>
-<script src="/ghost-box/lib/media.js"></script>
-<script src="/ghost-box/lib/capture.js"></script>
-<script src="/ghost-box/lib/fullscreen.js"></script>
+<script src="/ghost-box/lib/wakelock.js?v=4"></script>
+<script src="/ghost-box/lib/media.js?v=4"></script>
+<script src="/ghost-box/lib/capture.js?v=4"></script>
+<script src="/ghost-box/lib/fullscreen.js?v=4"></script>
 </body>
 </html>

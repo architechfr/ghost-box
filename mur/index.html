@@ -72,7 +72,7 @@ body.filming #quitFix{display:block;position:fixed;z-index:61;right:10px;
 <body>
 
 <div class="top"><div class="topin">
-  <a href="../">←</a><h1>Mur seul <span style="font-size:10px;color:var(--signal)">v2</span></h1>
+  <a href="../">←</a><h1>Mur seul <span style="font-size:10px;color:var(--signal)">v3</span></h1>
   <span class="lg" id="phase">à préparer</span>
 </div></div>
 
@@ -112,11 +112,11 @@ body.filming #quitFix{display:block;position:fixed;z-index:61;right:10px;
 
 </div>
 
-<script src="/ghost-box/lib/wakelock.js"></script>
-<script src="/ghost-box/lib/media.js"></script>
-<script src="/ghost-box/lib/moteur.js"></script>
-<script src="/ghost-box/lib/mur.js"></script>
-<script src="/ghost-box/lib/fullscreen.js"></script>
+<script src="/ghost-box/lib/wakelock.js?v=4"></script>
+<script src="/ghost-box/lib/media.js?v=4"></script>
+<script src="/ghost-box/lib/moteur.js?v=4"></script>
+<script src="/ghost-box/lib/mur.js?v=4"></script>
+<script src="/ghost-box/lib/fullscreen.js?v=4"></script>
 <script>
 (() => {
 "use strict";
@@ -125,6 +125,9 @@ const esc=s=>String(s).replace(/[&<>]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;'}[
 const fmt=s=>{s=Math.max(0,s|0);return String(s/60|0).padStart(2,'0')+':'+String(s%60).padStart(2,'0');};
 const hhmm=d=>String(d.getHours()).padStart(2,'0')+':'+String(d.getMinutes()).padStart(2,'0')+':'+String(d.getSeconds()).padStart(2,'0');
 const stamp=()=>new Date().toISOString().slice(0,19).replace(/[:T]/g,'-');
+const duree=sec=>{ sec=Math.max(0,Math.round(sec));
+  const h=Math.floor(sec/3600), m=Math.floor((sec%3600)/60), s2=sec%60;
+  return h? h+' h '+String(m).padStart(2,'0') : (m? m+' min '+String(s2).padStart(2,'0') : s2+' s'); };
 const M=window.GBMoteur;
 
 /* ═══════ le mur ═══════
@@ -223,6 +226,7 @@ function mesure(){
     : (WS.ready
         ? 'Niveau <b>'+niveau.toFixed(0)+'</b> dBFS · écart '+WS.z.toFixed(1)+' σ · seuil auto <b>'+WS.thr.toFixed(1)
           +'</b> σ (relevé '+WS.raises+'×) · mots retenus <b>'+nMots+'</b>'
+          +' · en veille depuis <b>'+duree((now-tPret)/1000)+'</b>'
           +((now-tPret)<SETTLE? ' · stabilisation '+Math.ceil((SETTLE-(now-tPret))/1000)+' s':'')
         : 'Le mur défile, mais aucun capteur n\'est armé : rien ne peut être retenu.');
   setTimeout(mesure,100);

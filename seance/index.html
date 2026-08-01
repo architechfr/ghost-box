@@ -96,7 +96,7 @@ body.filming #quitFix{display:block;position:fixed;z-index:61;right:10px;
 <body>
 
 <div class="top"><div class="topin">
-  <a href="../">←</a><h1>Séance caméra <span style="font-size:10px;color:var(--signal)">v1</span></h1>
+  <a href="../">←</a><h1>Séance caméra <span style="font-size:10px;color:var(--signal)">v2</span></h1>
   <span class="lg" id="phase">à préparer</span>
 </div></div>
 
@@ -162,12 +162,12 @@ body.filming #quitFix{display:block;position:fixed;z-index:61;right:10px;
 <video id="vid3" playsinline muted></video>
 <video id="vid4" playsinline muted></video>
 
-<script src="/ghost-box/lib/moteur.js"></script>
-<script src="/ghost-box/lib/secours.js"></script>
-<script src="/ghost-box/lib/tampon.js"></script>
-<script src="/ghost-box/lib/mur.js"></script>
-<script src="/ghost-box/lib/media.js"></script>
-<script src="/ghost-box/lib/wakelock.js"></script>
+<script src="/ghost-box/lib/moteur.js?v=4"></script>
+<script src="/ghost-box/lib/secours.js?v=4"></script>
+<script src="/ghost-box/lib/tampon.js?v=4"></script>
+<script src="/ghost-box/lib/mur.js?v=4"></script>
+<script src="/ghost-box/lib/media.js?v=4"></script>
+<script src="/ghost-box/lib/wakelock.js?v=4"></script>
 <script>
 (() => {
 "use strict";
@@ -176,6 +176,10 @@ const esc=s=>String(s).replace(/[&<>]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;'}[
 const fmt=s=>{s=Math.max(0,s|0);return String(s/60|0).padStart(2,'0')+':'+String(s%60).padStart(2,'0');};
 const mo=b=>b<1048576?(b/1024).toFixed(0)+' Ko':(b/1048576).toFixed(1)+' Mo';
 const stamp=()=>new Date().toISOString().slice(0,19).replace(/[:T]/g,'-');
+/* une durée doit se lire d'un coup d'œil : « 2 h 37 », pas « 157:11 » */
+const duree=sec=>{ sec=Math.max(0,Math.round(sec));
+  const h=Math.floor(sec/3600), m=Math.floor((sec%3600)/60), s2=sec%60;
+  return h? h+' h '+String(m).padStart(2,'0') : (m? m+' min '+String(s2).padStart(2,'0') : s2+' s'); };
 const hhmm=d=>String(d.getHours()).padStart(2,'0')+':'+String(d.getMinutes()).padStart(2,'0')+':'+String(d.getSeconds()).padStart(2,'0');
 
 /* ═══════ lexique ═══════ */
@@ -471,7 +475,7 @@ $('aiBtn').onclick=async ()=>{
   if(!vstream){ $('aiState').textContent="Prépare d'abord le tournage."; return; }
   $('aiState').textContent='Chargement du modèle (~5 Mo, une seule fois)…';
   try{
-    if(!POSE) POSE=await import('/ghost-box/lib/pose.js');
+    if(!POSE) POSE=await import('/ghost-box/lib/pose.js?v=4');
     await POSE.load();
     aiOn=true; $('aiBtn').className='act';
     $('aiState').innerHTML='Détection active — jusqu\'à <b>4 personnes suivies en même temps</b>, chacune avec sa couleur et son numéro. Les squelettes s\'incrustent dans la vidéo enregistrée, et seulement si une personne réelle est reconnue.';
@@ -598,12 +602,13 @@ function measure(tok){
   const mute = silence>50   // 5 s de silence complet : ce n'est pas une ambiance, c'est une panne
     ? ' · <b style="color:var(--flag)">aucun son ne parvient au micro</b>' : '';
   const cams = nbVues()>1 ? ' · <b>'+nbVues()+' caméras</b>'+(stackV?' empilées':'') : '';
+  const depuis = tStart? ' · séance depuis <b>'+duree((now-tStart)/1000)+'</b>' : '';
   $('live').innerHTML = learning
-    ? 'Apprentissage — reste <b>'+Math.ceil((LEARN_MS-(now-tLearn))/1000)+' s</b>. Niveau '+level.toFixed(0)+' dBFS, mouvement '+frac.toFixed(1)+' %.'+mute+cams
+    ? 'Apprentissage — reste <b>'+Math.ceil((LEARN_MS-(now-tLearn))/1000)+' s</b>. Niveau '+level.toFixed(0)+' dBFS, mouvement '+frac.toFixed(1)+' %.'+mute+cams+depuis
     : 'Niveau <b>'+level.toFixed(0)+'</b> dBFS · mouvement <b>'+frac.toFixed(1)+'</b> % · seuils auto : son '
       +(WA.ready? WA.thr.toFixed(1)+' σ' : 'non armé')+', image '+(WM.ready? WM.thr.toFixed(1)+' σ' : 'non armé')
       +' (relevés '+(WA.raises+WM.raises)+'×) · présence '
-      +mHits+'× vs témoin de bruit '+cHits+'×'+mute+cams;
+      +mHits+'× vs témoin de bruit '+cHits+'×'+mute+cams+depuis;
   setTimeout(()=>measure(tok),100);
 }
 
@@ -971,7 +976,7 @@ addEventListener('load',function(){ try{ GBCapture.init({label:($('lieu').value|
 })();
 </script>
 <script>if('serviceWorker' in navigator){window.addEventListener('load',function(){navigator.serviceWorker.register('/ghost-box/sw.js').catch(function(){});});}</script>
-<script src="/ghost-box/lib/capture.js"></script>
-<script src="/ghost-box/lib/fullscreen.js"></script>
+<script src="/ghost-box/lib/capture.js?v=4"></script>
+<script src="/ghost-box/lib/fullscreen.js?v=4"></script>
 </body>
 </html>

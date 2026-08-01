@@ -322,7 +322,7 @@ $('aiBtn').onclick=async ()=>{
   if(!camActive){ $('poseState').textContent="Active d'abord la caméra."; return; }
   $('poseState').textContent='Chargement du modèle (~5 Mo, une seule fois)…';
   try{
-    if(!POSE) POSE=await import('/ghost-box/lib/pose.js');
+    if(!POSE) POSE=await import('/ghost-box/lib/pose.js?v=4');
     await POSE.load();
     aiOn=true; $('aiBtn').classList.add('act');
     $('poseState').innerHTML='Silhouette IA active — <b>expérimental</b>. Un squelette doré apparaît si le modèle croit voir quelqu\'un.';
@@ -406,9 +406,9 @@ addEventListener('load',function(){ try{ GBCapture.init({label:'contact-ia', rec
 })();
 </script>
 <script>if('serviceWorker' in navigator){window.addEventListener('load',function(){navigator.serviceWorker.register('/ghost-box/sw.js').catch(function(){});});}</script>
-<script src="/ghost-box/lib/wakelock.js"></script>
-<script src="/ghost-box/lib/media.js"></script>
-<script src="/ghost-box/lib/capture.js"></script>
-<script src="/ghost-box/lib/fullscreen.js"></script>
+<script src="/ghost-box/lib/wakelock.js?v=4"></script>
+<script src="/ghost-box/lib/media.js?v=4"></script>
+<script src="/ghost-box/lib/capture.js?v=4"></script>
+<script src="/ghost-box/lib/fullscreen.js?v=4"></script>
 </body>
 </html>

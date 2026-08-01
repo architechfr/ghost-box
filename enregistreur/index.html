@@ -147,6 +147,7 @@ body.assis #quitAssis{display:block;position:fixed;z-index:61;right:10px;
 <body>
 <div class="wrap">
 
+<div class="lg" style="padding:8px 0 0;text-align:right;opacity:.7">Écoute <span style="color:var(--signal)">v2</span></div>
 <nav>
   <button id="tabT" class="on">Terrain</button>
   <button id="tabA" disabled>Analyse</button>
@@ -254,6 +255,12 @@ body.assis #quitAssis{display:block;position:fixed;z-index:61;right:10px;
       <div class="lg">séance entière</div>
       <div class="frame" style="margin-top:8px"><canvas id="overview"></canvas></div>
       <div class="bar2">
+        <button id="playAll">▶ Écouter la séance</button>
+        <button id="dropAll">Aller au repère suivant</button>
+      </div>
+      <div class="between"><span class="lg" id="posAll">00:00</span><span class="lg" id="durAll">—</span></div>
+      <p class="fine">Appuie <b>dans le spectre</b> pour sauter à ce moment-là. Les traits marquent les repères : jaune ceux que tu as posés, rouge les pics détectés, vert les mots retenus par le mur.</p>
+      <div class="bar2">
         <button id="expWav">WAV complet</button>
         <button id="expLog">Journal</button>
         <button id="fresh">Nouvelle séance</button>
@@ -333,7 +340,10 @@ $('go').onclick=async()=>{
   $('dot').classList.add('on');$('stTxt').textContent='enregistrement';$('setup').style.display='none';
   $('hzTop').textContent=Math.round(Math.min(8000,outSR/2))+' Hz';
   try{wake=await navigator.wakeLock.request('screen');}catch(e){}
-  clk=setInterval(()=>{$('clock').textContent=fmt((performance.now()-t0)/1000);},250);
+  clk=setInterval(()=>{const s2=(performance.now()-t0)/1000;
+    $('clock').textContent=fmt(s2);
+    $('stTxt').textContent = s2>3600? 'enregistrement · '+Math.floor(s2/3600)+' h '+String(Math.floor((s2%3600)/60)).padStart(2,'0')
+      : 'enregistrement';},250);
   paintLive();
 };
 
@@ -604,11 +614,17 @@ function paintOver(){
       g.fillStyle=e.verdict==='keep'?'#5FD3A6':e.verdict==='drop'?'#5A686F':(e.kind==='man'?'#E9B44C':e.kind==='mot'?'#5FD3A6':'#E2574C');
       g.fillRect(x,i===cur?0:H*.78,Math.max(1,d),i===cur?H:H*.22);
     });
+    // où en est la lecture : un trait clair qui avance
+    if(tLect>0){
+      const xl=(tLect/D)*W;
+      g.fillStyle='#DDE6EA'; g.fillRect(xl,0,Math.max(1.5,d),H);
+    }
   });
 }
 
 /* ═══ vignettes ═══ */
 function buildStrip(){
+  $('durAll').textContent='durée '+fmt(meta.duration||0);
   const s=$('strip');s.innerHTML='';
   $('work').style.display=events.length?'block':'none';
   $('noEv').style.display=events.length?'none':'block';
@@ -721,6 +737,59 @@ function dl(b,n){const u=URL.createObjectURL(b),a=document.createElement('a');
   a.href=u;a.download=n;a.click();setTimeout(()=>URL.revokeObjectURL(u),4000);}
 const stamp=()=>(meta.date||'').slice(0,19).replace(/[:T]/g,'-');
 $('expWav').onclick=()=>dl(wav(0,meta.duration),'seance-'+stamp()+'.wav');
+
+/* ═══════ écouter la séance entière ═══════
+   Le WAV pouvait être exporté mais pas écouté sur place : il fallait sortir de
+   l'application pour réentendre sa propre séance. Le lecteur est ici, avec un
+   curseur qui avance sur le spectre de la séance et un appui pour sauter à
+   n'importe quel moment. */
+let lecteur=null, urlLect=null, tLect=0, rafLect=0;
+function ouvrirLecteur(){
+  if(lecteur) return lecteur;
+  lecteur=new Audio();
+  lecteur.preload='auto';
+  lecteur.onended=()=>{ majLecture(); $('playAll').textContent='▶ Écouter la séance'; };
+  return lecteur;
+}
+function majLecture(){
+  cancelAnimationFrame(rafLect);
+  const boucle=()=>{
+    if(!lecteur) return;
+    tLect=lecteur.currentTime;
+    $('posAll').textContent=fmt(tLect);
+    paintOver();
+    if(!lecteur.paused) rafLect=requestAnimationFrame(boucle);
+  };
+  boucle();
+}
+$('playAll').onclick=()=>{
+  if(!pcm||!recLen){ return; }
+  const a=ouvrirLecteur();
+  if(!a.paused){ a.pause(); $('playAll').textContent='▶ Écouter la séance'; majLecture(); return; }
+  if(!urlLect){ urlLect=URL.createObjectURL(wav(0,meta.duration)); a.src=urlLect; }
+  a.play().then(()=>{ $('playAll').textContent='❚❚ Pause'; majLecture(); }).catch(()=>{});
+  $('durAll').textContent='durée '+fmt(meta.duration||0);
+};
+/* appuyer dans le spectre de la séance = sauter à ce moment */
+$('overview').onclick=e=>{
+  if(!pcm||!recLen) return;
+  const r=$('overview').getBoundingClientRect();
+  const t=Math.max(0,Math.min(meta.duration||0,((e.clientX-r.left)/r.width)*(meta.duration||0)));
+  const a=ouvrirLecteur();
+  if(!urlLect){ urlLect=URL.createObjectURL(wav(0,meta.duration)); a.src=urlLect; }
+  const go=()=>{ a.currentTime=t; a.play().then(()=>{ $('playAll').textContent='❚❚ Pause'; majLecture(); }).catch(()=>{}); };
+  if(a.readyState>=1) go(); else a.onloadedmetadata=go;
+};
+/* passer d'un repère au suivant sans chercher à l'oreille */
+$('dropAll').onclick=()=>{
+  if(!events.length||!pcm) return;
+  const suivant=events.map(e=>e.t).sort((x,y)=>x-y).find(t=>t>tLect+0.4);
+  const t=(suivant==null)? events.map(e=>e.t).sort((x,y)=>x-y)[0] : suivant;
+  const a=ouvrirLecteur();
+  if(!urlLect){ urlLect=URL.createObjectURL(wav(0,meta.duration)); a.src=urlLect; }
+  const go=()=>{ a.currentTime=Math.max(0,t-1.5); a.play().then(()=>{ $('playAll').textContent='❚❚ Pause'; majLecture(); }).catch(()=>{}); };
+  if(a.readyState>=1) go(); else a.onloadedmetadata=go;
+};
 $('exp1').onclick=()=>{const e=events[cur];if(e)dl(wav(e.a,e.b),'repere-'+fmt(e.t).replace(/:/g,'')+'.wav');};
 $('expLog').onclick=()=>{
   const L=[`Séance ${meta.date}`,`Lieu : ${meta.place||'—'}`,`Ghost box : ${meta.gear||'—'}`,
@@ -729,6 +798,10 @@ $('expLog').onclick=()=>{
   dl(new Blob([L.join('\n')],{type:'text/plain'}),'journal-'+stamp()+'.txt');
 };
 $('fresh').onclick=()=>{
+  if(lecteur){ try{lecteur.pause();}catch(e){} }
+  if(urlLect){ URL.revokeObjectURL(urlLect); urlLect=null; }
+  tLect=0; $('posAll').textContent='00:00'; $('durAll').textContent='—';
+  $('playAll').textContent='▶ Écouter la séance';
   pcm=null;spg=null;events=[];chunks=[];recLen=0;rms=[];
   $('tabA').disabled=true;$('setup').style.display='flex';$('clock').textContent='00:00:00';
   $('stTxt').textContent="à l'arrêt";wipe();buildStrip();mode('t');
@@ -745,10 +818,10 @@ if(!navigator.mediaDevices||!navigator.mediaDevices.getUserMedia)
 })();
 </script>
 <script>if('serviceWorker' in navigator){window.addEventListener('load',function(){navigator.serviceWorker.register('/ghost-box/sw.js').catch(function(){});});}</script>
-<script src="/ghost-box/lib/secours.js"></script>
-<script src="/ghost-box/lib/moteur.js"></script>
-<script src="/ghost-box/lib/mur.js"></script>
-<script src="/ghost-box/lib/wakelock.js"></script>
-<script src="/ghost-box/lib/fullscreen.js"></script>
+<script src="/ghost-box/lib/secours.js?v=4"></script>
+<script src="/ghost-box/lib/moteur.js?v=4"></script>
+<script src="/ghost-box/lib/mur.js?v=4"></script>
+<script src="/ghost-box/lib/wakelock.js?v=4"></script>
+<script src="/ghost-box/lib/fullscreen.js?v=4"></script>
 </body>
 </html>
