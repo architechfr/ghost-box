@@ -119,6 +119,29 @@ section{margin-top:20px} hr{border:0;border-top:1px solid var(--hair);margin:18p
 #prog{height:3px;background:var(--panel);margin-top:14px;display:none}
 #prog.on{display:block} #progb{height:100%;width:0;background:var(--signal)}
 .empty{color:var(--dim);font-size:14px;line-height:1.55;padding:20px 0}
+#murBox{display:none;margin-top:10px;height:30vh;min-height:150px;
+  border:1px solid var(--line);border-radius:4px;overflow:hidden}
+body.avecmur #murBox{display:flex}
+/* ── séance assise : écran fixe, spectre en haut, mur en bas, Marquer sous le pouce ── */
+html.assis{height:100%;overflow:hidden}
+body.assis{position:fixed;inset:0;width:100%;height:100%;margin:0;padding:0;
+  overflow:hidden;overscroll-behavior:none;touch-action:none}
+body.assis nav,body.assis .fields,body.assis .slide,body.assis section,
+body.assis #msg,body.assis #prog,body.assis .row,body.assis .between{display:none}
+body.assis .wrap{max-width:none;padding:0;margin:0}
+body.assis .frame{position:fixed;left:0;right:0;top:calc(30px + env(safe-area-inset-top));
+  height:26%;margin:0;border-radius:0;border-left:0;border-right:0}
+body.assis .status{position:fixed;left:0;right:0;top:0;z-index:50;margin:0;
+  padding:4px 10px;padding-top:calc(4px + env(safe-area-inset-top));background:rgba(10,15,18,.85)}
+body.assis .meter{position:fixed;left:10px;right:10px;top:calc(30px + env(safe-area-inset-top) + 26%);z-index:50}
+body.assis #murBox{display:flex;position:fixed;left:0;right:0;
+  top:calc(46px + env(safe-area-inset-top) + 26%);bottom:calc(96px + env(safe-area-inset-bottom));
+  height:auto;margin:0;border-left:0;border-right:0;border-radius:0}
+body.assis #mark{position:fixed;left:10px;right:10px;bottom:calc(16px + env(safe-area-inset-bottom));
+  z-index:60;margin:0;padding:22px 0;font-size:17px;opacity:.96}
+#quitAssis{display:none}
+body.assis #quitAssis{display:block;position:fixed;z-index:61;right:10px;
+  top:calc(3px + env(safe-area-inset-top));padding:6px 9px;font-size:11px;background:rgba(20,26,30,.9)}
 </style>
 </head>
 <body>
@@ -143,6 +166,7 @@ section{margin-top:20px} hr{border:0;border-top:1px solid var(--hair);margin:18p
     <div class="tag">signal direct</div>
   </div>
 
+  <div id="murBox"></div>
   <div class="meter"><div id="bar"></div><div id="thr"></div></div>
   <div class="between"><span class="lg">niveau</span><span class="lg" id="floorT">plancher —</span></div>
 
@@ -156,6 +180,12 @@ section{margin-top:20px} hr{border:0;border-top:1px solid var(--hair);margin:18p
     <button id="halt" disabled>Arrêter</button>
   </div>
   <button id="mark" disabled>Marquer</button>
+  <button id="quitAssis" type="button">Quitter</button>
+  <div class="row">
+    <button id="murBtn">Mur de mots</button>
+    <button id="fixBtn">Écran fixe</button>
+  </div>
+  <p id="murState" class="fine">Le <b>mur de mots</b> montre tout le vocabulaire sous le spectre, écran tourné vers la pièce : ce qui peut être dit est visible en permanence, plutôt que rangé dans un fichier. Il ne se fige que si le niveau du micro dépasse tout ce que le bruit du lieu sait produire — seuil appris pendant les 30 premières secondes, jamais réglé à la main. Le mot est alors posé <b>sur la bande son</b> : à la relecture, tu peux réécouter exactement cet instant.</p>
 
   <div class="slide">
     <span class="lg">seuil</span>
@@ -298,6 +328,7 @@ $('go').onclick=async()=>{
   floorV=0;fInit=false;inEv=false;
   meta={id:'s'+Date.now(),date:new Date().toISOString(),place:$('place').value.trim(),gear:$('gear').value.trim(),sr:outSR};
   wipe();recording=true;t0=performance.now();
+  secoursOuvrir();
   $('go').disabled=true;$('halt').disabled=false;$('mark').disabled=false;$('tabA').disabled=true;
   $('dot').classList.add('on');$('stTxt').textContent='enregistrement';$('setup').style.display='none';
   $('hzTop').textContent=Math.round(Math.min(8000,outSR/2))+' Hz';
@@ -306,6 +337,33 @@ $('go').onclick=async()=>{
   paintLive();
 };
 
+/* ═══════ rien ne doit pouvoir se perdre ═══════
+   C'était le défaut le plus grave de cette page : tant qu'on n'avait pas appuyé
+   sur Arrêter, la séance n'existait QUE dans la mémoire vive. Application fermée,
+   téléphone qui reprend de la mémoire, écran qui bascule — et tout disparaissait.
+   Désormais le son est écrit dans la base de l'appareil toutes les 10 secondes,
+   au fur et à mesure. Au pire on perd les dernières secondes, jamais la séance.
+   Voir lib/secours.js. */
+let SEC=null, secBuf=[], secOct=0, secDern=0;
+const SEC_INTERVAL=10000;
+function secoursOuvrir(){
+  try{
+    SEC=GBSecours.ouvrir({ nom:'ecoute-'+(meta.place? meta.place.replace(/[^\wÀ-ÿ -]/g,'').slice(0,24)+'-':'')
+        +new Date().toISOString().slice(0,19).replace(/[:T]/g,'-'),
+      mime:'audio/wav', wav:{sr:outSR}, cam:(meta.place||'écoute'), source:'ecoute' });
+  }catch(e){ SEC=null; }
+  secBuf=[]; secOct=0; secDern=performance.now();
+}
+function secoursPousser(force){
+  if(!SEC || !secBuf.length) return;
+  const now=performance.now();
+  if(!force && now-secDern < SEC_INTERVAL) return;
+  secDern=now;
+  const b=new Blob(secBuf.map(a=>a.buffer? a.buffer : a),{type:'application/octet-stream'});
+  secBuf=[]; SEC.ajouter(b);
+}
+function secoursFini(){ if(SEC){ secoursPousser(true); try{ SEC.finir(); }catch(e){} SEC=null; } }
+
 let carry=0,csum=0;
 function feed(e){
   if(!recording)return;
@@ -313,11 +371,13 @@ function feed(e){
   for(let i=0;i<n;i++){let s=0;for(let k=0;k<decim;k++)s+=inp[i*decim+k];s/=decim;
     out[i]=Math.max(-32768,Math.min(32767,s*32767))|0;}
   chunks.push(out);recLen+=n;
+  secBuf.push(out);secOct+=out.length*2;secoursPousser(false);
   for(let i=0;i<n;i++){const v=out[i]/32768;csum+=v*v;
     if(++carry===FRAME){const r=Math.sqrt(csum/FRAME);rms.push(r);
       detect(r,rms.length*FRAME/outSR);carry=0;csum=0;}}
 }
 function detect(r,t){
+  murFeed(r,t);
   if(!fInit){floorV=Math.max(r,1e-4);fInit=true;return;}
   const thr=Math.max(floorV*K(),.004);
   if(r>thr){down=0;evPk=Math.max(evPk,r);if(!inEv&&++up>=3){inEv=true;evS=t-.096;}}
@@ -342,6 +402,7 @@ function paintLive(){
   for(let y=0;y<H;y++){lc.fillStyle=rampCss(d[Math.floor((1-y/H)*(mx-1))]);lc.fillRect(W-S,y,S,1);}
   while(flags.length){const f=flags.shift();
     if(f==='m'){lc.fillStyle='#E9B44C';lc.fillRect(W-S,0,S,H);}
+    else if(f==='w'){lc.fillStyle='#5FD3A6';lc.fillRect(W-S,0,S,H);}   // mot retenu
     else{lc.fillStyle='#E2574C';lc.fillRect(W-S,H*.87,S,H*.13);}}
   const r=rms.length?rms[rms.length-1]:0;
   $('bar').style.width=Math.min(100,Math.max(0,(20*Math.log10(r||1e-6)+70)/.7)).toFixed(1)+'%';
@@ -351,9 +412,106 @@ function paintLive(){
 }
 $('sens').oninput=e=>$('sensV').textContent=(+e.target.value/10).toFixed(1)+'×';
 
+/* la page s'en va : on pousse ce qui n'a pas encore été écrit */
+addEventListener('pagehide',()=>{ try{ secoursPousser(true); }catch(e){} });
+addEventListener('visibilitychange',()=>{ if(document.hidden){ try{ secoursPousser(true); }catch(e){} } });
+
+/* ── au retour : une séance interrompue attend-elle ? ── */
+(async ()=>{
+  let att=[]; try{ att=await GBSecours.enAttente(); }catch(e){}
+  if(!att.length) return;
+  const d=document.createElement('div'); d.className='warn';
+  d.style.cssText='margin:10px 0;padding:10px 12px;border-left:2px solid #E9B44C;background:#1E1A12;font-size:12.5px;line-height:1.55;color:#E4D3AE';
+  d.innerHTML='<b>'+att.length+' séance'+(att.length>1?'s':'')+' interrompue'+(att.length>1?'s':'')
+    +'</b> — l\'enregistrement n\'a pas été arrêté normalement. Le son a été écrit au fur et à mesure : '
+    +'il est récupérable dans la <a href="../bibliotheque/" style="color:#E9B44C">Bibliothèque</a>.';
+  const w=document.querySelector('#paneT'); w.insertBefore(d, w.firstChild);
+})();
+
+/* ═══════ le mur de mots, sous le spectre ═══════
+   Écran tourné vers la pièce : ce que l'appareil peut dire est visible en
+   permanence, au lieu d'attendre caché dans un fichier. Il ne se fige QUE si le
+   niveau du micro dépasse tout ce que le bruit du lieu sait produire — seuil
+   appris pendant les 30 premières secondes puis relevé par le témoin de bruit,
+   jamais réglé à la main. Le curseur « seuil » de la page ne le concerne pas :
+   celui-là ne sert qu'à repérer des pics à relire, pas à faire parler. */
+let MUR=null, WSON=null, murArme=false, murTente=false, tArme=0, lastMot=-1e9, nMots=0;
+const MUR_APPREND=30, MUR_SETTLE=60, MUR_RAFALE=60;   // secondes
+$('murBtn').onclick=async ()=>{
+  if(MUR){ MUR.arreter(); MUR=null; document.body.classList.remove('avecmur');
+    $('murBtn').classList.remove('on');
+    $('murState').innerHTML='Mur éteint.'; return; }
+  try{
+    const mots=await GBMur.lexique('../data/lexique.json');
+    MUR=GBMur.creer({hote:$('murBox'), mots:mots});
+    if(!MUR) throw new Error('indisponible');
+    document.body.classList.add('avecmur'); MUR.demarrer(); $('murBtn').classList.add('on');
+    WSON=GBMoteur.mk('son','Niveau sonore'); murArme=false; murTente=false;
+    $('murState').innerHTML='<b style="color:var(--signal)">Mur allumé</b> — '
+      +MUR.colonnes().map(c=>c.famille+' ('+c.mots+')').join(' · ')
+      +'. Les vitesses tournent toutes les '+(MUR.rotation_ms/1000)+' s : aucune famille n\'est durablement la plus rapide. '
+      +'Le seuil s\'apprend pendant les 30 premières secondes d\'enregistrement.';
+  }catch(e){ $('murState').textContent='Mur indisponible (lexique introuvable ?).'; }
+};
+function murFeed(r,t){
+  if(!MUR || !WSON) return;
+  const db=20*Math.log10(r||1e-9);
+  if(!isFinite(db)) return;
+  if(t < MUR_APPREND){ GBMoteur.feed(WSON,db,true); return; }
+  if(!murTente){
+    murTente=true; murArme=GBMoteur.seal(WSON); tArme=t;
+    $('murState').innerHTML = murArme
+      ? '<b style="color:var(--signal)">Mur armé</b> — seuil <b>'+WSON.thr.toFixed(1)+' σ</b> appris sur le bruit de ce lieu. '
+        +'Rien ne peut sortir pendant la première minute.'
+      : '<b style="color:var(--gold)">Mur non armé</b> — le niveau du micro n\'a pas varié d\'un cheveu pendant l\'apprentissage. '
+        +'Sans bruit à comparer, la moindre variation vaudrait une fausse alerte : le mur défile, mais il ne se figera pas.';
+  }
+  if(!murArme) return;
+  const feu=GBMoteur.feed(WSON,db,false);
+  if(feu && (t-tArme)>=MUR_SETTLE && (t-lastMot)>=MUR_RAFALE && !MUR.estFige()){
+    lastMot=t; nMots++;
+    const c=MUR.figer('niveau '+db.toFixed(1)+' dBFS · écart '+WSON.z.toFixed(1)+' σ · seuil '+WSON.thr.toFixed(1)+' σ');
+    if(c){
+      // le mot est posé SUR la bande son : à la relecture on réécoute cet instant précis
+      const ev=mkEv(t,0,'mot',db);
+      ev.a=Math.max(0,t-4); ev.b=t+4; ev.mot=c.mot;
+      ev.mur={colonne:c.colonne,index:c.index,taille:c.taille,allure:c.allure};
+      ev.sigma=+WSON.z.toFixed(2); ev.seuil=+WSON.thr.toFixed(2);
+      events.push(ev); flags.push('w');
+      if(navigator.vibrate) navigator.vibrate(80);
+    }
+  }
+}
+
+/* ═══════ séance assise : écran fixe ═══════
+   Assis, la box qui balaye, le téléphone posé face à la pièce. L'écran ne doit
+   plus bouger : spectre en haut, mur au milieu, « Marquer » sous le pouce. */
+let assis=false;
+function setAssis(on){
+  assis=!!on;
+  document.documentElement.classList.toggle('assis',assis);
+  document.body.classList.toggle('assis',assis);
+  $('fixBtn').className=assis?'on':'';
+  $('fixBtn').textContent=assis?'Quitter':'Écran fixe';
+  if(assis){
+    try{GBWake.on();}catch(e){}
+    const el=document.documentElement, rq=el.requestFullscreen||el.webkitRequestFullscreen;
+    if(rq){ const r=rq.call(el,{navigationUI:'hide'}); if(r&&r.catch) r.catch(()=>{}); }
+    try{window.scrollTo(0,0);}catch(e){}
+  } else if(document.fullscreenElement||document.webkitFullscreenElement){
+    try{(document.exitFullscreen||document.webkitExitFullscreen).call(document);}catch(e){}
+  }
+  setTimeout(()=>{ if(MUR) MUR.placer(); try{ wipe(); }catch(e){} },120);
+}
+$('fixBtn').onclick=()=>setAssis(!assis);
+$('quitAssis').onclick=()=>setAssis(false);
+addEventListener('fullscreenchange',()=>{ if(!document.fullscreenElement && assis) setAssis(false); });
+addEventListener('touchmove',e=>{ if(assis) e.preventDefault(); },{passive:false});
+
 /* ═══ arrêt + calcul du spectrogramme ═══ */
 $('halt').onclick=async()=>{
   if(!recording)return;recording=false;
+  secoursFini();
   cancelAnimationFrame(raf);clearInterval(clk);
   try{proc.disconnect();src.disconnect();}catch(e){}
   stream.getTracks().forEach(t=>t.stop());
@@ -431,7 +589,7 @@ function paintZoom(){
   const ev=events[cur];if(!ev)return;
   paint($('zoom'),ev.a,ev.b,(g,W,H,d,t1,t2)=>{
     const x=(ev.t-t1)/(t2-t1)*W;
-    g.fillStyle=ev.kind==='man'?'rgba(233,180,76,.85)':'rgba(226,87,76,.85)';
+    g.fillStyle=ev.kind==='man'?'rgba(233,180,76,.85)':ev.kind==='mot'?'rgba(95,211,166,.9)':'rgba(226,87,76,.85)';
     g.fillRect(x,0,Math.max(1,d),H);
   });
   $('rL').textContent=(ev.a-ev.t).toFixed(1).replace('.',',')+' s';
@@ -443,7 +601,7 @@ function paintOver(){
     const D=meta.duration||1;
     events.forEach((e,i)=>{
       const x=(e.t/D)*W;
-      g.fillStyle=e.verdict==='keep'?'#5FD3A6':e.verdict==='drop'?'#5A686F':(e.kind==='man'?'#E9B44C':'#E2574C');
+      g.fillStyle=e.verdict==='keep'?'#5FD3A6':e.verdict==='drop'?'#5A686F':(e.kind==='man'?'#E9B44C':e.kind==='mot'?'#5FD3A6':'#E2574C');
       g.fillRect(x,i===cur?0:H*.78,Math.max(1,d),i===cur?H:H*.22);
     });
   });
@@ -478,7 +636,9 @@ function selectEv(i){
   const ev=events[cur];
   $('pos').textContent=(cur+1)+' / '+events.length;
   $('evKind').className='k '+ev.kind;
-  $('evKind').textContent=ev.kind==='man'?'◆ marqueur':'▲ pic '+ev.db.toFixed(0)+' dB';
+  $('evKind').textContent=ev.kind==='man'?'◆ marqueur'
+    :ev.kind==='mot'?('■ mot « '+ev.mot+' » · '+(ev.sigma||0)+' σ (seuil '+(ev.seuil||0)+')')
+    :'▲ pic '+ev.db.toFixed(0)+' dB';
   $('evT').textContent=fmt(ev.t);
   $('note').value=ev.note;
   $('keep').classList.toggle('on',ev.verdict==='keep');
@@ -565,7 +725,7 @@ $('exp1').onclick=()=>{const e=events[cur];if(e)dl(wav(e.a,e.b),'repere-'+fmt(e.
 $('expLog').onclick=()=>{
   const L=[`Séance ${meta.date}`,`Lieu : ${meta.place||'—'}`,`Ghost box : ${meta.gear||'—'}`,
     `Durée : ${fmt(meta.duration||0)}`,`Échantillonnage : ${outSR} Hz`,`Seuil : ${K().toFixed(1)}× le plancher`,'','--- repères ---'];
-  events.forEach(e=>L.push(`${fmt(e.t)}  ${e.kind==='man'?'MARQUEUR':'PIC '+e.db.toFixed(0)+'dB'}  [${e.verdict||'—'}]  ${e.note||''}`));
+  events.forEach(e=>L.push(`${fmt(e.t)}  ${e.kind==='man'?'MARQUEUR':e.kind==='mot'?'MOT '+e.mot+' ('+(e.sigma||0)+'σ, seuil '+(e.seuil||0)+')':'PIC '+e.db.toFixed(0)+'dB'}  [${e.verdict||'—'}]  ${e.note||''}`));
   dl(new Blob([L.join('\n')],{type:'text/plain'}),'journal-'+stamp()+'.txt');
 };
 $('fresh').onclick=()=>{
@@ -577,13 +737,18 @@ $('fresh').onclick=()=>{
 async function save(){
   if(!window.storage||!meta.id)return;
   try{await window.storage.set('sessions:'+meta.id,JSON.stringify({...meta,
-    log:events.map(e=>({t:e.t,kind:e.kind,note:e.note,verdict:e.verdict}))}));}catch(e){}
+    log:events.map(e=>({t:e.t,kind:e.kind,mot:e.mot||null,mur:e.mur||null,sigma:e.sigma||null,
+      seuil:e.seuil||null,note:e.note,verdict:e.verdict}))}));}catch(e){}
 }
 if(!navigator.mediaDevices||!navigator.mediaDevices.getUserMedia)
   say("Ce navigateur ne donne pas accès au micro. Utilise Safari sur iPhone, Chrome sur Android, en <code>https://</code>.");
 })();
 </script>
 <script>if('serviceWorker' in navigator){window.addEventListener('load',function(){navigator.serviceWorker.register('/ghost-box/sw.js').catch(function(){});});}</script>
+<script src="/ghost-box/lib/secours.js"></script>
+<script src="/ghost-box/lib/moteur.js"></script>
+<script src="/ghost-box/lib/mur.js"></script>
+<script src="/ghost-box/lib/wakelock.js"></script>
 <script src="/ghost-box/lib/fullscreen.js"></script>
 </body>
 </html>

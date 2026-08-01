@@ -71,6 +71,7 @@ video.player{width:100%;margin-top:8px;border:1px solid var(--line);border-radiu
     <button id="fVid">Vidéos</button>
     <button id="fPho">Photos</button>
   </div>
+  <div id="secours"></div>
   <div class="row"><button id="dlAll">Tout envoyer vers le téléphone</button></div>
   <div id="lib"><p class="empty">Aucun enregistrement.</p></div>
   <div class="row"><button id="wipe" class="ko">Tout supprimer</button></div>
@@ -79,6 +80,7 @@ video.player{width:100%;margin-top:8px;border:1px solid var(--line);border-radiu
 
 </div>
 
+<script src="/ghost-box/lib/secours.js"></script>
 <script>
 (() => {
 "use strict";
@@ -112,6 +114,7 @@ let filtre='tout';
 
 async function render(){
   let all=[]; try{ all=await dbAll(); }catch(e){}
+  all=all.filter(c=>!c.secours);           // les morceaux d'une prise en cours ne sont pas des fichiers
   all.sort((a,b)=>b.id-a.id);
   const vus = all.filter(c => filtre==='tout' ? true : (filtre==='photo' ? c.type==='photo' : c.type!=='photo'));
   $('cnt').textContent = all.length? all.length+' fichier'+(all.length>1?'s':'') : '';
@@ -127,6 +130,7 @@ async function render(){
     if(c.avant_s) bits.push('dont '+c.avant_s+' s d\'avant le geste');
     if(c.cameras>1) bits.push(c.cameras+' caméras');
     if(c.son===false) bits.push('sans son');
+    if(c.recupere) bits.push('prise récupérée');
     d.innerHTML=(c.vignette? '<img src="'+c.vignette+'" alt="">':'<img alt="">')+
       '<div class="meta"><div class="nm">'+esc(c.nom)+'</div>'+
       '<div class="sub">'+bits.join(' · ')+'</div><div class="acts"></div></div>';
@@ -178,7 +182,34 @@ $('wipe').onclick=async ()=>{
   if(!confirm('Supprimer TOUS les enregistrements ? Action définitive.')) return;
   await dbClear(); render();
 };
-render();
+/* ── prises interrompues : une séance ne doit jamais rester perdue ── */
+async function secours(){
+  let att=[]; try{ att=await GBSecours.enAttente(); }catch(e){}
+  const box=$('secours');
+  if(!att.length){ box.innerHTML=''; return; }
+  box.innerHTML='<div class="warn"><b>'+att.length+' prise'+(att.length>1?'s':'')+' interrompue'
+    +(att.length>1?'s':'')+'</b> — l\'enregistrement n\'a pas été arrêté normalement (application fermée, '
+    +'mémoire reprise par le téléphone). Le son et l\'image ont été écrits au fur et à mesure : '
+    +'tout est là, sauf peut-être la dernière seconde.</div>';
+  att.forEach(a=>{
+    const d=document.createElement('div'); d.className='clip';
+    d.innerHTML='<img alt=""><div class="meta"><div class="nm">'+esc((a.meta&&a.meta.nom)||'prise')+'</div>'
+      +'<div class="sub">'+a.morceaux+' morceaux · '+mo(a.octets)+' · '
+      +esc(a.debut? new Date(a.debut).toLocaleString('fr-FR'):'—')+'</div><div class="acts"></div></div>';
+    const acts=d.querySelector('.acts');
+    const br=document.createElement('button'); br.textContent='Récupérer'; br.style.borderColor='var(--signal)'; br.style.color='var(--signal)';
+    br.onclick=async ()=>{ br.disabled=true; br.textContent='…';
+      const c=await GBSecours.recuperer(a.session);
+      $('libStat').textContent = c? ('Prise récupérée : '+c.nom+' ('+mo(c.taille)+').') : 'Récupération impossible.';
+      await secours(); await render(); };
+    const bx=document.createElement('button'); bx.textContent='Jeter'; bx.className='ko';
+    bx.onclick=async ()=>{ if(!confirm('Jeter cette prise interrompue ? Action définitive.')) return;
+      await GBSecours.jeter(a.session); await secours(); await render(); };
+    acts.appendChild(br); acts.appendChild(bx);
+    box.appendChild(d);
+  });
+}
+secours(); render();
 })();
 </script>
 <script>if('serviceWorker' in navigator){window.addEventListener('load',function(){navigator.serviceWorker.register('/ghost-box/sw.js').catch(function(){});});}</script>

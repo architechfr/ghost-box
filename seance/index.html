@@ -163,6 +163,7 @@ body.filming #quitFix{display:block;position:fixed;z-index:61;right:10px;
 <video id="vid4" playsinline muted></video>
 
 <script src="/ghost-box/lib/moteur.js"></script>
+<script src="/ghost-box/lib/secours.js"></script>
 <script src="/ghost-box/lib/tampon.js"></script>
 <script src="/ghost-box/lib/mur.js"></script>
 <script src="/ghost-box/lib/media.js"></script>
@@ -644,6 +645,17 @@ $('selftest').onclick=()=>{
 function addJ(now,type,detail){
   journal.unshift({t_ms:Math.round(now-tStart), heure:hhmm(new Date()), type, detail});
   renderJ();
+
+/* ── au retour : une prise interrompue attend-elle ? ── */
+(async ()=>{
+  let att=[]; try{ att=await GBSecours.enAttente(); }catch(e){}
+  if(!att.length) return;
+  const d=document.createElement('div'); d.className='warn'; d.id='reprise';
+  d.innerHTML='<b>'+att.length+' prise'+(att.length>1?'s':'')+' interrompue'+(att.length>1?'s':'')
+    +'</b> — un enregistrement n\'a pas été arrêté normalement. Rien n\'est perdu : les morceaux ont été '
+    +'écrits au fur et à mesure. Va les récupérer dans la <a href="../bibliotheque/" style="color:var(--gold)">Bibliothèque</a>.';
+  const w=document.querySelector('.wrap'); w.insertBefore(d, w.firstChild);
+})();
 }
 function renderJ(){
   $('jCount').textContent=journal.length? '· '+journal.length : '';
@@ -748,6 +760,23 @@ function pickMime(){
   for(const m of c) if(window.MediaRecorder&&MediaRecorder.isTypeSupported&&MediaRecorder.isTypeSupported(m)) return m;
   return '';
 }
+/* ═══════ rien ne doit pouvoir se perdre ═══════
+   Pendant une prise, chaque morceau est écrit tout de suite dans la base de
+   l'appareil. Si le téléphone reprend la mémoire, si l'application est fermée,
+   si l'écran s'éteint mal — la prise est retrouvée au retour, entière à la
+   dernière seconde près. Voir lib/secours.js. */
+let SEC=null;
+function secoursOuvrir(extra){
+  try{
+    SEC=GBSecours.ouvrir(Object.assign({
+      nom:'seance-'+stamp(), mime:(recMime||(tampon&&tampon.type())||'video/webm'),
+      cam:($('lieu').value||'tournage'), source:'seance'
+    }, extra||{}));
+  }catch(e){ SEC=null; }
+}
+function secoursMorceau(b){ if(SEC) SEC.ajouter(b); }
+function secoursFini(){ if(SEC){ try{ SEC.finir(); }catch(e){} SEC=null; } }
+
 /* ═══════ mémoire tampon : les secondes d'AVANT le geste ═══════ */
 let tampon=null, tampSec=10, prerollDernier=0;
 /* Deux façons d'enregistrer, une seule page :
@@ -791,7 +820,11 @@ function tampDemarre(){
   }
   const f=fluxCompose();
   if(!f){ $('tampState').textContent='Image composée indisponible — prépare d\'abord le tournage.'; return false; }
-  tampon=GBTampon.creer({secondes:tampSec, onEtat:tampEtat});
+  tampon=GBTampon.creer({secondes:tampSec, onEtat:tampEtat,
+    // dès qu'on décide de garder, tout ce qui est déjà en mémoire part à l'abri,
+    // puis chaque nouveau morceau au fil de l'eau
+    onGarde:parts=>{ secoursOuvrir({mime:tampon.type()}); parts.forEach(secoursMorceau); },
+    onMorceau:secoursMorceau});
   if(!tampon.demarrer(f)){ tampon=null; $('tampState').textContent='Le tampon n\'a pas pu démarrer.'; return false; }
   $('tampBtn').className='act';
   return true;
@@ -841,7 +874,8 @@ $('recBtn').onclick=async ()=>{
   recMime=pickMime(); chunks=[];
   try{ rec=new MediaRecorder(flux, recMime?{mimeType:recMime}:undefined); }
   catch(e){ $('live').textContent='Enregistrement indisponible sur ce navigateur.'; return; }
-  rec.ondataavailable=e=>{ if(e.data&&e.data.size) chunks.push(e.data); };
+  secoursOuvrir({mime:recMime});
+  rec.ondataavailable=e=>{ if(e.data&&e.data.size){ chunks.push(e.data); secoursMorceau(e.data); } };
   rec.onstop=onStop;
   rec.start(1000); recording=true; recAudio=audio.length>0; recStart=performance.now();
   $('recBtn').textContent='■ Arrêter'; $('recBtn').classList.add('on');
@@ -875,6 +909,7 @@ async function sauver(blob, type, dur, preroll){
     duree:Math.round(dur), vignette:thumb, cam:($('lieu').value||'tournage'), blob,
     source:'seance', son:recAudio, cameras:nbVues(), avant_s:preroll||0,
     journal:[...journal].reverse() };
+  secoursFini();
   try{ await dbPut(clip); addJ(performance.now(),'fin','vidéo sauvegardée ('+mo(blob.size)+')'
       +(preroll? ' — dont '+preroll+' s d\'avant le geste':'')); }
   catch(e){ addJ(performance.now(),'fin','sauvegarde impossible — téléchargement direct');
