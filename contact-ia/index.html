@@ -291,6 +291,7 @@ async function startCam(){
       : {facingMode:'environment',width:{ideal:1280},height:{ideal:960}}});
     const v=$('vid'); v.srcObject=vstream; await v.play();
     camActive=true; $('pCam').textContent='Couper la caméra'; $('pCam').classList.add('act');
+    try{GBWake.on();}catch(e){}
     $('aiBtn').disabled=false; $('vRec').disabled=false; $('camView').style.display='block';
     const view=$('camView');
     if(v.videoWidth){ view.width=Math.min(1280,v.videoWidth);
@@ -308,6 +309,7 @@ async function startCam(){
     $('poseState').innerHTML='<b style="color:var(--flag)">Caméra indisponible.</b> '+(window.GBMedia?GBMedia.explain(e):'Accès impossible.'); }
 }
 function stopCam(){
+  try{GBWake.off();}catch(e){}
   if(vRecOn){ try{ vRec.stop(); }catch(e){} }
   aiOn=false; $('aiBtn').classList.remove('act'); $('aiBtn').disabled=true; $('vRec').disabled=true;
   if(vstream){ vstream.getTracks().forEach(t=>t.stop()); vstream=null; }
@@ -398,6 +400,7 @@ addEventListener('load',function(){ try{ GBCapture.init({label:'contact-ia', rec
 })();
 </script>
 <script>if('serviceWorker' in navigator){window.addEventListener('load',function(){navigator.serviceWorker.register('/ghost-box/sw.js').catch(function(){});});}</script>
+<script src="/ghost-box/lib/wakelock.js"></script>
 <script src="/ghost-box/lib/media.js"></script>
 <script src="/ghost-box/lib/capture.js"></script>
 <script src="/ghost-box/lib/fullscreen.js"></script>

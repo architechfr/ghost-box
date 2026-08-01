@@ -178,6 +178,7 @@ function labelOf(d,i){
   return d.label? d.label.slice(0,18) : 'Objectif '+(i+1);
 }
 function stopAll(){
+  try{GBWake.off();}catch(e){}
   aiOn=false; lastPeople=null; if($('camAi')) $('camAi').className='';
   streams.forEach(s=>{ try{ s.getTracks().forEach(t=>t.stop()); }catch(e){} });
   streams=[]; cells=[]; $('grid').innerHTML=''; $('grid').style.gridTemplateColumns='';
@@ -200,7 +201,7 @@ async function openOne(deviceId){
     cell.v.srcObject=st; await cell.v.play().catch(()=>{});
     cells=[cell];
     $('grid').style.gridTemplateColumns='1fr';
-    $('camState').textContent='Caméra active.';
+    $('camState').textContent='Caméra active.'; try{GBWake.on();}catch(e){}
     $('recBtn').disabled=false; $('camOn').className='act'; $('camOn').textContent='Couper la caméra';
     await listDevices(); startMotion();
   }catch(e){ $('camState').innerHTML='<b style="color:var(--flag)">Caméra indisponible.</b> '+(window.GBMedia?GBMedia.explain(e):'Accès impossible.'); }
@@ -500,6 +501,7 @@ addEventListener('load',function(){ try{ GBCapture.init({label:'vision', rec:'#r
 })();
 </script>
 <script>if('serviceWorker' in navigator){window.addEventListener('load',function(){navigator.serviceWorker.register('/ghost-box/sw.js').catch(function(){});});}</script>
+<script src="/ghost-box/lib/wakelock.js"></script>
 <script src="/ghost-box/lib/media.js"></script>
 <script src="/ghost-box/lib/capture.js"></script>
 <script src="/ghost-box/lib/fullscreen.js"></script>

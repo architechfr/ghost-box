@@ -68,7 +68,7 @@ video{display:none}
 <body>
 
 <div class="top"><div class="topin">
-  <a href="../">←</a><h1>Réalisateur <span style="font-size:10px;color:var(--signal)">v5</span></h1>
+  <a href="../">←</a><h1>Réalisateur <span style="font-size:10px;color:var(--signal)">v6</span></h1>
   <span class="lg" id="phase">à préparer</span>
 </div></div>
 
@@ -219,19 +219,31 @@ async function useLens(id){
    Certains téléphones l'acceptent réellement (constaté sur l'appareil de terrain).
    On tente le double flux ; s'il est refusé, on le dit et on reste à une caméra.
    Les deux vues sont composées côte à côte, donc ENREGISTRÉES ensemble. */
-let vstream2=null, twoCam=false;
+let vstream2=null, twoCam=false, pendingSecond=null;
 $('twoCam').onclick=async ()=>{
   if(twoCam){
     twoCam=false; $('twoCam').className='';
     if(vstream2){ vstream2.getTracks().forEach(t=>t.stop()); vstream2=null; }
     $('twoState').textContent='Vue unique.'; sizeStage(); return;
   }
+  // on choisit QUELLE caméra vient en seconde vue
+  const others=lenses.filter(d=>d.deviceId!==curLens);
+  if(others.length>1 && !pendingSecond){
+    const box=$('twoState'); box.innerHTML='Seconde caméra : ';
+    others.forEach((d,i)=>{
+      const b=document.createElement('button');
+      b.textContent=lensName(d,i); b.style.cssText='margin:4px 4px 0 0;padding:7px 9px;font-size:11px';
+      b.onclick=()=>{ pendingSecond=d.deviceId; $('twoCam').click(); };
+      box.appendChild(b);
+    });
+    return;
+  }
+  const chosen = pendingSecond || (others[0] && others[0].deviceId);
+  pendingSecond=null;
   $('twoState').textContent='Ouverture de la seconde caméra…';
   try{
-    const back=curLens;
-    const other=lenses.find(d=>d.deviceId!==back);
     vstream2=await navigator.mediaDevices.getUserMedia({
-      video: other? {deviceId:{exact:other.deviceId},width:{ideal:640}} : {facingMode:'user',width:{ideal:640}},
+      video: chosen? {deviceId:{exact:chosen},width:{ideal:640}} : {facingMode:'user',width:{ideal:640}},
       audio:false});
     const v2=$('vid2'); v2.srcObject=vstream2; await v2.play().catch(()=>{});
     const t0=$('vid').currentTime;
@@ -316,6 +328,7 @@ $('prep').onclick=async ()=>{
   WA=mkW('audio','Niveau sonore'); WM=mkW('mouvement','Mouvement');
   learning=true; tLearn=performance.now(); tStart=tLearn; bg=null; mHits=0; cHits=0;
   $('prep').className='act'; $('prep').textContent='Caméra active';
+  try{GBWake.on();}catch(e){}
   $('selftest').disabled=false; $('aiBtn').disabled=false; $('twoCam').disabled=false;
   $('phase').textContent='apprentissage';
   $('prepState').innerHTML='Apprentissage du bruit du lieu — <b>ne bouge pas</b> pendant ce temps.';
@@ -562,6 +575,7 @@ addEventListener('load',function(){ try{ GBCapture.init({label:($('lieu').value|
 })();
 </script>
 <script>if('serviceWorker' in navigator){window.addEventListener('load',function(){navigator.serviceWorker.register('/ghost-box/sw.js').catch(function(){});});}</script>
+<script src="/ghost-box/lib/wakelock.js"></script>
 <script src="/ghost-box/lib/media.js"></script>
 <script src="/ghost-box/lib/capture.js"></script>
 <script src="/ghost-box/lib/fullscreen.js"></script>

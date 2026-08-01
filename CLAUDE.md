@@ -16,6 +16,7 @@ Cinq outils, un par moment de séance :
 | `enregistreur/` | Écoute : micro brut, spectrogramme, marqueurs, export WAV |
 | `lib/pose.js` | Détection de personne partagée (MediaPipe, plusieurs personnes), utilisée par les quatre modes caméra |
 | `lib/capture.js` | Boutons flottants photo ○ / vidéo ● — capture à tout instant, suivent le plein écran |
+| `lib/wakelock.js` | Empêche la mise en veille tant qu'une caméra tourne (repli vidéo si l'API manque) |
 | `lib/media.js` | Traduction en clair des erreurs caméra/micro |
 | `lib/fullscreen.js` | Bouton plein écran présent sur toutes les pages |
 | `contact-ia/` | Expérimental : transcription Voxtral (clé Mistral, sort de l'appareil) + silhouette IA MediaPipe |
@@ -32,6 +33,8 @@ Ce projet a une exigence de sincérité qui prime sur toute fonctionnalité. Un 
 6bis. **La détection visuelle est réglée SÉVÈRE, volontairement.** Laissé à ses valeurs par défaut, MediaPipe plaque un squelette sur un fauteuil ou un rideau. Sont donc imposés : seuils du modèle à 0,80 / 0,80 / 0,70, 14 points fiables sur 33, confiance moyenne 0,62, plausibilité géométrique (plus haut que large, ≥ 14 % de la hauteur d'image) et surtout une **persistance de 5 images consécutives** — une détection d'un éclair est du bruit. Vérifié par simulation : fauteuil, forme écrasée, silhouette minuscule et détection fugace sont tous rejetés ; une vraie personne passe. Ne pas relâcher ces seuils sans refaire ces tests.
 6. **La détection de personne est disponible dans TOUS les modes caméra, et suit PLUSIEURS personnes** — deux règles posées explicitement. Jusqu'à 4 personnes simultanées (`MAX_PEOPLE`), chacune avec sa couleur et son numéro, triées de gauche à droite. Implémentation unique dans `lib/pose.js`, importée dynamiquement par `banc/`, `vision/`, `realisateur/` et `contact-ia/`. Ne jamais la redupliquer dans une page ni revenir à une seule personne : étendre le module.
 7. **Tout est vérifiable.** Chaque émission conserve valeur brute, normale, écart, seuil et index — le calcul doit pouvoir être refait à la main depuis la trace exportée.
+7bis. **L'écran ne doit jamais s'éteindre pendant une séance** — le verrou est pris dès qu'une caméra tourne et repris automatiquement au retour d'arrière-plan. Une veille interrompt caméra, enregistrement et détection.
+7ter. **Tout élément flottant doit être déplaçable** et ne jamais recouvrir un bouton : la vue caméra du banc se déplace au doigt, sa position est mémorisée.
 8. **Une capture doit être possible à tout instant** — bouton flottant, jamais un bouton qu'il faut aller chercher en faisant défiler la page. Une observation ne prévient pas.
 9. **L'IA ne fabrique pas de sens.** Elle ne relie jamais les mots en phrases. La transcription est marquée « non vérifiée » car ces modèles inventent des mots sur du bruit.
 
