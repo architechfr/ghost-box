@@ -6,23 +6,30 @@ Ce fichier existe pour qu'une session Claude repartant de zéro comprenne le pro
 
 Application web (HTML/CSS/JS pur, sans dépendance ni build) pour séances de ghost box, publiée par GitHub Pages sur `architechfr.github.io/ghost-box`. Tout tourne dans le navigateur du téléphone.
 
-Six outils, un par moment de séance :
+Cinq outils, rangés par **moment de séance**, pas par technique :
 
 | Dossier | Rôle |
 |---|---|
-| `realisateur/` | Mode tournage en déplacement : image composée (vidéo + incrustations + squelette) enregistrée avec le micro, choix de l'objectif, journal |
-| `vision/` | Caméras : objectifs, bascule, enregistrement vidéo, bibliothèque IndexedDB, détection de mouvement + témoin |
-| `mur/` | Mur de mots : tout le lexique montré en colonnes qui défilent vite, case de lecture qui les parcourt, gel à l'instant d'une mesure |
-| `banc/` | Séance capteurs : veille silencieuse, moteur capteur → mot, coïncidence, mode à l'aveugle, trace |
-| `enregistreur/` | Écoute : micro brut, spectrogramme, marqueurs, export WAV |
-| `lib/moteur.js` | **Moteur de détection partagé** (statistique robuste, seuil auto, témoin de bruit) — banc, réalisateur, mur |
-| `lib/tampon.js` | **Mémoire tampon partagée** : encode en continu, ne garde que les N dernières secondes, les livre au déclenchement — vision, réalisateur |
-| `lib/pose.js` | Détection de personne partagée (MediaPipe, plusieurs personnes), utilisée par les quatre modes caméra |
-| `lib/capture.js` | Boutons flottants photo ○ / vidéo ● — capture à tout instant, suivent le plein écran |
-| `lib/wakelock.js` | Empêche la mise en veille tant qu'une caméra tourne (repli vidéo si l'API manque) |
+| `seance/` | **Séance caméra** — une ou plusieurs caméras composées dans une seule image, détection de personne sur chaque vue, mouvement, son de la box, incrustation optionnelle des informations dans la vidéo, mémoire tampon, mur de mots, écran fixe |
+| `banc/` | **Séance capteurs** — capteurs de l'appareil, seuil auto-calibré, coïncidence, mode à l'aveugle, trace, mur de mots |
+| `mur/` | **Mur seul** — le mur sans caméra, micro comme capteur |
+| `bibliotheque/` | Tout ce qui a été gardé, de n'importe quel mode : relecture avec journal, envoi vers le téléphone, suppression |
+| `enregistreur/` | **Écoute** — micro brut, spectrogramme, marqueurs, export WAV |
+| `contact-ia/` | Expérimental : transcription Voxtral (clé Mistral, sort de l'appareil) |
+| `realisateur/`, `vision/` | **Redirections** vers `seance/` — ces deux modes ont fusionné. Ne pas y remettre de code : les raccourcis déjà posés sur l'écran d'accueil des téléphones pointent dessus |
+
+Le code partagé, en un seul exemplaire :
+
+| Fichier | Rôle |
+|---|---|
+| `lib/moteur.js` | Moteur de détection (statistique robuste, seuil auto, témoin de bruit) |
+| `lib/mur.js` | Mur de mots (colonnes, case de lecture, gel, équité des vitesses) |
+| `lib/tampon.js` | Mémoire tampon : encode en continu, ne garde que les N dernières secondes |
+| `lib/pose.js` | Détection de personne (MediaPipe, plusieurs personnes) |
+| `lib/capture.js` | Boutons flottants photo ○ / vidéo ● — capture à tout instant |
+| `lib/wakelock.js` | Empêche la mise en veille tant qu'une caméra tourne |
 | `lib/media.js` | Traduction en clair des erreurs caméra/micro |
 | `lib/fullscreen.js` | Bouton plein écran présent sur toutes les pages |
-| `contact-ia/` | Expérimental : transcription Voxtral (clé Mistral, sort de l'appareil) + silhouette IA MediaPipe |
 
 ## Les principes — ne pas les enfreindre
 
@@ -35,19 +42,23 @@ Ce projet a une exigence de sincérité qui prime sur toute fonctionnalité. Un 
 4. **Un témoin partout.** Mode à l'aveugle pour les capteurs, témoin visuel pour la caméra (même détecteur sur une image mélangée), témoin de bruit pour le seuil. Sans chiffre de comparaison, une détection ne prouve rien.
 5. **Jamais de forme inventée.** La caméra encadre factuellement ce qui bouge (rectangle + pourcentage). Pas de silhouette dessinée à partir d'une boîte. Le squelette n'apparaît que si le modèle détecte réellement une personne (≥ 8 points fiables).
 6bis. **La détection visuelle est réglée SÉVÈRE, volontairement.** Laissé à ses valeurs par défaut, MediaPipe plaque un squelette sur un fauteuil ou un rideau. Sont donc imposés : seuils du modèle à 0,80 / 0,80 / 0,70, 14 points fiables sur 33, confiance moyenne 0,62, plausibilité géométrique (plus haut que large, ≥ 14 % de la hauteur d'image) et surtout une **persistance de 5 images consécutives** — une détection d'un éclair est du bruit. Vérifié par simulation : fauteuil, forme écrasée, silhouette minuscule et détection fugace sont tous rejetés ; une vraie personne passe. Ne pas relâcher ces seuils sans refaire ces tests.
-6. **La détection de personne est disponible dans TOUS les modes caméra, et suit PLUSIEURS personnes** — deux règles posées explicitement. Jusqu'à 4 personnes simultanées (`MAX_PEOPLE`), chacune avec sa couleur et son numéro, triées de gauche à droite. Implémentation unique dans `lib/pose.js`, importée dynamiquement par `banc/`, `vision/`, `realisateur/` et `contact-ia/`. Ne jamais la redupliquer dans une page ni revenir à une seule personne : étendre le module.
+6. **La détection de personne est disponible dans TOUS les modes caméra, et suit PLUSIEURS personnes** — deux règles posées explicitement. Jusqu'à 4 personnes simultanées (`MAX_PEOPLE`), chacune avec sa couleur et son numéro, triées de gauche à droite. Implémentation unique dans `lib/pose.js`, importée dynamiquement par `seance/`, `banc/` et `contact-ia/`. Ne jamais la redupliquer dans une page ni revenir à une seule personne : étendre le module.
 7. **Tout est vérifiable.** Chaque émission conserve valeur brute, normale, écart, seuil et index — le calcul doit pouvoir être refait à la main depuis la trace exportée.
 7bis. **L'écran ne doit jamais s'éteindre pendant une séance** — le verrou est pris dès qu'une caméra tourne et repris automatiquement au retour d'arrière-plan. Une veille interrompt caméra, enregistrement et détection.
 7ter. **Tout élément flottant doit être déplaçable** et ne jamais recouvrir un bouton : la vue caméra du banc se déplace au doigt, sa position est mémorisée.
 8. **Une capture doit être possible à tout instant** — bouton flottant, jamais un bouton qu'il faut aller chercher en faisant défiler la page. Une observation ne prévient pas.
-8bis. **Montrer, plutôt que garder pour soi.** Le mur de mots existe parce qu'un lexique caché dans un fichier ne se propose à personne : les 567 mots défilent à l'écran, rangés par famille (réponses, personnes, lieux, actions, états), et une case de lecture les parcourt en continu. Quand une mesure dépasse le seuil, **le mur se fige à cet instant et le mot de la case est retenu — c'est l'instant qui désigne, rien d'autre**. Aucun tirage caché, et la trace conserve colonne, index, graine de session : le choix se refait à la main.
+8bis. **Le mur de mots n'est pas un mode, c'est un affichage.** Seul, il ne sert à rien : il n'a de sens qu'à côté de ce qui mesure. Il est donc disponible **dans la séance caméra et dans la séance capteurs**, comme composant partagé (`lib/mur.js`), et la page « Mur seul » n'est qu'un des trois endroits où on l'allume. Ne jamais en refaire une copie dans une page.
+8bis-b. **Aucun mot n'est favorisé, et ça se mesure.** Si chaque colonne gardait sa vitesse, ce seraient toujours les mêmes mots qui passeraient en coup de vent. Les allures **tournent d'une colonne à l'autre toutes les 20 s** : chaque famille passe le même temps à chaque vitesse. Vérifié : sur 400 gels, les cinq colonnes sont retenues 76 à 84 fois chacune. Ne pas figer les vitesses.
+8bis-c. **Montrer, plutôt que garder pour soi.** Le mur de mots existe parce qu'un lexique caché dans un fichier ne se propose à personne : les 567 mots défilent à l'écran, rangés par famille (réponses, personnes, lieux, actions, états), et une case de lecture les parcourt en continu. Quand une mesure dépasse le seuil, **le mur se fige à cet instant et le mot de la case est retenu — c'est l'instant qui désigne, rien d'autre**. Aucun tirage caché, et la trace conserve colonne, index, graine de session : le choix se refait à la main.
 8ter. **Rien n'est écrit sans qu'on le demande — mais ce qui vient de se passer n'est pas perdu.** Un événement est déjà terminé quand on appuie sur le bouton. La mémoire tampon encode donc en permanence sans rien conserver : à chaque instant seules les N dernières secondes existent en mémoire vive, et tout ce qui est plus vieux est effacé au fur et à mesure — aucun fichier n'est créé tant que l'utilisateur n'a rien demandé. Au déclenchement, ces N secondes-là font partie du fichier. **Ne jamais transformer ça en enregistrement permanent qui remplit l'appareil** : c'est exactement ce que ce dispositif existe pour éviter.
 8quater. **Un réglage ne doit pas se dérégler tout seul.** Un curseur (`input[type=range]`) posé au milieu d'une page se déplace quand le pouce fait défiler l'écran — l'utilisateur croit naviguer et modifie un paramètre. Pour un réglage à trois valeurs, des **boutons**. Partout où un curseur reste justifié, `touch-action:pan-y` pour que le défilement vertical lui passe au-dessus sans le toucher. Et tout réglage doit expliquer **ce qu'il change pour l'utilisateur**, pas ce qu'il fait techniquement.
 9. **L'IA ne fabrique pas de sens.** Elle ne relie jamais les mots en phrases. La transcription est marquée « non vérifiée » car ces modèles inventent des mots sur du bruit.
 
 ## Architecture — pourquoi elle est ainsi
 
-**Un `index.html` par dossier est voulu**, pas une duplication : c'est la convention des sites statiques, qui donne des URL propres (`/vision/` plutôt que `/vision.html`). GitHub Pages s'appuie dessus. Ne pas « fusionner les index ».
+**Un `index.html` par dossier est voulu**, pas une duplication : c'est la convention des sites statiques, qui donne des URL propres (`/seance/` plutôt que `/seance.html`). GitHub Pages s'appuie dessus. Ne pas « fusionner les index ».
+
+**Le menu est rangé par moment de séance, pas par technique.** Réalisateur et Vision étaient deux pages pour une même chose — filmer — et partageaient l'essentiel de leur code (objectifs, enregistrement, détection de personne, tampon, capture) ; elles obligeaient surtout à **choisir avant de savoir ce qu'on allait faire**. Elles ont fusionné en `seance/`, où la vraie différence est devenue un bouton : *incruster les informations dans la vidéo*, ou enregistrer l'image brute. La bibliothèque, qui reçoit les fichiers de tous les modes, est sortie en page à part — elle était cachée au fond de Vision alors qu'elle sert après la séance. Avant d'ajouter une page, se demander si ce n'est pas un **bouton** dans une page existante.
 
 **Ce qui est commun vit dans `lib/`**, jamais recopié dans une page : **moteur de détection**, détection de personne, capture, plein écran, veille écran, messages d'erreur média. Toute logique utilisée par deux pages ou plus doit y être extraite. Le moteur a longtemps existé en deux exemplaires (banc + réalisateur) : ils avaient déjà divergé. Il vit maintenant dans `lib/moteur.js` et les pages n'en gardent que leur politique propre (quels capteurs, quelles fenêtres, quel affichage). **Ne jamais le recopier dans une page** — si le principe change, il doit changer partout à la fois.
 

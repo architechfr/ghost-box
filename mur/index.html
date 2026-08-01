@@ -53,36 +53,9 @@ th{font-family:var(--legend);text-transform:uppercase;letter-spacing:.12em;font-
 td{padding:7px 6px 7px 0;border-bottom:1px solid var(--hair);font-family:var(--mono);font-size:12px;vertical-align:top}
 td.w{font-family:var(--body);font-size:14px;color:var(--paper)}
 .empty{color:var(--dim);font-size:13px;padding:12px 0}
-
-/* ═══ le mur ═══ */
-#mur{position:relative;margin-top:12px;background:#05090B;border:1px solid var(--line);
-  border-radius:4px;overflow:hidden;height:52vh;min-height:280px;display:flex}
-.col{flex:1;position:relative;overflow:hidden;border-right:1px solid var(--hair)}
-.col:last-child{border-right:0}
-.colhd{position:absolute;top:0;left:0;right:0;z-index:3;text-align:center;
-  font-family:var(--legend);text-transform:uppercase;letter-spacing:.12em;font-size:9.5px;
-  color:var(--dim);background:linear-gradient(180deg,rgba(5,9,11,.97),rgba(5,9,11,0));padding:4px 0 10px}
-.strip{position:absolute;left:0;right:0;top:0;will-change:transform}
-.cell{height:30px;line-height:30px;text-align:center;font-family:var(--body);font-size:14px;
-  color:#8FA0A9;white-space:nowrap;overflow:hidden}
-.cell.hit{color:#0A0F12;background:var(--gold);font-weight:600}
-/* la ligne de lecture : c'est là que le mot est lu, toujours au même endroit */
-#ligne{position:absolute;left:0;right:0;top:50%;height:30px;transform:translateY(-15px);
-  z-index:2;pointer-events:none;border-top:1px solid rgba(95,211,166,.55);
-  border-bottom:1px solid rgba(95,211,166,.55);background:rgba(95,211,166,.07)}
-#curseur{position:absolute;top:50%;height:30px;transform:translateY(-15px);z-index:2;
-  pointer-events:none;border:2px solid var(--signal);border-radius:2px;
-  box-shadow:0 0 12px rgba(95,211,166,.35);transition:left .06s linear}
-#gel{position:absolute;inset:0;z-index:4;display:none;align-items:center;justify-content:center;
-  background:rgba(5,9,11,.72);text-align:center;padding:16px}
-#gel.on{display:flex}
-#gelMot{font-family:var(--legend);text-transform:uppercase;letter-spacing:.06em;
-  font-size:clamp(38px,13vw,86px);line-height:1;color:var(--gold);font-weight:600}
-#gelSub{font-family:var(--mono);font-size:11.5px;color:var(--paper);margin-top:10px;line-height:1.5}
-#gel.test #gelMot,#gel.test #gelSub{color:var(--flag)}
-.warn{margin-top:10px;padding:10px 12px;border-left:2px solid var(--gold);background:#1E1A12;
-  font-size:12.5px;line-height:1.55;color:#E4D3AE}
-
+/* le décor du mur — colonnes, case de lecture, gel — vit dans lib/mur.js */
+#mur{position:relative;margin-top:12px;border:1px solid var(--line);border-radius:4px;
+  height:52vh;min-height:280px}
 /* ── écran fixe : le mur seul, plein écran, rien d'autre ── */
 html.filming{height:100%;overflow:hidden}
 body.filming{position:fixed;inset:0;width:100%;height:100%;padding:0;margin:0;
@@ -99,28 +72,27 @@ body.filming #quitFix{display:block;position:fixed;z-index:61;right:10px;
 <body>
 
 <div class="top"><div class="topin">
-  <a href="../">←</a><h1>Mur de mots <span style="font-size:10px;color:var(--signal)">v1</span></h1>
+  <a href="../">←</a><h1>Mur seul <span style="font-size:10px;color:var(--signal)">v2</span></h1>
   <span class="lg" id="phase">à préparer</span>
 </div></div>
 
 <div class="wrap">
 
 <div class="step" id="setup" style="border-top:0">
-  <p class="ex">Tout le vocabulaire est <b>montré</b>, en continu, en colonnes qui défilent vite. Rien n'est caché dans une base de données : les mots sont là, sous les yeux, rangés par famille — <b>réponses, personnes, lieux, actions, états</b>. Une case de lecture parcourt les colonnes sans arrêt.</p>
-  <p class="ex">Si — et seulement si — une mesure dépasse tout ce que le bruit du lieu sait produire, <b>le mur se fige à cet instant précis</b> et le mot qui se trouvait dans la case est retenu. C'est <b>l'instant</b> qui désigne le mot, rien d'autre : ni moi, ni un tirage caché. La plupart des séances ne figent rien, et c'est le résultat normal.</p>
+  <p class="ex">Le mur, sans caméra : téléphone posé, écran tourné vers la pièce. Tout le vocabulaire est <b>montré</b> en continu, rangé par famille — <b>réponses, personnes, lieux, actions, états</b> — et une case de lecture parcourt les colonnes sans arrêt.</p>
+  <p class="ex">Si — et seulement si — une mesure dépasse tout ce que le bruit du lieu sait produire, <b>le mur se fige à cet instant précis</b> et le mot qui se trouvait dans la case est retenu. C'est <b>l'instant</b> qui désigne, rien d'autre : ni moi, ni un tirage caché. La plupart des séances ne figent rien, et c'est le résultat normal.</p>
+  <p class="ex">Le même mur est disponible dans la <a href="../seance/" style="color:var(--signal)">séance caméra</a> et dans la <a href="../banc/" style="color:var(--signal)">séance capteurs</a> — c'est le même composant, le même comportement.</p>
   <div class="row">
     <button id="prep">Ouvrir le mur</button>
     <button id="essai" disabled>Essai (faux mot)</button>
   </div>
+  <p id="colonnes" class="ex">Chargement du lexique…</p>
   <p id="prepState" class="ex">Le micro sert de capteur : c'est le son de la pièce — et celui de ta box radio si elle est posée à côté. L'appareil apprend 45 s le bruit normal avant de pouvoir figer quoi que ce soit.</p>
   <div class="fld"><span class="lg">vitesse</span><input type="range" id="vit" min="30" max="900" value="330"><span class="stat" id="vitL" style="margin:0;min-width:74px">330 px/s</span></div>
   <p class="ex">Le défilement peut être rendu très rapide : les mots ne sont pas là pour être lus par toi, mais pour être tous <b>disponibles</b> à chaque seconde.</p>
 </div>
 
-<div id="mur">
-  <div id="ligne"></div><div id="curseur"></div>
-  <div id="gel"><div><div id="gelMot">—</div><div id="gelSub"></div></div></div>
-</div>
+<div id="mur"></div>
 <button id="quitFix" type="button">Quitter</button>
 <div class="row">
   <button id="fixBtn">Écran fixe</button>
@@ -135,7 +107,7 @@ body.filming #quitFix{display:block;position:fixed;z-index:61;right:10px;
     <button id="expJ">Export JSON</button>
     <button id="clrJ">Effacer</button>
   </div>
-  <p class="ex">Chaque mot retenu garde l'instant, la mesure brute, l'écart en σ, le seuil du moment, la colonne et l'index — le choix peut être refait à la main depuis l'export.</p>
+  <p class="ex">Chaque mot retenu garde l'instant, la mesure brute, l'écart en σ, le seuil du moment, la colonne, l'index et l'allure de la colonne — le choix peut être refait à la main depuis l'export.</p>
 </div>
 
 </div>
@@ -143,6 +115,7 @@ body.filming #quitFix{display:block;position:fixed;z-index:61;right:10px;
 <script src="/ghost-box/lib/wakelock.js"></script>
 <script src="/ghost-box/lib/media.js"></script>
 <script src="/ghost-box/lib/moteur.js"></script>
+<script src="/ghost-box/lib/mur.js"></script>
 <script src="/ghost-box/lib/fullscreen.js"></script>
 <script>
 (() => {
@@ -154,122 +127,29 @@ const hhmm=d=>String(d.getHours()).padStart(2,'0')+':'+String(d.getMinutes()).pa
 const stamp=()=>new Date().toISOString().slice(0,19).replace(/[:T]/g,'-');
 const M=window.GBMoteur;
 
-/* ═══════ les colonnes ═══════
-   Le lexique est rangé par famille pour que ce qui est proposé soit lisible d'un
-   coup d'œil : une colonne « oui / non / chiffres », une colonne de personnes, une
-   de lieux, une d'actions, une d'états et de temps. Personne n'a besoin de savoir
-   qu'il existe un fichier : tout est à l'écran. */
-const FAM=[
-  {t:'réponses',  pos:['REPONSE','NOMBRE']},
-  {t:'personnes', pos:['PRENOM'], cat:['personne']},
-  {t:'lieux',     pos:['LIEU']},
-  {t:'actions',   pos:['VERBE','VERBE3','IMPER']},
-  {t:'états · temps', pos:['ADJ','TEMPS','ADV','NOM','PREP']}
-];
-const ROW=30;                       // hauteur d'une case, en pixels
-let cols=[], MOTS=[], pret=false;
+/* ═══════ le mur ═══════
+   Composant partagé (lib/mur.js) : exactement le même mur que dans la séance
+   caméra et la séance capteurs. Une seule implémentation, un seul comportement. */
+let MUR=null, pret=false;
+GBMur.lexique('../data/lexique.json').then(mots=>{
+  MUR=GBMur.creer({hote:$('mur'), mots:mots, vitesse:+$('vit').value});
+  if(!MUR){ $('colonnes').innerHTML='<b style="color:var(--flag)">Mur indisponible.</b>'; return; }
+  MUR.demarrer(); pret=true;
+  $('colonnes').innerHTML='Colonnes : '+MUR.colonnes().map(c=>'<b>'+c.famille+'</b> ('+c.mots+')').join(' · ')
+    +'. Les vitesses <b>tournent d\'une colonne à l\'autre toutes les '+(MUR.rotation_ms/1000)+' s</b> : '
+    +'aucune famille n\'est durablement la plus rapide, et aucun mot ne passe systématiquement en coup de vent. '
+    +'Graine de session <b>'+MUR.graine+'</b> — le défilement est reproductible.';
+}).catch(()=>{ $('colonnes').innerHTML='<b style="color:var(--flag)">Lexique introuvable.</b> Le mur ne peut pas s\'ouvrir.'; });
 
-/* graine de session : le défilement est reproductible, donc vérifiable */
-const seed=(Date.now()^((Math.random()*4294967296)>>>0))>>>0;
-let rnd=(function(s){ return function(){ s^=s<<13;s>>>=0;s^=s>>17;s^=s<<5;s>>>=0;return s/4294967296; };})(seed||1);
-function melange(a){ const b=a.slice(); for(let i=b.length-1;i>0;i--){ const j=(rnd()*(i+1))|0; const t=b[i];b[i]=b[j];b[j]=t; } return b; }
-
-fetch('../data/lexique.json').then(r=>r.json()).then(j=>{
-  const m=(j&&j.mots)?j.mots:(Array.isArray(j)?j:[]);
-  MOTS=m.map(x=>({mot:x.mot,pos:x.pos,cat:x.categorie||'',poids:x.poids||1}));
-  batir();
-}).catch(()=>{ $('prepState').innerHTML='<b style="color:var(--flag)">Lexique introuvable.</b> Le mur ne peut pas s\'ouvrir.'; });
-
-function batir(){
-  const pris=new Set();
-  const listes=FAM.map(f=>{
-    const l=MOTS.filter((w,i)=>{
-      if(pris.has(i)) return false;
-      const ok=(f.pos&&f.pos.indexOf(w.pos)>=0)||(f.cat&&f.cat.indexOf(w.cat)>=0);
-      if(ok) pris.add(i);
-      return ok;
-    });
-    return l;
-  });
-  // ce qui n'est entré dans aucune famille rejoint la dernière colonne : aucun mot n'est écarté
-  const reste=MOTS.filter((w,i)=>!pris.has(i));
-  listes[listes.length-1]=listes[listes.length-1].concat(reste);
-
-  const mur=$('mur');
-  listes.forEach((l,ci)=>{
-    const liste=melange(l);
-    const d=document.createElement('div'); d.className='col';
-    const h=document.createElement('div'); h.className='colhd'; h.textContent=FAM[ci].t+' · '+liste.length;
-    const s=document.createElement('div'); s.className='strip';
-    // la liste est écrite deux fois : le défilement peut boucler sans coupure visible
-    for(let k=0;k<2;k++) liste.forEach(w=>{
-      const c=document.createElement('div'); c.className='cell'; c.textContent=w.mot; s.appendChild(c);
-    });
-    d.appendChild(h); d.appendChild(s); mur.insertBefore(d,$('ligne'));
-    cols.push({liste,strip:s,off:rnd()*liste.length*ROW,vit:1});
-  });
-  // chaque colonne a sa propre vitesse : deux colonnes ne repassent jamais en phase
-  cols.forEach((c,i)=>{ c.vit=0.72+0.19*i; });
-  pret=true;
-  place();
-  boucle();
+function figer(info,test){
+  if(!MUR) return null;
+  const r=MUR.figer(info,test);
+  if(r) addJ(test?'ESSAI':'mot', r.mot,
+    (test? 'figé à la main — aucune mesure derrière' : info)
+    +' · colonne '+r.colonne+' · index '+r.index+'/'+r.taille+' · allure '+r.allure);
+  return r;
 }
-
-/* case de lecture : elle parcourt les colonnes sans arrêt, à cadence fixe */
-const DWELL=420;                    // ms passées sur chaque colonne
-function colCourante(t){ return cols.length? (Math.floor(t/DWELL)%cols.length) : 0; }
-function place(){
-  if(!cols.length) return;
-  const mur=$('mur'), w=mur.clientWidth/cols.length;
-  const c=$('curseur'); c.style.width=(w-4)+'px';
-}
-addEventListener('resize',place);
-
-/* mot présent dans la case de lecture d'une colonne, à cet instant */
-function motLu(ci){
-  const c=cols[ci], n=c.liste.length, cycle=n*ROW;
-  const mur=$('mur').clientHeight;
-  const idx=Math.floor((((c.off%cycle)+cycle)%cycle + mur/2)/ROW)%n;
-  return {idx, mot:c.liste[idx].mot};
-}
-
-let fige=false, tFige=0, dernier=null, lastT=0;
-function boucle(){
-  const t=performance.now(), dt=Math.min(60,t-(lastT||t)); lastT=t;
-  if(!fige){
-    const v=+$('vit').value;
-    for(const c of cols){
-      const cycle=c.liste.length*ROW;
-      c.off=(c.off + v*c.vit*dt/1000)%cycle;
-      c.strip.style.transform='translateY('+(-c.off)+'px)';
-    }
-    const ci=colCourante(t), w=$('mur').clientWidth/cols.length;
-    $('curseur').style.left=(ci*w+2)+'px';
-  } else if(t-tFige>6000){ degel(); }
-  requestAnimationFrame(boucle);
-}
-
-function degel(){
-  fige=false; $('gel').className='';
-  document.querySelectorAll('.cell.hit').forEach(e=>e.classList.remove('hit'));
-}
-/* ── figer : c'est l'instant qui désigne le mot ── */
-function figer(ci, info, test){
-  const {idx,mot}=motLu(ci);
-  fige=true; tFige=performance.now(); dernier={ci,idx,mot};
-  const c=cols[ci], n=c.liste.length;
-  const cells=c.strip.children;
-  if(cells[idx]) cells[idx].classList.add('hit');
-  if(cells[idx+n]) cells[idx+n].classList.add('hit');
-  $('gelMot').textContent=mot;
-  $('gelSub').innerHTML= test
-    ? 'ESSAI — figé à la main pour montrer le mécanisme.<br>Aucune mesure derrière ce mot.'
-    : esc(info);
-  $('gel').className='on'+(test?' test':'');
-  if(navigator.vibrate) navigator.vibrate(80);
-  addJ(test?'ESSAI':'mot', mot, (test?'figé à la main — aucune mesure derrière':info)
-      +' · colonne '+FAM[ci].t+' · index '+idx+'/'+n);
-}
+$('vit').oninput=()=>{ $('vitL').textContent=$('vit').value+' px/s'; if(MUR) MUR.vitesse(+$('vit').value); };
 
 /* ═══════ capteur : le son de la pièce (et de la box posée à côté) ═══════ */
 let micStream=null, actx=null, ana=null, tdata=null, micBrut=false;
@@ -332,10 +212,9 @@ function mesure(){
     }
   } else if(WS.ready){
     const feu=vive&&M.feed(WS,niveau,false);
-    if(feu && (now-tPret)>=SETTLE && (now-lastEmit)>=ANTI_RAFALE && !fige){
+    if(feu && (now-tPret)>=SETTLE && (now-lastEmit)>=ANTI_RAFALE && MUR && !MUR.estFige()){
       lastEmit=now; nMots++;
-      figer(colCourante(now),
-        'niveau '+WS.v.toFixed(1)+' dBFS · écart '+WS.z.toFixed(1)+' σ · seuil '+WS.thr.toFixed(1)+' σ', false);
+      figer('niveau '+WS.v.toFixed(1)+' dBFS · écart '+WS.z.toFixed(1)+' σ · seuil '+WS.thr.toFixed(1)+' σ', false);
     }
   }
 
@@ -349,8 +228,7 @@ function mesure(){
   setTimeout(mesure,100);
 }
 
-$('essai').onclick=()=>{ if(!fige) figer(colCourante(performance.now()),'',true); };
-$('vit').oninput=()=>{ $('vitL').textContent=$('vit').value+' px/s'; };
+$('essai').onclick=()=>{ if(MUR && !MUR.estFige()) figer('',true); };
 
 /* ═══════ trace ═══════ */
 function addJ(type,mot,detail){
@@ -368,9 +246,9 @@ function renderJ(){
 $('clrJ').onclick=()=>{ journal=[]; renderJ(); };
 $('expJ').onclick=()=>{
   const b=new Blob([JSON.stringify({
-    mur:'mur-de-mots', date:new Date().toISOString(), graine:seed,
-    vitesse_px_s:+$('vit').value, hauteur_case_px:ROW, sejour_case_ms:DWELL,
-    colonnes:cols.map((c,i)=>({famille:FAM[i].t,mots:c.liste.length,vitesse_relative:+c.vit.toFixed(2)})),
+    mur:'mur-seul', date:new Date().toISOString(), graine:(MUR?MUR.graine:0),
+    vitesse_px_s:+$('vit').value, hauteur_case_px:GBMur.ROW, sejour_case_ms:GBMur.DWELL,
+    rotation_vitesses_ms:(MUR?MUR.rotation_ms:null), colonnes:(MUR?MUR.equite():[]),
     capteur:{code:'son',normale:+WS.moy.toFixed(3),ecart_type:+WS.sd.toFixed(4),
              seuil_sigma:+WS.thr.toFixed(2),relevages_temoin:WS.raises,arme:WS.ready},
     apprentissage_s:APPREND_MS/1000, stabilisation_ms:SETTLE, anti_rafale_ms:ANTI_RAFALE,
@@ -396,7 +274,7 @@ function setFilming(on){
   } else if(document.fullscreenElement||document.webkitFullscreenElement){
     try{(document.exitFullscreen||document.webkitExitFullscreen).call(document);}catch(e){}
   }
-  setTimeout(place,80);
+  setTimeout(()=>{ if(MUR) MUR.placer(); },80);
 }
 $('fixBtn').onclick=()=>setFilming(!filming);
 $('quitFix').onclick=()=>setFilming(false);

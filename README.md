@@ -13,8 +13,9 @@ Tout fonctionne côté navigateur. Aucune donnée ne quitte l'appareil, aucune d
 | Chemin | Rôle |
 |---|---|
 | `index.html` | Accueil + diagnostic des capteurs de l'appareil |
-| `realisateur/` | Réalisateur : mode tournage en déplacement — l'image composée (vidéo + incrustations lieu, heure, chrono, VU-mètre, cadre de présence, mots émis) est enregistrée avec le micro dans un seul fichier, journal exportable |
-| `vision/` | Vision : tous les objectifs de l'appareil avec bascule instantanée, aperçu direct, enregistrement vidéo + son du micro, détection de mouvement encadrée avec témoin de bruit, bibliothèque des enregistrements (lecture, export, suppression) stockée sur l'appareil |
+| `seance/` | Séance caméra : une ou plusieurs caméras composées dans une seule image, tous les objectifs, détection de personne sur chaque vue, mouvement encadré avec témoin, son de la box, incrustation optionnelle des informations dans la vidéo, mémoire tampon (récupère les secondes d'avant le geste), mur de mots, écran fixe. `realisateur/` et `vision/` redirigent ici : ils ont fusionné |
+| `mur/` | Mur seul : tout le vocabulaire montré en colonnes défilantes, case de lecture, gel à l'instant d'une mesure. Le même mur est disponible dans `seance/` et `banc/` |
+| `bibliotheque/` | Tout ce qui a été gardé, de n'importe quel mode : relecture avec le journal de séance, envoi vers les téléchargements du téléphone, suppression |
 | `enregistreur/` | Écoute : micro sans traitement, spectrogramme, marqueurs, détection de pics, relecture (boucle, rognage, filtres), export WAV |
 | `banc/` | Banc d'essai : capteurs en direct, moteur capteur → mot à seuil auto-calibré, coïncidence multi-capteurs, forme caméra avec témoin visuel, enregistrement audio de la box radio, mode témoin à l'aveugle, trace exportable |
 | `contact-ia/` | Contact via IA (en développement) : transcription Voxtral de la box radio, silhouette IA en direct |

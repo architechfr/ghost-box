@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#0A0F12">
+<title>Bibliothèque — tout ce qui a été gardé</title>
+<link rel="icon" type="image/png" href="/ghost-box/favicon.png">
+<link rel="apple-touch-icon" href="/ghost-box/apple-touch-icon.png">
+<link rel="manifest" href="/ghost-box/manifest.json">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Ghost Box">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600&family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bench:#0A0F12;--panel:#1D262B;--sunk:#0A0F12;--line:#2C383F;--hair:#212B31;
+  --signal:#5FD3A6;--gold:#E9B44C;--flag:#E2574C;--paper:#CFC6B4;--dim:#78868E;--text:#DDE6EA;
+  --legend:"Barlow Condensed","Arial Narrow",sans-serif;
+  --body:"IBM Plex Sans",system-ui,sans-serif;--mono:"IBM Plex Mono",ui-monospace,monospace;
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;background:var(--bench);color:var(--text);font-family:var(--body);-webkit-font-smoothing:antialiased}
+body{padding:0 0 calc(env(safe-area-inset-bottom) + 24px)}
+.wrap{max-width:660px;margin:0 auto;padding:0 12px}
+.top{position:sticky;top:0;z-index:20;background:rgba(10,15,18,.96);backdrop-filter:blur(8px);
+  border-bottom:1px solid var(--line);padding:env(safe-area-inset-top) 0 0}
+.topin{max-width:660px;margin:0 auto;padding:10px 12px;display:flex;align-items:center;gap:10px}
+.topin a{color:var(--dim);text-decoration:none;font-family:var(--mono);font-size:16px}
+.topin h1{font-family:var(--legend);text-transform:uppercase;letter-spacing:.18em;font-size:15px;font-weight:600;margin:0;flex:1}
+.lg{font-family:var(--legend);text-transform:uppercase;letter-spacing:.15em;font-size:12px;color:var(--dim);font-weight:600}
+.ex{font-size:12.5px;color:var(--dim);line-height:1.55;margin:6px 0 0}
+.ex b{color:var(--paper);font-weight:500}
+.step{margin-top:18px;border-top:1px solid var(--line);padding-top:12px}
+button{font-family:var(--legend);text-transform:uppercase;letter-spacing:.13em;font-weight:600;
+  border:1px solid var(--line);background:var(--panel);color:var(--text);border-radius:3px;
+  padding:11px 12px;font-size:13px;cursor:pointer}
+button:active{transform:translateY(1px)}
+button.ko{border-color:var(--flag);color:var(--flag)}
+button.on{background:var(--gold);color:#191204;border-color:var(--gold)}
+.row{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}.row>button{flex:1;min-width:120px}
+.warn{margin-top:10px;padding:10px 12px;border-left:2px solid var(--gold);background:#1E1A12;
+  font-size:12.5px;line-height:1.55;color:#E4D3AE}
+.clip{display:flex;gap:10px;align-items:flex-start;padding:10px 0;border-bottom:1px solid var(--hair)}
+.clip img{width:78px;height:58px;object-fit:cover;background:#000;border:1px solid var(--line);border-radius:3px;flex:none}
+.clip .meta{flex:1;min-width:0}
+.clip .nm{font-family:var(--mono);font-size:12.5px;color:var(--paper);word-break:break-all}
+.clip .sub{font-family:var(--mono);font-size:11px;color:var(--dim);margin-top:3px}
+.clip .acts{display:flex;gap:6px;margin-top:7px;flex-wrap:wrap}
+.clip .acts button{padding:7px 9px;font-size:11px;letter-spacing:.1em;min-width:0;flex:none}
+.empty{color:var(--dim);font-size:13.5px;padding:14px 0;line-height:1.55}
+video.player{width:100%;margin-top:8px;border:1px solid var(--line);border-radius:3px;background:#000}
+</style>
+</head>
+<body>
+
+<div class="top"><div class="topin">
+  <a href="../">←</a><h1>Bibliothèque <span style="font-size:10px;color:var(--signal)">v1</span></h1>
+  <span class="lg" id="cnt"></span>
+</div></div>
+
+<div class="wrap">
+
+<div class="step" style="border-top:0">
+  <p class="ex">Tout ce que l'application a gardé — vidéos de séance, photos instantanées, prises venues de la mémoire tampon — arrive <b>ici</b>, et nulle part ailleurs.</p>
+  <div class="warn">Ces fichiers sont rangés <b>dans l'application</b>, pas dans la galerie photo du téléphone. Pour qu'un fichier rejoigne la galerie, appuie sur <b>Télécharger</b> : il ira dans les téléchargements de l'appareil, visible depuis la galerie et partageable.</div>
+  <div class="row">
+    <button id="fTout" class="on">Tout</button>
+    <button id="fVid">Vidéos</button>
+    <button id="fPho">Photos</button>
+  </div>
+  <div class="row"><button id="dlAll">Tout envoyer vers le téléphone</button></div>
+  <div id="lib"><p class="empty">Aucun enregistrement.</p></div>
+  <div class="row"><button id="wipe" class="ko">Tout supprimer</button></div>
+  <p id="libStat" class="ex"></p>
+</div>
+
+</div>
+
+<script>
+(() => {
+"use strict";
+const $=id=>document.getElementById(id);
+const esc=s=>String(s).replace(/[&<>]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;'}[c]));
+const fmt=s=>{s=Math.max(0,s|0);return String(s/60|0).padStart(2,'0')+':'+String(s%60).padStart(2,'0');};
+const mo=b=>b<1048576?(b/1024).toFixed(0)+' Ko':(b/1048576).toFixed(1)+' Mo';
+
+/* une seule base pour toute l'application */
+const DBN='ghostbox-vision', ST='clips';
+function db(){ return new Promise((res,rej)=>{ const r=indexedDB.open(DBN,1);
+  r.onupgradeneeded=()=>{ if(!r.result.objectStoreNames.contains(ST)) r.result.createObjectStore(ST,{keyPath:'id'}); };
+  r.onsuccess=()=>res(r.result); r.onerror=()=>rej(r.error); }); }
+async function dbAll(){ const d=await db(); return new Promise((res,rej)=>{
+  const t=d.transaction(ST,'readonly'), q=t.objectStore(ST).getAll();
+  q.onsuccess=()=>res(q.result||[]); q.onerror=()=>rej(q.error); }); }
+async function dbDel(id){ const d=await db(); return new Promise((res,rej)=>{
+  const t=d.transaction(ST,'readwrite'); t.objectStore(ST).delete(id);
+  t.oncomplete=()=>res(); t.onerror=()=>rej(t.error); }); }
+async function dbClear(){ const d=await db(); return new Promise((res,rej)=>{
+  const t=d.transaction(ST,'readwrite'); t.objectStore(ST).clear();
+  t.oncomplete=()=>res(); t.onerror=()=>rej(t.error); }); }
+function dl(blob,name){ const u=URL.createObjectURL(blob),a=document.createElement('a');
+  a.href=u;a.download=name;a.click(); setTimeout(()=>URL.revokeObjectURL(u),6000); }
+
+let filtre='tout';
+[['fTout','tout'],['fVid','video'],['fPho','photo']].forEach(([id,f])=>{
+  $(id).onclick=()=>{ filtre=f; ['fTout','fVid','fPho'].forEach(x=>$(x).classList.remove('on'));
+    $(id).classList.add('on'); render(); };
+});
+
+async function render(){
+  let all=[]; try{ all=await dbAll(); }catch(e){}
+  all.sort((a,b)=>b.id-a.id);
+  const vus = all.filter(c => filtre==='tout' ? true : (filtre==='photo' ? c.type==='photo' : c.type!=='photo'));
+  $('cnt').textContent = all.length? all.length+' fichier'+(all.length>1?'s':'') : '';
+  const box=$('lib');
+  if(!vus.length){ box.innerHTML='<p class="empty">Rien ici pour l\'instant.</p>'; $('libStat').textContent=''; return; }
+  box.innerHTML=''; let total=0;
+  vus.forEach(c=>{
+    total+=c.taille||0;
+    const photo = c.type==='photo';
+    const d=document.createElement('div'); d.className='clip';
+    // d'où vient le fichier, et ce qu'il contient : lisible sans l'ouvrir
+    const bits=[ photo? 'photo' : fmt(c.duree||0), mo(c.taille||0), esc(c.cam||'—') ];
+    if(c.avant_s) bits.push('dont '+c.avant_s+' s d\'avant le geste');
+    if(c.cameras>1) bits.push(c.cameras+' caméras');
+    if(c.son===false) bits.push('sans son');
+    d.innerHTML=(c.vignette? '<img src="'+c.vignette+'" alt="">':'<img alt="">')+
+      '<div class="meta"><div class="nm">'+esc(c.nom)+'</div>'+
+      '<div class="sub">'+bits.join(' · ')+'</div><div class="acts"></div></div>';
+    const acts=d.querySelector('.acts');
+    const bl=document.createElement('button'); bl.textContent = photo? 'Voir':'Lire';
+    bl.onclick=()=>{ const ex=d.querySelector('.player'); if(ex){ ex.remove(); return; }
+      if(photo){ const im=document.createElement('img'); im.className='player';
+        im.style.cssText='width:100%;height:auto;margin-top:8px;border:1px solid var(--line);border-radius:3px';
+        im.src=URL.createObjectURL(c.blob); d.querySelector('.meta').appendChild(im);
+      } else { const v=document.createElement('video'); v.className='player'; v.controls=true; v.playsInline=true;
+        v.src=URL.createObjectURL(c.blob); d.querySelector('.meta').appendChild(v); v.play().catch(()=>{}); } };
+    const bd=document.createElement('button'); bd.textContent='Télécharger'; bd.onclick=()=>dl(c.blob,c.nom);
+    const bx=document.createElement('button'); bx.textContent='Supprimer'; bx.className='ko';
+    bx.onclick=async ()=>{ if(!confirm('Supprimer '+c.nom+' ?')) return; await dbDel(c.id); render(); };
+    acts.appendChild(bl); acts.appendChild(bd); acts.appendChild(bx);
+    // le journal de séance voyage avec la vidéo : on peut le relire ici
+    if(c.journal && c.journal.length){
+      const bj=document.createElement('button'); bj.textContent='Journal';
+      bj.onclick=()=>{ const ex=d.querySelector('.jr'); if(ex){ ex.remove(); return; }
+        const p=document.createElement('div'); p.className='jr';
+        p.style.cssText='margin-top:8px;font-family:var(--mono);font-size:11px;color:var(--dim);line-height:1.6';
+        p.innerHTML=c.journal.map(r=>esc(r.heure+' · '+r.type+' · '+r.detail)).join('<br>');
+        d.querySelector('.meta').appendChild(p); };
+      acts.appendChild(bj);
+    }
+    box.appendChild(d);
+  });
+  let quota='';
+  if(navigator.storage&&navigator.storage.estimate){
+    try{ const e=await navigator.storage.estimate();
+      if(e.quota) quota=' · espace disponible sur l\'appareil : '+mo(e.quota-(e.usage||0));
+    }catch(e){}
+  }
+  $('libStat').textContent='Total affiché '+mo(total)+quota;
+}
+$('dlAll').onclick=async ()=>{
+  let all=[]; try{ all=await dbAll(); }catch(e){}
+  if(!all.length){ $('libStat').textContent='Rien à envoyer.'; return; }
+  if(!confirm('Envoyer '+all.length+' fichier(s) vers le téléphone ?')) return;
+  all.sort((a,b)=>a.id-b.id);
+  for(let i=0;i<all.length;i++){
+    dl(all[i].blob, all[i].nom);
+    $('libStat').textContent='Envoi '+(i+1)+' / '+all.length+'…';
+    await new Promise(r=>setTimeout(r,700));   // le navigateur refuse les rafales
+  }
+  $('libStat').textContent='Terminé — les fichiers sont dans les téléchargements de l\'appareil.';
+};
+$('wipe').onclick=async ()=>{
+  if(!confirm('Supprimer TOUS les enregistrements ? Action définitive.')) return;
+  await dbClear(); render();
+};
+render();
+})();
+</script>
+<script>if('serviceWorker' in navigator){window.addEventListener('load',function(){navigator.serviceWorker.register('/ghost-box/sw.js').catch(function(){});});}</script>
+<script src="/ghost-box/lib/fullscreen.js"></script>
+</body>
+</html>

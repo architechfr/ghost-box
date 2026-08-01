@@ -88,6 +88,9 @@ input[type=range]{flex:1;accent-color:var(--gold);height:26px;min-width:0;touch-
 #deriv b{color:var(--signal);font-weight:500}
 .zbar{margin-top:16px;height:5px;background:#161E23;border-radius:3px;position:relative;overflow:hidden}
 #zfill{height:100%;width:0;background:var(--signal);transition:width .12s linear}
+#murBox{display:none;margin-top:10px;height:30vh;min-height:160px;
+  border:1px solid var(--line);border-radius:4px;overflow:hidden}
+body.avecmur #murBox{display:flex}
 #zmark{position:absolute;top:-3px;bottom:-3px;width:2px;background:var(--gold)}
 .zlab{display:flex;justify-content:space-between;margin-top:6px}
 #run{width:100%;margin-top:10px;padding:18px 0;font-size:16px;letter-spacing:.2em;
@@ -202,6 +205,11 @@ video{display:none}
     <div class="zbar"><div id="zfill"></div><div id="zmark"></div></div>
     <div class="zlab"><span class="lg">écart mesuré</span><span class="lg" id="zNow">—</span></div>
   </div>
+  <div id="murBox"></div>
+  <div class="row">
+    <button id="murBtn" class="tgl">Mur de mots</button>
+  </div>
+  <p id="murState" class="ex">Pendant toute la veille, le mur montre le vocabulaire à l'écran plutôt que de le garder dans un fichier : cinq colonnes qui défilent, une case de lecture qui les parcourt. Quand un capteur dépasse son seuil, <b>le mur se fige à cet instant</b> et le mot vient de la case. Les vitesses tournent entre les colonnes — aucune famille n'est durablement la plus rapide.</p>
   <button id="run" disabled>Lancer la veille</button>
   <div id="blindNote"></div>
 </div>
@@ -239,6 +247,7 @@ video{display:none}
 </div>
 
 <script src="/ghost-box/lib/moteur.js"></script>
+<script src="/ghost-box/lib/mur.js"></script>
 <script>
 (() => {
 "use strict";
@@ -850,6 +859,21 @@ function drawZ(z){
 }
 function fmt(s){s=Math.max(0,s|0);return String(s/60|0).padStart(2,'0')+':'+String(s%60).padStart(2,'0');}
 
+let MUR=null;
+$('murBtn').onclick=async ()=>{
+  if(MUR){ MUR.arreter(); MUR=null; document.body.classList.remove('avecmur');
+    $('murBtn').classList.remove('on'); $('murState').innerHTML='Mur éteint — le mot s\'affiche seul, comme avant.'; return; }
+  try{
+    const mots=await GBMur.lexique('../data/lexique.json');
+    MUR=GBMur.creer({hote:$('murBox'), mots:mots, graine:seed});
+    if(!MUR) throw new Error('indisponible');
+    document.body.classList.add('avecmur'); MUR.demarrer(); $('murBtn').classList.add('on');
+    $('murState').innerHTML='<b style="color:var(--signal)">Mur allumé</b> — '
+      +MUR.colonnes().map(c=>c.famille+' ('+c.mots+')').join(' · ')
+      +'. Vitesses tournantes toutes les '+(MUR.rotation_ms/1000)+' s, graine '+MUR.graine+' : le défilement est reproductible.';
+  }catch(e){ $('murState').textContent='Mur indisponible (lexique introuvable ?).'; }
+};
+
 function emit(now){
   if(!MOTS.length) return;          // lexique pas encore chargé
   const posF=$('pos').value, pool = posF&&BY_POS[posF]? BY_POS[posF] : MOTS;
@@ -872,7 +896,13 @@ function emit(now){
   const codes=W.map(w=>w.code).join('+');
   const label=multi? ('coïncidence '+W.map(w=>w.label).join(' + ')) : W[0].label;
 
-  $('word').className=''; $('word').textContent=m.mot;
+  // ── mur allumé : c'est l'INSTANT qui désigne le mot, et tout le monde voit l'offre ──
+  let mot=m.mot, viaMur=null;
+  if(MUR && !MUR.estFige()){
+    const r=MUR.figer(esc(label)+' · écart '+zc.toFixed(1)+' σ');
+    if(r){ mot=r.mot; viaMur=r; }
+  }
+  $('word').className=''; $('word').textContent=mot;
   $('stage').classList.add('alert');
   $('deriv').innerHTML = blind
     ? 'écart <b>'+zc.toFixed(2).replace('.',',')+' σ</b> → index <b>'+idx+'</b> / '+pool.length
@@ -881,7 +911,12 @@ function emit(now){
       : 'générateur aléatoire · graine <b>'+seed+'</b> · écart <b>'+zc.toFixed(2).replace('.',',')+' σ</b> → index <b>'+idx+'</b>';
 
   const preuve=grabEvidence();
-  trace.unshift({ t_ms:Math.round(now-t0), mot:m.mot, pos:m.pos,
+  trace.unshift({ t_ms:Math.round(now-t0), mot:mot, pos:m.pos,
+    // quand le mur est allumé, le mot vient de la case de lecture à l'instant du
+    // dépassement : colonne, index et décalage sont notés pour pouvoir le refaire
+    mur: viaMur? {colonne:viaMur.colonne, index:viaMur.index, taille:viaMur.taille,
+                  allure:viaMur.allure, vitesse:viaMur.vitesse, decalage:viaMur.decalage} : null,
+    mot_hachage: m.mot,
     capteur: realMode? (multi?('coinc:'+codes):W[0].code) : '—',
     valeur_brute:+W[0].v.toFixed(3), moyenne:+W[0].moy.toFixed(3), ecart_type:+W[0].sd.toFixed(4),
     z:+zc.toFixed(2), seuil_auto:+W[0].thr.toFixed(2), index_calcule:idx, rehash:usedSalt, est_temoin:!realMode,
@@ -890,7 +925,7 @@ function emit(now){
   renderTrace();
 
   if(speak && window.speechSynthesis){
-    const u=new SpeechSynthesisUtterance(m.mot); u.lang='fr-FR'; u.rate=.9; speechSynthesis.speak(u);
+    const u=new SpeechSynthesisUtterance(mot); u.lang='fr-FR'; u.rate=.9; speechSynthesis.speak(u);
   }
   if(navigator.vibrate) navigator.vibrate(60);
 }
