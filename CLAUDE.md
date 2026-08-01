@@ -10,10 +10,11 @@ Cinq outils, un par moment de séance :
 
 | Dossier | Rôle |
 |---|---|
-| `realisateur/` | Mode tournage en déplacement : image composée (vidéo + incrustations) enregistrée avec le micro, deux vues, journal |
+| `realisateur/` | Mode tournage en déplacement : image composée (vidéo + incrustations + squelette) enregistrée avec le micro, choix de l'objectif, journal |
 | `vision/` | Caméras : objectifs, bascule, enregistrement vidéo, bibliothèque IndexedDB, détection de mouvement + témoin |
 | `banc/` | Séance capteurs : veille silencieuse, moteur capteur → mot, coïncidence, mode à l'aveugle, trace |
 | `enregistreur/` | Écoute : micro brut, spectrogramme, marqueurs, export WAV |
+| `lib/pose.js` | Détection de personne partagée (MediaPipe), utilisée par les quatre modes caméra |
 | `contact-ia/` | Expérimental : transcription Voxtral (clé Mistral, sort de l'appareil) + silhouette IA MediaPipe |
 
 ## Les principes — ne pas les enfreindre
@@ -25,12 +26,13 @@ Ce projet a une exigence de sincérité qui prime sur toute fonctionnalité. Un 
 3. **Pas de seuil théorique.** « 3 σ » est un mensonge sur un capteur réel (bruit à queues lourdes, mesures corrélées). Le seuil est **auto-calibré** : ancré sur le pire pic observé pendant l'apprentissage, puis **relevé de 15 %** chaque fois qu'un témoin de bruit (bootstrap par blocs du bruit réel enregistré) aurait suffi à déclencher un mot.
 4. **Un témoin partout.** Mode à l'aveugle pour les capteurs, témoin visuel pour la caméra (même détecteur sur une image mélangée), témoin de bruit pour le seuil. Sans chiffre de comparaison, une détection ne prouve rien.
 5. **Jamais de forme inventée.** La caméra encadre factuellement ce qui bouge (rectangle + pourcentage). Pas de silhouette dessinée à partir d'une boîte. Le squelette n'apparaît que si le modèle détecte réellement une personne (≥ 8 points fiables).
-6. **Tout est vérifiable.** Chaque émission conserve valeur brute, normale, écart, seuil et index — le calcul doit pouvoir être refait à la main depuis la trace exportée.
-7. **L'IA ne fabrique pas de sens.** Elle ne relie jamais les mots en phrases. La transcription est marquée « non vérifiée » car ces modèles inventent des mots sur du bruit.
+6. **La détection de personne est disponible dans TOUS les modes caméra, et suit PLUSIEURS personnes** — deux règles posées explicitement. Jusqu'à 4 personnes simultanées (`MAX_PEOPLE`), chacune avec sa couleur et son numéro, triées de gauche à droite. Implémentation unique dans `lib/pose.js`, importée dynamiquement par `banc/`, `vision/`, `realisateur/` et `contact-ia/`. Ne jamais la redupliquer dans une page ni revenir à une seule personne : étendre le module.
+7. **Tout est vérifiable.** Chaque émission conserve valeur brute, normale, écart, seuil et index — le calcul doit pouvoir être refait à la main depuis la trace exportée.
+8. **L'IA ne fabrique pas de sens.** Elle ne relie jamais les mots en phrases. La transcription est marquée « non vérifiée » car ces modèles inventent des mots sur du bruit.
 
 ## Contraintes techniques connues (ne pas re-promettre)
 
-- **Deux caméras simultanées : impossible** sur Android et iOS. Le mode réalisateur tente le double direct, et sinon alterne en affichant l'âge de la vignette. Ne jamais présenter ça comme du direct.
+- **Deux caméras simultanées : impossible** sur Android et iOS. Une tentative d'alternance a été essayée puis **retirée** : elle figeait l'image et laissait un écran noir. Ne pas la réintroduire ; proposer le choix de l'objectif à la place.
 - Un téléphone **n'a pas de récepteur radio** : le micro enregistre le *son* de la box, pas les ondes.
 - Pas de capteur de profondeur : la détection de personne est fragile dans le noir.
 - La clé Mistral est stockée en `localStorage` de l'appareil, jamais dans le dépôt.

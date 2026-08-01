@@ -67,7 +67,7 @@ video{display:none}
 <body>
 <div class="wrap">
 
-<h1>Contact via IA <span class="wip">en développement · v4</span></h1>
+<h1>Contact via IA <span class="wip">en développement · v7</span></h1>
 <p class="sub">Deux expériences pour « entendre » ou « voir » au-delà des mesures brutes du banc. À traiter comme des <b>pistes à vérifier</b>, jamais comme des preuves : l'IA fabrique des mots à partir du bruit et des silhouettes à partir de reflets. La transcription <b>envoie l'audio au serveur Mistral</b> ; la silhouette tourne entièrement sur l'appareil.</p>
 
 <div class="step">
@@ -262,19 +262,8 @@ function renderTranscript(j){
 }
 
 /* ═══════ caméra + silhouette IA ═══════ */
-let vstream=null, camActive=false, poseLM=null, aiOn=false, lastPose=null;
-const POSE_CONN=[[11,12],[11,13],[13,15],[12,14],[14,16],[11,23],[12,24],[23,24],[23,25],[25,27],[24,26],[26,28],[0,11],[0,12]];
-const VIS=0.4;                              // seuil de confiance par point articulaire
-// Kinect-like : os entre points fiables (or), puis les points par-dessus (vert)
-function drawSkeleton(g,lms,vw,vh){
-  g.strokeStyle='#E9B44C'; g.lineWidth=4; g.lineCap='round';
-  for(const c of POSE_CONN){ const a=lms[c[0]],b=lms[c[1]]; if(!a||!b) continue;
-    if((a.visibility!=null&&a.visibility<VIS)||(b.visibility!=null&&b.visibility<VIS)) continue;
-    g.beginPath(); g.moveTo(a.x*vw,a.y*vh); g.lineTo(b.x*vw,b.y*vh); g.stroke(); }
-  g.fillStyle='#5FD3A6';
-  for(const p of lms){ if(p.visibility!=null&&p.visibility<VIS) continue;
-    g.beginPath(); g.arc(p.x*vw,p.y*vh,5.5,0,7); g.fill(); }
-}
+let vstream=null, camActive=false, aiOn=false, lastPeople=null;
+let POSE=null;
 let lensId=null, lenses=[];
 function lensName(d,i){
   const l=(d.label||'').toLowerCase();
@@ -312,16 +301,17 @@ async function startCam(){
     (function loop(){
       if(!vstream) return;
       vg.drawImage(v,0,0,vw,vh);
-      if(aiOn && lastPose && performance.now()-lastPoseT<600) drawSkeleton(vg,lastPose,vw,vh);
+      if(aiOn && lastPeople && performance.now()-lastPoseT<600) POSE.drawAll(vg,lastPeople,vw,vh,vw/640);
       setTimeout(loop,80);
     })();
-  }catch(e){ $('pCam').classList.add('ko'); camActive=false; }
+  }catch(e){ $('pCam').classList.add('ko'); camActive=false;
+    $('poseState').innerHTML='<b style="color:var(--flag)">Caméra indisponible.</b> '+(window.GBMedia?GBMedia.explain(e):'Accès impossible.'); }
 }
 function stopCam(){
   if(vRecOn){ try{ vRec.stop(); }catch(e){} }
   aiOn=false; $('aiBtn').classList.remove('act'); $('aiBtn').disabled=true; $('vRec').disabled=true;
   if(vstream){ vstream.getTracks().forEach(t=>t.stop()); vstream=null; }
-  camActive=false; lastPose=null; $('camView').style.display='none';
+  camActive=false; lastPeople=null; $("camView").style.display="none";
   $('pCam').textContent='Activer la caméra'; $('pCam').classList.remove('act'); $('poseState').textContent='';
 }
 let lastPoseT=-1e9, lastVT=-1;
@@ -330,13 +320,8 @@ $('aiBtn').onclick=async ()=>{
   if(!camActive){ $('poseState').textContent="Active d'abord la caméra."; return; }
   $('poseState').textContent='Chargement du modèle (~5 Mo, une seule fois)…';
   try{
-    if(!poseLM){
-      const vision=await import('https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10/vision_bundle.mjs');
-      const fsr=await vision.FilesetResolver.forVisionTasks('https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10/wasm');
-      poseLM=await vision.PoseLandmarker.createFromOptions(fsr,{
-        baseOptions:{modelAssetPath:'https://storage.googleapis.com/mediapipe-models/pose_landmarker/pose_landmarker_lite/float16/1/pose_landmarker_lite.task'},
-        runningMode:'VIDEO', numPoses:1 });
-    }
+    if(!POSE) POSE=await import('/ghost-box/lib/pose.js');
+    await POSE.load();
     aiOn=true; $('aiBtn').classList.add('act');
     $('poseState').innerHTML='Silhouette IA active — <b>expérimental</b>. Un squelette doré apparaît si le modèle croit voir quelqu\'un.';
     (function aiLoop(){
@@ -344,19 +329,11 @@ $('aiBtn').onclick=async ()=>{
       const v=$('vid');
       if(v && v.videoWidth && v.currentTime!==lastVT){
         lastVT=v.currentTime;
-        try{
-          const res=poseLM.detectForVideo(v, performance.now());
-          let ok=false, pct=0;
-          if(res && res.landmarks && res.landmarks.length){
-            const lms=res.landmarks[0]; let vis=0,cnt=0,strong=0;
-            for(const p of lms){ if(p.visibility!=null){ vis+=p.visibility; cnt++; if(p.visibility>=VIS) strong++; } }
-            pct = cnt? Math.round(vis/cnt*100) : 0;
-            ok = strong>=8 && pct>=45;     // assez de points fiables → vraie personne, pas du bruit
-          }
-          if(ok){ lastPose=res.landmarks[0]; lastPoseT=performance.now();
-            $('poseState').innerHTML='Personne détectée — présence <b>'+pct+'%</b>. À vérifier de tes yeux.'; }
-          else { lastPose=null; $('poseState').textContent='Rien de convaincant — aucun squelette tracé.'; }
-        }catch(e){}
+        const r=POSE.detect(v);
+        if(r){ lastPeople=r.people; lastPoseT=performance.now();
+          $('poseState').innerHTML='<b>'+r.count+' personne'+(r.count>1?'s':'')+' détectée'+(r.count>1?'s':'')+'</b> — '
+            +r.people.map((p,i)=>'n°'+(i+1)+' '+p.pct+' %').join(' · ')+'. À vérifier de tes yeux.'; }
+        else { lastPeople=null; $('poseState').textContent='Rien de convaincant — aucun squelette tracé.'; }
       }
       requestAnimationFrame(aiLoop);
     })();
@@ -414,5 +391,7 @@ listLenses();
 })();
 </script>
 <script>if('serviceWorker' in navigator){window.addEventListener('load',function(){navigator.serviceWorker.register('/ghost-box/sw.js').catch(function(){});});}</script>
+<script src="/ghost-box/lib/media.js"></script>
+<script src="/ghost-box/lib/fullscreen.js"></script>
 </body>
 </html>

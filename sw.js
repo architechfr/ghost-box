@@ -1,8 +1,8 @@
-/* Service worker minimal : rend l'application installable, SANS mettre les pages en cache.
-   Volontaire — un cache agressif ferait tester d'anciennes versions après chaque mise à jour. */
+/* Service worker volontairement PASSIF.
+   Il existe uniquement pour rendre l'application installable. Il n'intercepte
+   ni ne met en cache aucune requête : le navigateur travaille normalement.
+   (Une version antérieure faisait respondWith(fetch(...)) — retiré, un service
+   worker qui s'interpose peut perturber le chargement selon les navigateurs.) */
 self.addEventListener('install', () => self.skipWaiting());
 self.addEventListener('activate', e => e.waitUntil(self.clients.claim()));
-self.addEventListener('fetch', e => {
-  // toujours le réseau ; repli sur le cache navigateur seulement si hors ligne
-  e.respondWith(fetch(e.request).catch(() => caches.match(e.request)));
-});
+self.addEventListener('fetch', () => { /* rien : requête laissée au navigateur */ });

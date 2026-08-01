@@ -67,7 +67,7 @@ video{display:none}
 <body>
 
 <div class="top"><div class="topin">
-  <a href="../">←</a><h1>Réalisateur <span style="font-size:10px;color:var(--signal)">v2</span></h1>
+  <a href="../">←</a><h1>Réalisateur <span style="font-size:10px;color:var(--signal)">v4</span></h1>
   <span class="lg" id="phase">à préparer</span>
 </div></div>
 
@@ -208,69 +208,46 @@ async function useLens(id){
     if(v.videoWidth){ const r=v.videoHeight/v.videoWidth;
       cv.width=Math.min(1280,v.videoWidth); cv.height=Math.round(cv.width*r); }
     bg=null; await listLenses();
-  }catch(e){ $('prepState').textContent='Cet objectif est refusé par l\'appareil.'; }
+  }catch(e){ $('prepState').innerHTML='<b style="color:var(--flag)">Caméra indisponible.</b> '+(window.GBMedia?GBMedia.explain(e):'Accès impossible.'); }
 }
 
 /* ── plein écran ── */
 $('fsBtn').onclick=()=>{
-  const el=$('stageWrap');
+  const el=document.documentElement;   // vrai plein écran : barre de statut masquée aussi
   if(document.fullscreenElement||document.webkitFullscreenElement){
     (document.exitFullscreen||document.webkitExitFullscreen).call(document);
   } else {
     const rq=el.requestFullscreen||el.webkitRequestFullscreen;
-    if(rq) rq.call(el).catch(()=>{});
+    if(rq){ const r=rq.call(el,{navigationUI:'hide'}); if(r&&r.catch) r.catch(()=>{}); }
     else $('aiState').textContent="Le plein écran n'est pas disponible dans ce navigateur — installe l'application depuis le menu du navigateur (« Ajouter à l'écran d'accueil ») pour un vrai plein écran.";
   }
 };
 
-/* ── silhouette IA : le vrai squelette, incrusté dans la vidéo enregistrée ── */
-let poseLM=null, aiOn=false, lastPose=null, lastPoseT=-1e9, lastVT=-1;
-const VIS=0.4;
-const POSE_CONN=[[11,12],[11,13],[13,15],[12,14],[14,16],[11,23],[12,24],[23,24],[23,25],[25,27],[24,26],[26,28],[0,11],[0,12]];
+/* ── détection de personne : module partagé (règle de base de l'application) ── */
+let POSE=null, aiOn=false, lastPeople=null, lastPoseT=-1e9, lastVT=-1;
 $('aiBtn').onclick=async ()=>{
-  if(aiOn){ aiOn=false; $('aiBtn').className=''; $('aiState').textContent='Silhouette IA arrêtée.'; return; }
+  if(aiOn){ aiOn=false; lastPeople=null; $('aiBtn').className=''; $('aiState').textContent='Détection arrêtée.'; return; }
   if(!vstream){ $('aiState').textContent="Prépare d'abord le tournage."; return; }
   $('aiState').textContent='Chargement du modèle (~5 Mo, une seule fois)…';
   try{
-    if(!poseLM){
-      const vision=await import('https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10/vision_bundle.mjs');
-      const fsr=await vision.FilesetResolver.forVisionTasks('https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10/wasm');
-      poseLM=await vision.PoseLandmarker.createFromOptions(fsr,{
-        baseOptions:{modelAssetPath:'https://storage.googleapis.com/mediapipe-models/pose_landmarker/pose_landmarker_lite/float16/1/pose_landmarker_lite.task'},
-        runningMode:'VIDEO', numPoses:1 });
-    }
+    if(!POSE) POSE=await import('/ghost-box/lib/pose.js');
+    await POSE.load();
     aiOn=true; $('aiBtn').className='act';
-    $('aiState').innerHTML='Silhouette IA active — le squelette s\'incruste dans la vidéo enregistrée. <b>Expérimental</b> : dans le noir il ne voit rien, ou accroche un reflet.';
+    $('aiState').innerHTML='Détection active — jusqu\'à <b>4 personnes suivies en même temps</b>, chacune avec sa couleur et son numéro. Les squelettes s\'incrustent dans la vidéo enregistrée, et seulement si une personne réelle est reconnue.';
     (function aiLoop(){
       if(!aiOn) return;
       const v=$('vid');
       if(v && v.videoWidth && v.currentTime!==lastVT){
         lastVT=v.currentTime;
-        try{
-          const res=poseLM.detectForVideo(v, performance.now());
-          let ok=false;
-          if(res && res.landmarks && res.landmarks.length){
-            const lms=res.landmarks[0]; let vis=0,cnt=0,strong=0;
-            for(const p of lms){ if(p.visibility!=null){ vis+=p.visibility; cnt++; if(p.visibility>=VIS) strong++; } }
-            ok = strong>=8 && (cnt? vis/cnt : 0)>=0.45;   // une vraie personne, pas du bruit
-            if(ok){ lastPose=lms; lastPoseT=performance.now(); }
-          }
-          if(!ok) lastPose=null;
-        }catch(e){}
+        const r=POSE.detect(v);
+        if(r){ lastPeople=r.people; lastPoseT=performance.now();
+          $('aiState').innerHTML='<b>'+r.count+' personne'+(r.count>1?'s':'')+'</b> suivie'+(r.count>1?'s':'')+' — squelettes incrustés dans la vidéo.'; }
+        else lastPeople=null;
       }
       requestAnimationFrame(aiLoop);
     })();
   }catch(e){ aiOn=false; $('aiBtn').className=''; $('aiState').textContent='Modèle indisponible (réseau ?). Tout le reste fonctionne.'; }
 };
-function drawSkeleton(g,lms,W,H,S){
-  g.strokeStyle='#E9B44C'; g.lineWidth=4*S; g.lineCap='round';
-  for(const c of POSE_CONN){ const a=lms[c[0]],b=lms[c[1]]; if(!a||!b) continue;
-    if((a.visibility!=null&&a.visibility<VIS)||(b.visibility!=null&&b.visibility<VIS)) continue;
-    g.beginPath(); g.moveTo(a.x*W,a.y*H); g.lineTo(b.x*W,b.y*H); g.stroke(); }
-  g.fillStyle='#5FD3A6';
-  for(const p of lms){ if(p.visibility!=null&&p.visibility<VIS) continue;
-    g.beginPath(); g.arc(p.x*W,p.y*H,5*S,0,7); g.fill(); }
-}
 let WA=mkW('audio','Niveau sonore'), WM=mkW('mouvement','Mouvement');
 let learning=false, tLearn=0, LEARN_MS=45000, tReady=0;
 const cv=$('stage'), g=cv.getContext('2d');
@@ -279,15 +256,15 @@ let mHits=0, cHits=0, mOn=false, cOn=false, tStart=0, box=null, lastPresence=-1e
 
 $('prep').onclick=async ()=>{
   $('prepState').textContent='Autorisations…';
-  try{ await useLens(null); if(!vstream) throw 0; }
-  catch(e){ $('prepState').textContent='Caméra refusée — impossible de tourner.'; return; }
+  try{ await useLens(null); if(!vstream) throw new Error('aucun flux'); }
+  catch(e){ return; }   // useLens a déjà affiché la raison exacte
   try{
     micStream=await navigator.mediaDevices.getUserMedia({audio:{echoCancellation:false,noiseSuppression:false,autoGainControl:false}});
     actx=new (window.AudioContext||window.webkitAudioContext)(); await actx.resume();
     const src=actx.createMediaStreamSource(micStream);
     ana=actx.createAnalyser(); ana.fftSize=1024; ana.smoothingTimeConstant=.4; src.connect(ana);
     tdata=new Float32Array(ana.fftSize);
-  }catch(e){ $('prepState').textContent='Micro refusé — la vidéo sera muette et sans niveau sonore.'; }
+  }catch(e){ $('prepState').innerHTML='<b style="color:var(--gold)">Micro indisponible</b> — la vidéo sera muette. '+(window.GBMedia?GBMedia.explain(e):'Accès impossible.'); }
   const v=$('vid');
   if(v.videoWidth){ const r=v.videoHeight/v.videoWidth;
     cv.width=Math.min(1280,v.videoWidth); cv.height=Math.round(cv.width*r); }
@@ -446,10 +423,10 @@ function render(){
     g.fillText('MOUVEMENT', box.minx*sx, Math.max(0,box.miny*sy-16*S));
   }
   // squelette réel, incrusté dans l'image enregistrée (seulement si une personne est détectée)
-  if(aiOn && lastPose && now-lastPoseT<600){
-    drawSkeleton(g,lastPose,W,H,S);
+  if(aiOn && lastPeople && now-lastPoseT<600){
+    POSE.drawAll(g,lastPeople,W,H,S);
     g.fillStyle='#E9B44C'; g.font=(13*S|0)+'px monospace';
-    g.fillText('PERSONNE DÉTECTÉE', 10*S, 62*S);
+    g.fillText(lastPeople.length+' PERSONNE'+(lastPeople.length>1?'S':'')+' DÉTECTÉE'+(lastPeople.length>1?'S':''), 10*S, 62*S);
   }
   // compteur présence vs témoin, en bas à droite
   g.textAlign='right'; g.fillStyle='#78868E'; g.font=(11*S|0)+'px monospace';
@@ -525,5 +502,7 @@ renderJ();
 })();
 </script>
 <script>if('serviceWorker' in navigator){window.addEventListener('load',function(){navigator.serviceWorker.register('/ghost-box/sw.js').catch(function(){});});}</script>
+<script src="/ghost-box/lib/media.js"></script>
+<script src="/ghost-box/lib/fullscreen.js"></script>
 </body>
 </html>

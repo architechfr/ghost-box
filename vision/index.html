@@ -85,7 +85,7 @@ video.player{width:100%;margin-top:8px;border:1px solid var(--line);border-radiu
 
 <div class="top"><div class="topin">
   <a class="back" href="../">←</a>
-  <h1>Vision</h1>
+  <h1>Vision <span style="font-size:10px;color:var(--signal)">v3</span></h1>
   <span class="recdot" id="recDot">● <span id="recT">00:00</span></span>
 </div></div>
 
@@ -111,8 +111,9 @@ video.player{width:100%;margin-top:8px;border:1px solid var(--line);border-radiu
   <p class="ex">La vidéo et le <b>son du micro</b> sont enregistrés dans le même fichier : tu peux filmer la pièce pendant que ta box radio tourne. Tout reste sur l'appareil.</p>
   <div class="row">
     <button id="withAudio" class="on">Son du micro</button>
-    <button id="withMotion">Marquer les mouvements</button>
+    <button id="camAi">Détection de personne</button>
   </div>
+  <p id="aiState" class="ex"></p>
   <button id="recBtn" disabled>● Enregistrer</button>
   <p id="recState" class="ex">Active d'abord la caméra.</p>
 </div>
@@ -171,6 +172,7 @@ function labelOf(d,i){
   return d.label? d.label.slice(0,18) : 'Objectif '+(i+1);
 }
 function stopAll(){
+  aiOn=false; lastPeople=null; if($('camAi')) $('camAi').className='';
   streams.forEach(s=>{ try{ s.getTracks().forEach(t=>t.stop()); }catch(e){} });
   streams=[]; cells=[]; $('grid').innerHTML=''; $('grid').style.gridTemplateColumns='';
   motionOn=false; bg=null;
@@ -195,7 +197,7 @@ async function openOne(deviceId){
     $('camState').textContent='Caméra active.';
     $('recBtn').disabled=false; $('camOn').className='act'; $('camOn').textContent='Couper la caméra';
     await listDevices(); startMotion();
-  }catch(e){ $('camState').textContent='Caméra refusée ou indisponible.'; }
+  }catch(e){ $('camState').innerHTML='<b style="color:var(--flag)">Caméra indisponible.</b> '+(window.GBMedia?GBMedia.explain(e):'Accès impossible.'); }
 }
 $('camOn').onclick=async ()=>{
   if(streams.length){ stopAll(); activeId=null; $('camOn').className=''; $('camOn').textContent='Activer la caméra';
@@ -279,6 +281,11 @@ function loopMotion(){
     // encadrer la zone qui bouge (un rectangle factuel, pas une silhouette inventée)
     const ov=c.ov, W=ov.width=v.clientWidth||320, H=ov.height=v.clientHeight||240, g=ov.getContext('2d');
     g.clearRect(0,0,W,H);
+    if(aiOn && POSE && lastPeople && performance.now()-lastPoseT<600){
+      POSE.drawAll(g,lastPeople,W,H,W/640);
+      g.fillStyle='#E9B44C'; g.font='12px monospace';
+      g.fillText(lastPeople.length+' PERSONNE'+(lastPeople.length>1?'S':'')+' DÉTECTÉE'+(lastPeople.length>1?'S':''),6,14);
+    }
     if(prevBox){
       const sx=W/MW, sy=H/MH;
       g.strokeStyle='#5FD3A6'; g.lineWidth=2;
@@ -293,7 +300,36 @@ function loopMotion(){
   }
   setTimeout(loopMotion,110);
 }
-$('withMotion').onclick=e=>e.target.classList.toggle('on');
+
+
+/* détection de personne — module partagé, règle de base de l'application */
+let POSE=null, aiOn=false, lastPeople=null, lastPoseT=-1e9, lastVT=-1;
+$('camAi').onclick=async ()=>{
+  if(aiOn){ aiOn=false; lastPeople=null; $('camAi').className='';
+    $('aiState').textContent='Détection de personne arrêtée.'; return; }
+  if(!cells.length){ $('aiState').textContent="Active d'abord la caméra."; return; }
+  $('aiState').textContent='Chargement du modèle (~5 Mo, une seule fois)…';
+  try{
+    if(!POSE) POSE=await import('/ghost-box/lib/pose.js');
+    await POSE.load();
+    aiOn=true; $('camAi').className='act';
+    $('aiState').innerHTML='Détection active — un squelette n\'apparaît que si une <b>personne réelle</b> est reconnue. Il s\'affiche à l\'écran ; pour l\'avoir <b>incrusté dans le fichier vidéo</b>, utilise le mode <a href="../realisateur/" style="color:var(--signal)">Réalisateur</a>.';
+    (function loopAi(){
+      if(!aiOn) return;
+      const v=cells[0] && cells[0].v;
+      if(v && v.videoWidth && v.currentTime!==lastVT){
+        lastVT=v.currentTime;
+        const r=POSE.detect(v);
+        if(r){ lastPeople=r.people; lastPoseT=performance.now();
+          $('aiState').innerHTML='<b>'+r.count+' personne'+(r.count>1?'s':'')+'</b> — '
+            +r.people.map((p,i)=>'n°'+(i+1)+' '+p.pct+' %').join(' · '); }
+        else lastPeople=null;
+      }
+      requestAnimationFrame(loopAi);
+    })();
+  }catch(e){ aiOn=false; $('camAi').className='';
+    $('aiState').textContent='Modèle indisponible (réseau ?). Tout le reste fonctionne.'; }
+};
 
 /* ═══════ enregistrement ═══════ */
 let micStream=null, rec=null, chunks=[], recording=false, recStart=0, recTimer=null, recMime='';
@@ -415,5 +451,7 @@ listDevices(); renderLib();
 })();
 </script>
 <script>if('serviceWorker' in navigator){window.addEventListener('load',function(){navigator.serviceWorker.register('/ghost-box/sw.js').catch(function(){});});}</script>
+<script src="/ghost-box/lib/media.js"></script>
+<script src="/ghost-box/lib/fullscreen.js"></script>
 </body>
 </html>

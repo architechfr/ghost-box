@@ -123,7 +123,7 @@ video{display:none}
 <div class="wrap">
 
 <p style="margin:14px 0 0"><a href="../" style="color:var(--dim);text-decoration:none;font-family:var(--mono);font-size:13px">← poste de terrain</a></p>
-<h1>Séance capteurs <span style="font-size:11px;color:var(--signal);letter-spacing:.12em">v10</span></h1>
+<h1>Séance capteurs <span style="font-size:11px;color:var(--signal);letter-spacing:.12em">v13</span></h1>
 <p class="sub">L'appareil est fait pour <b>se taire</b>. Il apprend le bruit normal du capteur, puis relève son seuil tant que ce bruit pourrait le faire parler. Un mot ne sort que si une mesure dépasse tout ce que l'appareil a vu de normal — <b>et le silence est le résultat attendu</b>. S'il n'y a rien, il n'y a rien.</p>
 
 <div class="step">
@@ -141,7 +141,11 @@ video{display:none}
   <canvas id="camView" width="320" height="240"></canvas>
   <span id="camTag">appuyer pour agrandir</span>
   <p id="camHint" class="ex" style="display:none">La vue caméra <b>flotte au-dessus de la page</b> : elle reste visible pendant que tu consultes les capteurs et la veille. Appuie dessus pour l'agrandir ou la réduire. Ici la caméra sert seulement de <b>capteur</b> (elle alimente « Forme caméra » et le témoin visuel) ; pour filmer et enregistrer, va dans <a href="../vision/" style="color:var(--signal)">Vision</a>.</p>
-  <div class="row"><button id="camHide">Masquer la vue</button></div>
+  <div class="row">
+    <button id="camAi">Détection de personne</button>
+    <button id="camHide">Masquer la vue</button>
+  </div>
+  <p id="aiState" class="ex"></p>
   <details id="dorm"><summary>Capteurs indisponibles</summary><div class="grid" id="capsOff"></div></details>
 </div>
 
@@ -363,7 +367,9 @@ async function ensureMic(){
 }
 $('pMic').onclick = async () => {
   if(micStream){ stopMic(); return; }
-  try{ await ensureMic(); }catch(e){ mark('pMic',false); }
+  try{ await ensureMic(); }
+  catch(e){ mark('pMic',false);
+    $('aiState').innerHTML='<b style="color:var(--flag)">Micro indisponible.</b> '+(window.GBMedia?GBMedia.explain(e):'Accès impossible.'); }
 };
 function stopMic(){
   try{ if(recording && mediaRec) mediaRec.stop(); }catch(e){}
@@ -463,11 +469,18 @@ $('pCam').onclick = async () => {
       const view=$('camView'), vg=view.getContext('2d'), vw=view.width, vh=view.height;
       if(!camHidden && view.style.display!=='block'){ view.style.display='block'; $('camHint').style.display='block'; $('camTag').style.display='block'; }
       vg.drawImage(v,0,0,vw,vh);
+      if(aiOn && POSE && lastPeople && performance.now()-lastPoseT<600){
+        POSE.drawAll(vg,lastPeople,vw,vh,vw/640);
+        vg.fillStyle='#E9B44C'; vg.font=Math.max(10,vw/26|0)+'px monospace';
+        vg.fillText(lastPeople.length>1? lastPeople.length+' PERSONNES':'PERSONNE', 6, 16);
+      }
       prevFrame=cur; setTimeout(loop,90);
     })();
-  }catch(e){ mark('pCam',false); camActive=false; }
+  }catch(e){ mark('pCam',false); camActive=false;
+    $('aiState').innerHTML='<b style="color:var(--flag)">Caméra indisponible.</b> '+(window.GBMedia?GBMedia.explain(e):'Accès impossible.'); }
 };
 function stopCam(){
+  aiOn=false; lastPeople=null; if($('camAi')) $('camAi').className='';
   if(vstream){ vstream.getTracks().forEach(t=>t.stop()); vstream=null; }
   camActive=false; camBg=null; prevFrame=null;
   const view=$('camView'); if(view){ view.style.display='none'; view.classList.remove('big'); }
@@ -875,6 +888,36 @@ $('expJson').onclick=()=>dl(JSON.stringify({banc:'poste-de-terrain',date:new Dat
   emissions:[...trace].reverse()},null,1),'emissions-'+stamp()+'.json','application/json');
 
 
+
+/* détection de personne — module partagé, règle de base de l'application */
+let POSE=null, aiOn=false, lastPeople=null, lastPoseT=-1e9, lastVT=-1;
+$('camAi').onclick=async ()=>{
+  if(aiOn){ aiOn=false; lastPeople=null; $('camAi').className='';
+    $('aiState').textContent='Détection de personne arrêtée.'; return; }
+  if(!camActive){ $('aiState').textContent="Active d'abord la caméra."; return; }
+  $('aiState').textContent='Chargement du modèle (~5 Mo, une seule fois)…';
+  try{
+    if(!POSE) POSE=await import('/ghost-box/lib/pose.js');
+    await POSE.load();
+    aiOn=true; $('camAi').className='act';
+    $('aiState').innerHTML='Détection active — un squelette n\'apparaît que si une <b>personne réelle</b> est reconnue. Dans le noir, le modèle ne voit rien : c\'est normal.';
+    (function loopAi(){
+      if(!aiOn) return;
+      const v=$('vid');
+      if(v && v.videoWidth && v.currentTime!==lastVT){
+        lastVT=v.currentTime;
+        const r=POSE.detect(v);
+        if(r){ lastPeople=r.people; lastPoseT=performance.now();
+          $('aiState').innerHTML='<b>'+r.count+' personne'+(r.count>1?'s':'')+' détectée'+(r.count>1?'s':'')+'</b> — '
+            +r.people.map((p,i)=>'n°'+(i+1)+' '+p.pct+' %').join(' · ')+'. À vérifier de tes yeux.'; }
+        else { lastPeople=null; }
+      }
+      requestAnimationFrame(loopAi);
+    })();
+  }catch(e){ aiOn=false; $('camAi').className='';
+    $('aiState').textContent='Modèle indisponible (réseau ?). Tout le reste fonctionne.'; }
+};
+
 /* vue caméra flottante : appui = agrandir/réduire, bouton = masquer/afficher */
 let camHidden=false;
 $('camView').onclick=()=>{
@@ -892,5 +935,7 @@ buildCards(); setInterval(paintCards,150); checkReady(); drawZ(0);
 })();
 </script>
 <script>if('serviceWorker' in navigator){window.addEventListener('load',function(){navigator.serviceWorker.register('/ghost-box/sw.js').catch(function(){});});}</script>
+<script src="/ghost-box/lib/media.js"></script>
+<script src="/ghost-box/lib/fullscreen.js"></script>
 </body>
 </html>
