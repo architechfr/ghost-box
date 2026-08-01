@@ -90,7 +90,7 @@ video.player{width:100%;margin-top:8px;border:1px solid var(--line);border-radiu
 
 <div class="top"><div class="topin">
   <a class="back" href="../">←</a>
-  <h1>Vision <span style="font-size:10px;color:var(--signal)">v3</span></h1>
+  <h1>Vision <span style="font-size:10px;color:var(--signal)">v4</span></h1>
   <span class="recdot" id="recDot">● <span id="recT">00:00</span></span>
 </div></div>
 
@@ -132,7 +132,7 @@ video.player{width:100%;margin-top:8px;border:1px solid var(--line);border-radiu
 
 <div class="step">
   <div class="lg">5 — Enregistrements <span id="libCount" style="color:var(--paper)"></span></div>
-  <p class="ex">Stockés sur cet appareil uniquement. Supprime-les quand tu veux — ils occupent de la place.</p>
+  <p class="ex">Vidéos et <b>photos instantanées</b> (bouton ○ flottant), stockées sur cet appareil uniquement. Supprime-les quand tu veux — elles occupent de la place.</p>
   <div id="lib"><p class="empty">Aucun enregistrement.</p></div>
   <div class="row">
     <button id="wipe">Tout supprimer</button>
@@ -455,13 +455,20 @@ async function renderLib(){
     const d=document.createElement('div'); d.className='clip';
     d.innerHTML=(c.vignette? '<img src="'+c.vignette+'" alt="">':'<img alt="">')+
       '<div class="meta"><div class="nm">'+esc(c.nom)+'</div>'+
-      '<div class="sub">'+fmt(c.duree)+' · '+mo(c.taille||0)+' · '+esc(c.cam||'—')+'</div>'+
+      '<div class="sub">'+(c.type==='photo'? 'photo' : fmt(c.duree))+' · '+mo(c.taille||0)+' · '+esc(c.cam||'—')+'</div>'+
       '<div class="acts"></div></div>';
     const acts=d.querySelector('.acts');
-    const bl=document.createElement('button'); bl.textContent='Lire';
-    bl.onclick=()=>{ const ex=d.querySelector('video.player'); if(ex){ ex.remove(); return; }
-      const v=document.createElement('video'); v.className='player'; v.controls=true; v.playsInline=true;
-      v.src=URL.createObjectURL(c.blob); d.querySelector('.meta').appendChild(v); v.play().catch(()=>{}); };
+    const photo = c.type==='photo';
+    const bl=document.createElement('button'); bl.textContent = photo? 'Voir' : 'Lire';
+    bl.onclick=()=>{ const ex=d.querySelector('.player'); if(ex){ ex.remove(); return; }
+      if(photo){
+        const im=document.createElement('img'); im.className='player';
+        im.style.cssText='width:100%;margin-top:8px;border:1px solid var(--line);border-radius:3px';
+        im.src=URL.createObjectURL(c.blob); d.querySelector('.meta').appendChild(im);
+      } else {
+        const v=document.createElement('video'); v.className='player'; v.controls=true; v.playsInline=true;
+        v.src=URL.createObjectURL(c.blob); d.querySelector('.meta').appendChild(v); v.play().catch(()=>{});
+      } };
     const bd=document.createElement('button'); bd.textContent='Télécharger';
     bd.onclick=()=>dl(c.blob,c.nom);
     const bx=document.createElement('button'); bx.textContent='Supprimer'; bx.className='ko';
@@ -487,10 +494,14 @@ listDevices(); renderLib();
 /* libère la caméra en quittant la page : sinon elle reste prise et les autres
    modes affichent « déjà utilisée » (cause racine du problème constaté) */
 addEventListener('pagehide',()=>{ stopAll(); });
+
+/* bouton de capture flottant, disponible à tout instant */
+addEventListener('load',function(){ try{ GBCapture.init({label:'vision', rec:'#recBtn', frame:function(){ return cells.length? {video:cells[0].v, overlay:cells[0].ov} : null; }}); }catch(e){} });
 })();
 </script>
 <script>if('serviceWorker' in navigator){window.addEventListener('load',function(){navigator.serviceWorker.register('/ghost-box/sw.js').catch(function(){});});}</script>
 <script src="/ghost-box/lib/media.js"></script>
+<script src="/ghost-box/lib/capture.js"></script>
 <script src="/ghost-box/lib/fullscreen.js"></script>
 </body>
 </html>

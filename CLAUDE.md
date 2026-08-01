@@ -14,7 +14,10 @@ Cinq outils, un par moment de séance :
 | `vision/` | Caméras : objectifs, bascule, enregistrement vidéo, bibliothèque IndexedDB, détection de mouvement + témoin |
 | `banc/` | Séance capteurs : veille silencieuse, moteur capteur → mot, coïncidence, mode à l'aveugle, trace |
 | `enregistreur/` | Écoute : micro brut, spectrogramme, marqueurs, export WAV |
-| `lib/pose.js` | Détection de personne partagée (MediaPipe), utilisée par les quatre modes caméra |
+| `lib/pose.js` | Détection de personne partagée (MediaPipe, plusieurs personnes), utilisée par les quatre modes caméra |
+| `lib/capture.js` | Boutons flottants photo ○ / vidéo ● — capture à tout instant, suivent le plein écran |
+| `lib/media.js` | Traduction en clair des erreurs caméra/micro |
+| `lib/fullscreen.js` | Bouton plein écran présent sur toutes les pages |
 | `contact-ia/` | Expérimental : transcription Voxtral (clé Mistral, sort de l'appareil) + silhouette IA MediaPipe |
 
 ## Les principes — ne pas les enfreindre
@@ -28,11 +31,14 @@ Ce projet a une exigence de sincérité qui prime sur toute fonctionnalité. Un 
 5. **Jamais de forme inventée.** La caméra encadre factuellement ce qui bouge (rectangle + pourcentage). Pas de silhouette dessinée à partir d'une boîte. Le squelette n'apparaît que si le modèle détecte réellement une personne (≥ 8 points fiables).
 6. **La détection de personne est disponible dans TOUS les modes caméra, et suit PLUSIEURS personnes** — deux règles posées explicitement. Jusqu'à 4 personnes simultanées (`MAX_PEOPLE`), chacune avec sa couleur et son numéro, triées de gauche à droite. Implémentation unique dans `lib/pose.js`, importée dynamiquement par `banc/`, `vision/`, `realisateur/` et `contact-ia/`. Ne jamais la redupliquer dans une page ni revenir à une seule personne : étendre le module.
 7. **Tout est vérifiable.** Chaque émission conserve valeur brute, normale, écart, seuil et index — le calcul doit pouvoir être refait à la main depuis la trace exportée.
-8. **L'IA ne fabrique pas de sens.** Elle ne relie jamais les mots en phrases. La transcription est marquée « non vérifiée » car ces modèles inventent des mots sur du bruit.
+8. **Une capture doit être possible à tout instant** — bouton flottant, jamais un bouton qu'il faut aller chercher en faisant défiler la page. Une observation ne prévient pas.
+9. **L'IA ne fabrique pas de sens.** Elle ne relie jamais les mots en phrases. La transcription est marquée « non vérifiée » car ces modèles inventent des mots sur du bruit.
 
 ## Contraintes techniques connues (ne pas re-promettre)
 
-- **Deux caméras simultanées : impossible** sur Android et iOS. Une tentative d'alternance a été essayée puis **retirée** : elle figeait l'image et laissait un écran noir. Ne pas la réintroduire ; proposer le choix de l'objectif à la place.
+- **Deux caméras simultanées : possible sur l'appareil de terrain**, contrairement à la règle générale souvent citée. Vérifié en usage réel (« 2 flux actifs » dans Vision, avant + arrière). Le mode réalisateur ouvre donc deux vrais flux composés côte à côte et enregistrés ensemble. Ne jamais revenir à une alternance de flux : essayée, elle figeait l'image et donnait un écran noir.
+- **Toujours libérer caméra et micro sur `pagehide`.** Sans ça, la caméra reste prise en changeant de mode et tous les autres modes affichent « déjà utilisée » — cause racine d'une panne constatée.
+- Certains objectifs listés (macro, profondeur) ne s'ouvrent pas : c'est normal, l'erreur doit être expliquée à l'utilisateur, jamais silencieuse.
 - Un téléphone **n'a pas de récepteur radio** : le micro enregistre le *son* de la box, pas les ondes.
 - Pas de capteur de profondeur : la détection de personne est fragile dans le noir.
 - La clé Mistral est stockée en `localStorage` de l'appareil, jamais dans le dépôt.
