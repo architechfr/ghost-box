@@ -12,7 +12,7 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="Ghost Box">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<link rel="stylesheet" href="/ghost-box/lib/fonts.css?v=9">
+<link rel="stylesheet" href="/ghost-box/lib/fonts.css?v=10">
 <style>
 :root{
   --bench:#141A1E;--panel:#1D262B;--sunk:#0A0F12;--line:#2C383F;--hair:#212B31;
@@ -126,11 +126,17 @@ body.filming #hud{display:flex !important;flex-wrap:wrap;gap:6px;position:fixed;
   padding:calc(6px + env(safe-area-inset-top, 0px)) 10px 7px;
   background:linear-gradient(180deg,rgba(4,8,11,.96),rgba(4,8,11,.82));
   border-bottom:1px solid rgba(95,211,166,.20);font-family:var(--mono);font-size:11px}
-body.filming #camView{display:block !important;position:fixed;left:0;right:0;top:var(--hud);
+body.filming #spectreBox{display:block;position:fixed;left:0;right:0;top:var(--hud);
+  width:100%;height:64px;margin:0;border:0;border-radius:0;z-index:46;
+  border-bottom:1px solid rgba(95,211,166,.20)}
+body.filming #spectreState{display:none !important}
+body.filming.avecspectre{ --spectre:64px; }
+body.filming{ --spectre:0px; }
+body.filming #camView{display:block !important;position:fixed;left:0;right:0;top:calc(var(--hud) + var(--spectre));
   width:100%;height:var(--cam);object-fit:cover;border:0;border-radius:0;z-index:45;
   border-bottom:1px solid rgba(95,211,166,.20)}
 body.filming.avecmur #murBox{display:flex !important;position:fixed;left:0;right:0;
-  top:calc(var(--hud) + var(--cam));bottom:var(--mot);height:auto;margin:0;
+  top:calc(var(--hud) + var(--spectre) + var(--cam));bottom:var(--mot);height:auto;margin:0;
   border:0;border-radius:0;z-index:44}
 body.filming #phraseBox{display:block !important;position:fixed;left:0;right:0;bottom:0;z-index:60;margin:0;
   padding:8px 10px calc(8px + env(safe-area-inset-bottom, 0px));
@@ -181,13 +187,13 @@ video{display:none}
   font-family:var(--mono);font-size:9px;color:var(--signal);
   background:rgba(10,15,18,.75);padding:1px 4px;border-radius:2px;pointer-events:none}
 </style>
-<link rel="stylesheet" href="/ghost-box/lib/ambiance.css?v=9">
+<link rel="stylesheet" href="/ghost-box/lib/ambiance.css?v=10">
 </head>
 <body>
 <div class="wrap">
 
 <p style="margin:14px 0 0"><a href="../" style="color:var(--dim);text-decoration:none;font-family:var(--mono);font-size:13px">← poste de terrain</a></p>
-<h1>Séance capteurs <span style="font-size:11px;color:var(--signal);letter-spacing:.12em">v19</span></h1>
+<h1>Séance capteurs <span style="font-size:11px;color:var(--signal);letter-spacing:.12em">v20</span></h1>
 <p class="sub">L'appareil est fait pour <b>se taire</b>. Il apprend le bruit normal du capteur, puis relève son seuil tant que ce bruit pourrait le faire parler. Un mot ne sort que si une mesure dépasse tout ce que l'appareil a vu de normal — <b>et le silence est le résultat attendu</b>. S'il n'y a rien, il n'y a rien.</p>
 
 <div class="step">
@@ -211,8 +217,12 @@ video{display:none}
   <div class="row">
     <button id="twoCam">Deux caméras</button>
     <button id="camAi">Détection de personne</button>
+    <button id="spectreBtn">Spectre audio</button>
     <button id="camHide">Masquer la vue</button>
   </div>
+  <canvas id="spectreBox" width="10" height="10" style="display:none;width:100%;height:96px;
+    margin-top:8px;background:#05090C;border:1px solid var(--line);border-radius:4px"></canvas>
+  <p id="spectreState" class="ex" style="display:none"></p>
   <p id="twoState" class="ex"></p>
   <p id="aiState" class="ex"></p>
   <details id="dorm"><summary>Capteurs indisponibles</summary><div class="grid" id="capsOff"></div></details>
@@ -223,7 +233,11 @@ video{display:none}
   <div class="fld"><span class="lg">capteur</span><select id="src"></select></div>
   <p class="ex">La seule grandeur que l'appareil surveillera. Un capteur par séance : mélanger les sources rend la trace impossible à interpréter.</p>
 
-  <div class="row"><button id="tCoinc" class="tgl">Coïncidence</button></div>
+  <div class="row">
+    <button id="tCoinc" class="tgl">Coïncidence</button>
+    <button id="tIndep" class="tgl">Indépendants</button>
+  </div>
+  <p class="ex"><b>Coïncidence</b> : un mot ne sort que si PLUSIEURS capteurs s'écartent en même temps — le plus exigeant. <b>Indépendants</b> : plusieurs capteurs surveillés à la fois — son ET image par exemple — et <b>chacun peut faire sortir un mot seul</b>, avec son propre seuil auto-calibré. Le mot dit toujours quel capteur a parlé.</p>
   <div id="coincWrap" style="display:none">
     <p class="ex">Ne parle que si <b>plusieurs capteurs indépendants</b> s'écartent <b>en même temps</b> (dans ~0,7 s). Le bruit n'est pas corrélé entre des capteurs physiquement distincts ; un vrai événement dans la pièce, lui, peut l'être. Coche 2 ou 3 capteurs actifs — la sélection « capteur » ci-dessus est ignorée.</p>
     <div id="coincList" class="grid"></div>
@@ -308,12 +322,12 @@ video{display:none}
 <video id="vid2" playsinline muted></video>
 </div>
 
-<script src="/ghost-box/lib/moteur.js?v=9"></script>
-<script src="/ghost-box/lib/retour.js?v=9"></script>
-<script src="/ghost-box/lib/aide.js?v=9"></script>
-<script src="/ghost-box/lib/action.js?v=9"></script>
+<script src="/ghost-box/lib/moteur.js?v=10"></script>
+<script src="/ghost-box/lib/retour.js?v=10"></script>
+<script src="/ghost-box/lib/aide.js?v=10"></script>
+<script src="/ghost-box/lib/action.js?v=10"></script>
 <script>addEventListener('load',function(){ try{ GBAction.init(['#run']); }catch(e){} });</script>
-<script src="/ghost-box/lib/mur.js?v=9"></script>
+<script src="/ghost-box/lib/mur.js?v=10"></script>
 <script>
 (() => {
 "use strict";
@@ -660,6 +674,27 @@ $('rec').onclick = async () => {
   recTimer=setInterval(()=>{ $('recT').textContent=fmt((performance.now()-recStartPerf)/1000); },250);
   $('recState').textContent="Enregistrement en cours — l'audio reste sur l'appareil.";
 };
+function dbPutClip(o){
+  return new Promise((res,rej)=>{
+    const r=indexedDB.open('ghostbox-vision',1);
+    r.onupgradeneeded=()=>{ if(!r.result.objectStoreNames.contains('clips')) r.result.createObjectStore('clips',{keyPath:'id'}); };
+    r.onsuccess=()=>{ try{ const t=r.result.transaction('clips','readwrite'); t.objectStore('clips').put(o);
+      t.oncomplete=()=>res(); t.onerror=()=>rej(t.error); }catch(e){ rej(e); } };
+    r.onerror=()=>rej(r.error);
+  });
+}
+/* photographie de l'état des capteurs, jointe à tout enregistrement :
+   un fichier seul, dans un an, doit encore dire dans quelles conditions il est né */
+function etatCapteurs(){
+  return {
+    mode: coinc? 'coïncidence' : (indep? 'indépendants' : 'simple'),
+    capteurs: W.map(w=>({code:w.code, label:w.label, normale:+w.moy.toFixed(3),
+      ecart_type:+w.sd.toFixed(4), seuil_sigma:+w.thr.toFixed(2), relevages_temoin:w.raises})),
+    mots_emis: trace.filter(t=>!t.est_temoin).length,
+    phrase: (MUR? MUR.phrase() : trace.filter(t=>!t.est_temoin).map(t=>t.mot).reverse()),
+    aveugle: blind, veille_depuis_ms: running? Math.round(performance.now()-t0) : null
+  };
+}
 async function onRecStop(){
   recording=false; clearInterval(recTimer);
   $('rec').textContent='● Enregistrer'; $('rec').classList.remove('ko');
@@ -670,6 +705,16 @@ async function onRecStop(){
     wavBlob=await toWav(recBlob);
     $('recState').textContent='Enregistrement prêt — WAV '+(wavBlob.size/1048576).toFixed(1)+' Mo, 16 kHz mono.';
     $('recDl').disabled=false;
+    // il rejoint la bibliothèque, avec l'état des capteurs et la trace de la veille
+    try{
+      await dbPutClip({ id:Date.now(), nom:'box-radio-'+stamp()+'.wav', mime:'audio/wav',
+        taille:wavBlob.size, duree:Math.round((performance.now()-recStartPerf)/1000),
+        vignette:'', cam:'box radio', blob:wavBlob, type:'audio', source:'banc',
+        capteurs:etatCapteurs(),
+        journal:[...trace].reverse().map(t=>({heure:fmt(t.t_ms/1000), type:(t.est_temoin?'témoin':'mot'),
+          detail:t.mot+' · '+t.capteur+' · '+t.z+' σ (seuil '+t.seuil_auto+')'})) });
+      $('recState').textContent+=' Rangé dans la bibliothèque avec l\'état des capteurs.';
+    }catch(e){}
   }catch(e){
     wavBlob=null;
     $('recState').textContent='Enregistrement prêt (conversion WAV impossible ici — export au format brut).';
@@ -720,19 +765,20 @@ function fillSrc(){
     sel.appendChild(o);
   });
   if(cur) sel.value=cur;
-  if(coinc) updateCoinc();
+  if(coinc||indep) updateCoinc();
   checkReady();
 }
 $('src').onchange = checkReady;
 function checkReady(){
   let ok, lbl='';
   if(coinc){ const l=checkedCoinc(); ok=l.length>=2; lbl=l.map(c=>S[c].label).join(' + '); }
+  else if(indep){ const l=checkedCoinc(); ok=l.length>=1; lbl=l.map(c=>S[c].label).join(' · '); }
   else { const s=S[$('src').value]; ok=!!(s&&s.ok); if(ok) lbl=s.label; }
   $('run').disabled = running ? false : !ok;   // en veille, le bouton « Arrêter » reste actif
   $('n2').className = ok? 'n done':'n';
   if(!running) $('deriv').innerHTML = ok
-    ? 'Prêt. <b>'+esc(lbl)+'</b>'+(coinc?' (coïncidence)':'')+' — observé '+$('learn').value+' s avant toute émission.'
-    : (coinc?'Coche au moins deux capteurs actifs.':'Choisis un capteur actif dans la liste.');
+    ? 'Prêt. <b>'+esc(lbl)+'</b>'+(coinc?' (coïncidence)':(indep?' (indépendants)':''))+' — observé '+$('learn').value+' s avant toute émission.'
+    : (coinc?'Coche au moins deux capteurs actifs.':(indep?'Coche au moins un capteur actif.':'Choisis un capteur actif dans la liste.'));
 }
 function remplirClasses(){
   const p=$('pos'); if(!p) return;
@@ -747,12 +793,16 @@ function remplirClasses(){
     $('learn').value=s; ['lr30','lr60','lr120'].forEach(x=>$(x).classList.remove('on'));
     $(id).classList.add('on'); checkReady(); };
 });
-let speak=false, blind=false, coinc=false;
+let speak=false, blind=false, coinc=false, indep=false;
 const coincSel=new Set();
 $('tSpeak').onclick=e=>{speak=!speak;e.target.classList.toggle('on',speak);};
 $('tBlind').onclick=e=>{blind=!blind;e.target.classList.toggle('on',blind);};
-$('tCoinc').onclick=e=>{ coinc=!coinc; e.target.classList.toggle('on',coinc);
-  $('coincWrap').style.display=coinc?'block':'none'; updateCoinc(); checkReady(); };
+$('tCoinc').onclick=e=>{ coinc=!coinc; if(coinc){ indep=false; $('tIndep').classList.remove('on'); }
+  e.target.classList.toggle('on',coinc);
+  $('coincWrap').style.display=(coinc||indep)?'block':'none'; updateCoinc(); checkReady(); };
+$('tIndep').onclick=e=>{ indep=!indep; if(indep){ coinc=false; $('tCoinc').classList.remove('on'); }
+  e.target.classList.toggle('on',indep);
+  $('coincWrap').style.display=(coinc||indep)?'block':'none'; updateCoinc(); checkReady(); };
 function checkedCoinc(){ return [...coincSel].filter(c=>S[c]&&S[c].ok); }
 function updateCoinc(){
   const box=$('coincList'); if(!box) return; box.innerHTML='';
@@ -803,7 +853,7 @@ function gauss(){ let u=0,v=0; while(!u)u=rnd(); while(!v)v=rnd();
 
 $('run').onclick = () => running? stop() : start();
 function start(){
-  const list = coinc ? checkedCoinc() : (S[$('src').value]&&S[$('src').value].ok ? [$('src').value] : []);
+  const list = (coinc||indep) ? checkedCoinc() : (S[$('src').value]&&S[$('src').value].ok ? [$('src').value] : []);
   if(coinc && list.length<2){ $('deriv').textContent='Coïncidence : coche au moins deux capteurs actifs.'; return; }
   if(!list.length) return;
   realMode = blind ? Math.random()<.5 : true;
@@ -925,9 +975,13 @@ function tick(){
       +' · écart courant '+maxz.toFixed(1).replace('.',',')+' σ';
   }
 
-  const multi=W.length>1;
+  const multi=W.length>1 && coinc;
   const hot=W.filter(w=> now-w.lastAbove <= COINC_WIN).length;
-  const ready = multi ? (hot>=W.length) : (primary.persist>=PERSIST_NEED);
+  // indépendants : le premier capteur qui tient son seuil parle, seul
+  let tireur=null;
+  if(indep){ for(const w of W){ if(w.persist>=PERSIST_NEED){ tireur=w; break; } } }
+  const ready = multi ? (hot>=W.length) : (indep ? !!tireur : (primary.persist>=PERSIST_NEED));
+  if(tireur) primary=tireur;
   const gap = ANTI_RAFALE;
   const settled = (now-tWatch) >= SETTLE;
   const waited  = (now-lastEmit) >= gap;
@@ -935,7 +989,7 @@ function tick(){
   $('state').textContent = settled? 'en veille' : 'stabilisation';
 
   if(settled && ready && waited){
-    lastEmit=now; for(const w of W) w.persist=0; emit(now);
+    lastEmit=now; for(const w of W) w.persist=0; emit(now, indep? [primary] : W);
   } else if(now-lastEmit>2500 && $('word').className!=='q'){
     $('word').className='q'; $('word').textContent='···';
     $('stage').classList.remove('alert');
@@ -954,6 +1008,48 @@ function drawZ(z){
   $('zmark').style.left=Math.min(100,t/max*100).toFixed(1)+'%';
 }
 function fmt(s){s=Math.max(0,s|0);return String(s/60|0).padStart(2,'0')+':'+String(s%60).padStart(2,'0');}
+
+/* ═══════ spectre audio, en option ═══════
+   Le son de la pièce (et de la box posée à côté), rendu VISIBLE en continu :
+   le temps défile, les fréquences montent, ce qui sonne laisse une trace.
+   Purement documentaire — il n'émet rien, il montre ce que le micro entend. */
+let spectreOn=false, spectreRaf=0;
+$('spectreBtn').onclick=async ()=>{
+  if(spectreOn){
+    spectreOn=false; cancelAnimationFrame(spectreRaf);
+    $('spectreBtn').classList.remove('act');
+    $('spectreBox').style.display='none'; $('spectreState').style.display='none';
+    return;
+  }
+  try{ await ensureMic(); }
+  catch(e){ $('spectreState').style.display='block';
+    $('spectreState').innerHTML='<b style="color:var(--flag)">Micro refusé</b> — le spectre a besoin du micro.'; return; }
+  spectreOn=true; $('spectreBtn').classList.add('act');
+  $('spectreBox').style.display='block'; $('spectreState').style.display='block';
+  $('spectreState').innerHTML='Le temps défile vers la gauche, les fréquences montent (0 → ~8 kHz). '
+    +'Ce que la box fait entendre laisse une trace verticale. Purement documentaire : le spectre n\'émet aucun mot.';
+  const cvS=$('spectreBox'), gS=cvS.getContext('2d');
+  const fit=()=>{ const r=cvS.getBoundingClientRect(), d=Math.min(devicePixelRatio||1,2);
+    if(Math.abs(cvS.width-r.width*d)>4){ cvS.width=r.width*d|0; cvS.height=r.height*d|0;
+      gS.fillStyle='#05090C'; gS.fillRect(0,0,cvS.width,cvS.height); } };
+  fit();
+  const bins=ana.frequencyBinCount, data=new Uint8Array(bins);
+  const ramp=v=>{ const t=v/255;
+    return 'rgb('+(t*95|0)+','+(30+t*211|0)+','+(20+t*146|0)+')'; };
+  (function boucleS(){
+    if(!spectreOn) return;
+    fit();
+    ana.getByteFrequencyData(data);
+    const Wc=cvS.width, Hc=cvS.height, S2=2*Math.min(devicePixelRatio||1,2);
+    gS.drawImage(cvS,-S2,0);
+    const mx=Math.max(8,Math.round(bins*8000/((actx?actx.sampleRate:44100)/2)));
+    for(let y=0;y<Hc;y++){
+      gS.fillStyle=ramp(data[Math.floor((1-y/Hc)*(mx-1))]);
+      gS.fillRect(Wc-S2,y,S2,1);
+    }
+    spectreRaf=requestAnimationFrame(boucleS);
+  })();
+};
 
 /* ── bandeau de séance : tout ce qu'on doit lire sans toucher au téléphone ── */
 function chip(k,v,cls){ return '<span class="chip'+(cls?' '+cls:'')+'"><span class="k">'+k+'</span><span class="v">'+esc(String(v))+'</span></span>'; }
@@ -989,6 +1085,7 @@ function setFilming(on){
   document.documentElement.classList.toggle('filming',filming);
   document.body.classList.toggle('filming',filming);
   document.body.classList.toggle('aveccam', filming && camActive);
+  document.body.classList.toggle('avecspectre', filming && spectreOn);
   // la vue caméra est flottante et déplaçable : sa position est écrite EN LIGNE,
   // ce qui écrase toute mise en page. En écran fixe on la met de côté, et on la
   // rend telle quelle en sortant — sinon la bande caméra reste haute de zéro.
@@ -1037,13 +1134,14 @@ $('murBtn').onclick=async ()=>{
   }catch(e){ $('murState').textContent='Mur indisponible (lexique introuvable ?).'; }
 };
 
-function emit(now){
+function emit(now, contribs){
   if(!MOTS.length) return;          // lexique pas encore chargé
+  const WW = contribs && contribs.length ? contribs : W;   // en mode indépendants : le seul capteur qui a parlé
   const posF=$('pos').value, pool = posF&&BY_POS[posF]? BY_POS[posF] : MOTS;
-  const multi=W.length>1;
+  const multi=WW.length>1;
   // le mot est tiré par un HACHAGE de la valeur brute (reproductible depuis la trace),
   // pas par l'amplitude de l'écart — sinon on retombe toujours sur les mots du bout de liste.
-  const basis=W.map(w=>w.v.toFixed(3)).join('|');
+  const basis=WW.map(w=>w.v.toFixed(3)).join('|');
   let tot=0; for(const mm of pool) tot+=mm.poids;
   let idx=pool.length-1, usedSalt=0;
   for(let s=0;s<=6;s++){
@@ -1055,9 +1153,9 @@ function emit(now){
   }
   recentIdx.push(idx); if(recentIdx.length>5) recentIdx.shift();
   const m=pool[idx];
-  const zc=W.reduce((p,w)=>p+w.z,0)/W.length;           // écart moyen des contributeurs
-  const codes=W.map(w=>w.code).join('+');
-  const label=multi? ('coïncidence '+W.map(w=>w.label).join(' + ')) : W[0].label;
+  const zc=WW.reduce((p,w)=>p+w.z,0)/WW.length;           // écart moyen des contributeurs
+  const codes=WW.map(w=>w.code).join('+');
+  const label=multi? ('coïncidence '+WW.map(w=>w.label).join(' + ')) : WW[0].label;
 
   // ── mur allumé : c'est l'INSTANT qui désigne le mot, et tout le monde voit l'offre ──
   let mot=m.mot, viaMur=null;
@@ -1080,10 +1178,10 @@ function emit(now){
     mur: viaMur? {colonne:viaMur.colonne, index:viaMur.index, taille:viaMur.taille,
                   allure:viaMur.allure, vitesse:viaMur.vitesse, decalage:viaMur.decalage} : null,
     mot_hachage: m.mot,
-    capteur: realMode? (multi?('coinc:'+codes):W[0].code) : '—',
-    valeur_brute:+W[0].v.toFixed(3), moyenne:+W[0].moy.toFixed(3), ecart_type:+W[0].sd.toFixed(4),
-    z:+zc.toFixed(2), seuil_auto:+W[0].thr.toFixed(2), index_calcule:idx, rehash:usedSalt, est_temoin:!realMode,
-    contributeurs: W.map(w=>({code:w.code, valeur:+w.v.toFixed(3), moyenne:+w.moy.toFixed(3), ecart_type:+w.sd.toFixed(4), z:+w.z.toFixed(2), seuil:+w.thr.toFixed(2)})),
+    capteur: realMode? (multi?('coinc:'+codes):WW[0].code) : '—',
+    valeur_brute:+WW[0].v.toFixed(3), moyenne:+WW[0].moy.toFixed(3), ecart_type:+WW[0].sd.toFixed(4),
+    z:+zc.toFixed(2), seuil_auto:+WW[0].thr.toFixed(2), index_calcule:idx, rehash:usedSalt, est_temoin:!realMode,
+    contributeurs: WW.map(w=>({code:w.code, valeur:+w.v.toFixed(3), moyenne:+w.moy.toFixed(3), ecart_type:+w.sd.toFixed(4), z:+w.z.toFixed(2), seuil:+w.thr.toFixed(2)})),
     preuve: preuve });
   renderTrace(); majPhrase();
 
@@ -1143,7 +1241,7 @@ $('camAi').onclick=async ()=>{
   if(!camActive){ $('aiState').textContent="Active d'abord la caméra."; return; }
   $('aiState').textContent='Chargement du modèle (~5 Mo, une seule fois)…';
   try{
-    if(!POSE) POSE=await import('/ghost-box/lib/pose.js?v=9');
+    if(!POSE) POSE=await import('/ghost-box/lib/pose.js?v=10');
     await POSE.load();
     aiOn=true; $('camAi').className='act';
     $('aiState').innerHTML='Détection active — un squelette n\'apparaît que si une <b>personne réelle</b> est reconnue. Dans le noir, le modèle ne voit rien : c\'est normal.';
@@ -1327,9 +1425,9 @@ addEventListener('load',function(){ try{ GBCapture.init({label:'seance-capteurs'
 })();
 </script>
 <script>if('serviceWorker' in navigator){window.addEventListener('load',function(){navigator.serviceWorker.register('/ghost-box/sw.js').catch(function(){});});}</script>
-<script src="/ghost-box/lib/wakelock.js?v=9"></script>
-<script src="/ghost-box/lib/media.js?v=9"></script>
-<script src="/ghost-box/lib/capture.js?v=9"></script>
-<script src="/ghost-box/lib/fullscreen.js?v=9"></script>
+<script src="/ghost-box/lib/wakelock.js?v=10"></script>
+<script src="/ghost-box/lib/media.js?v=10"></script>
+<script src="/ghost-box/lib/capture.js?v=10"></script>
+<script src="/ghost-box/lib/fullscreen.js?v=10"></script>
 </body>
 </html>

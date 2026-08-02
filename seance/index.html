@@ -12,7 +12,7 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="Ghost Box">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<link rel="stylesheet" href="/ghost-box/lib/fonts.css?v=9">
+<link rel="stylesheet" href="/ghost-box/lib/fonts.css?v=10">
 <style>
 :root{
   --bench:#0A0F12;--panel:#1D262B;--sunk:#0A0F12;--line:#2C383F;--hair:#212B31;
@@ -131,12 +131,12 @@ body.filming #quitFix{display:block;position:fixed;z-index:61;right:10px;
   top:calc(var(--hud) + 8px);padding:8px 11px;font-size:11px;
   background:rgba(4,8,11,.9);border-color:rgba(95,211,166,.45);color:var(--signal)}
 </style>
-<link rel="stylesheet" href="/ghost-box/lib/ambiance.css?v=9">
+<link rel="stylesheet" href="/ghost-box/lib/ambiance.css?v=10">
 </head>
 <body>
 
 <div class="top"><div class="topin">
-  <a href="../">←</a><h1>Séance caméra <span style="font-size:10px;color:var(--signal)">v3</span></h1>
+  <a href="../">←</a><h1>Séance caméra <span style="font-size:10px;color:var(--signal)">v4</span></h1>
   <span class="lg" id="phase">à préparer</span>
 </div></div>
 
@@ -175,11 +175,13 @@ body.filming #quitFix{display:block;position:fixed;z-index:61;right:10px;
 <button id="quitFix" type="button">Quitter l'écran fixe</button>
 <div class="row">
   <button id="aiBtn" disabled>Silhouette IA</button>
+  <button id="autoBtn" class="act">Capture auto</button>
   <button id="murBtn">Mur de mots</button>
   <button id="incrustBtn">Incrustation</button>
   <button id="fixBtn">Écran fixe</button>
   <button id="fsBtn">Plein écran</button>
 </div>
+<p id="autoState" class="ex"><b>Capture auto</b> : quand la détection confirme une silhouette, une <b>photo part toute seule</b> — une apparition furtive ne laisse pas le temps d'appuyer. Si la personne <b>reste plus de 4 secondes</b>, l'enregistrement vidéo démarre tout seul et s'arrête peu après sa disparition. Tout est noté dans le journal. Nécessite la détection de personne allumée.</p>
 <p id="murState" class="ex">Le <b>mur de mots</b> montre tout le vocabulaire à l'écran, en colonnes qui défilent. Écran tourné vers la pièce, il rend visible ce que l'appareil peut dire — et quand une mesure dépasse le seuil, il se fige à cet instant sur un mot. Les vitesses tournent entre les colonnes : aucune famille n'est durablement la plus rapide.</p>
 <p id="incrustState" class="ex"><b>Incrustation allumée</b> : la vidéo enregistrée contient l'heure, le lieu, le niveau sonore, les squelettes et les mots. Éteinte, c'est l'image brute de la caméra principale, sans rien dessus.</p>
 <p id="aiState" class="ex"></p>
@@ -202,16 +204,16 @@ body.filming #quitFix{display:block;position:fixed;z-index:61;right:10px;
 <video id="vid3" playsinline muted></video>
 <video id="vid4" playsinline muted></video>
 
-<script src="/ghost-box/lib/moteur.js?v=9"></script>
-<script src="/ghost-box/lib/retour.js?v=9"></script>
-<script src="/ghost-box/lib/aide.js?v=9"></script>
-<script src="/ghost-box/lib/action.js?v=9"></script>
+<script src="/ghost-box/lib/moteur.js?v=10"></script>
+<script src="/ghost-box/lib/retour.js?v=10"></script>
+<script src="/ghost-box/lib/aide.js?v=10"></script>
+<script src="/ghost-box/lib/action.js?v=10"></script>
 <script>addEventListener('load',function(){ try{ GBAction.init(['#recBtn','#prep']); }catch(e){} });</script>
-<script src="/ghost-box/lib/secours.js?v=9"></script>
-<script src="/ghost-box/lib/tampon.js?v=9"></script>
-<script src="/ghost-box/lib/mur.js?v=9"></script>
-<script src="/ghost-box/lib/media.js?v=9"></script>
-<script src="/ghost-box/lib/wakelock.js?v=9"></script>
+<script src="/ghost-box/lib/secours.js?v=10"></script>
+<script src="/ghost-box/lib/tampon.js?v=10"></script>
+<script src="/ghost-box/lib/mur.js?v=10"></script>
+<script src="/ghost-box/lib/media.js?v=10"></script>
+<script src="/ghost-box/lib/wakelock.js?v=10"></script>
 <script>
 (() => {
 "use strict";
@@ -549,6 +551,47 @@ $('fsBtn').onclick=()=>{
 };
 
 /* ── détection de personne : module partagé (règle de base de l'application) ── */
+/* ── capture automatique : l'appareil réagit plus vite que la main ── */
+let autoCap = (function(){ try{ return localStorage.getItem('gb-autocap')!=='0'; }catch(e){ return true; } })();
+let autoDernierePhoto=-1e9, autoPresenceDebut=0, autoAbsenceDebut=0, autoRecEnCours=false, autoPresent=false;
+$('autoBtn').className = autoCap? 'act':'';
+$('autoBtn').onclick=()=>{
+  autoCap=!autoCap;
+  try{ localStorage.setItem('gb-autocap', autoCap?'1':'0'); }catch(e){}
+  $('autoBtn').className=autoCap?'act':'';
+  $('autoState').innerHTML = autoCap
+    ? '<b>Capture auto active</b> — photo dès qu\'une silhouette est confirmée, vidéo si elle reste plus de 4 s.'
+    : 'Capture auto coupée — rien ne se déclenche tout seul.';
+};
+const AUTO_PHOTO_GAP=12000, AUTO_VIDEO_APRES=4000, AUTO_STOP_APRES=5000;
+function autoTic(now, quelquun){
+  if(!autoCap || !aiOn) return;
+  if(quelquun){
+    autoAbsenceDebut=0;
+    if(!autoPresent){                                  // APPARITION — l'instant furtif
+      autoPresent=true; autoPresenceDebut=now;
+      if(now-autoDernierePhoto>AUTO_PHOTO_GAP){
+        autoDernierePhoto=now;
+        try{ GBCapture.photo(); addJ(now,'auto','photo déclenchée — silhouette confirmée'); }catch(e){}
+      }
+    } else if(now-autoPresenceDebut>AUTO_VIDEO_APRES && !recording){
+      autoRecEnCours=true;                             // elle RESTE — la vidéo prend le relais
+      addJ(now,'auto','enregistrement déclenché — la silhouette persiste ('+Math.round((now-autoPresenceDebut)/1000)+' s)');
+      try{ $('recBtn').click(); }catch(e){}
+    }
+  } else if(autoPresent){
+    if(!autoAbsenceDebut) autoAbsenceDebut=now;
+    if(now-autoAbsenceDebut>AUTO_STOP_APRES){          // partie — on referme
+      autoPresent=false; autoAbsenceDebut=0;
+      if(autoRecEnCours && recording){
+        autoRecEnCours=false;
+        addJ(now,'auto','enregistrement arrêté — silhouette disparue depuis '+Math.round(AUTO_STOP_APRES/1000)+' s');
+        try{ $('recBtn').click(); }catch(e){}
+      }
+    }
+  }
+}
+
 let POSE=null, aiOn=false, lastPeople=null, lastPoseT=-1e9, lastPoseVue=0;
 /* Une détection par image, en tournant sur les vues : le modèle ne peut pas
    analyser quatre flux en même temps sans tout ralentir. Chaque vue garde donc
@@ -559,7 +602,7 @@ $('aiBtn').onclick=async ()=>{
   if(!vstream){ $('aiState').textContent="Prépare d'abord le tournage."; return; }
   $('aiState').textContent='Chargement du modèle (~5 Mo, une seule fois)…';
   try{
-    if(!POSE) POSE=await import('/ghost-box/lib/pose.js?v=9');
+    if(!POSE) POSE=await import('/ghost-box/lib/pose.js?v=10');
     await POSE.load();
     aiOn=true; $('aiBtn').className='act';
     $('aiState').innerHTML='Détection active — jusqu\'à <b>4 personnes suivies en même temps</b>, chacune avec sa couleur et son numéro. Les squelettes s\'incrustent dans la vidéo enregistrée, et seulement si une personne réelle est reconnue.';
@@ -577,6 +620,7 @@ $('aiBtn').onclick=async ()=>{
         }
       }
       const total=poseVues.reduce((p,c)=>p+((c&&performance.now()-c.t<900)?c.people.length:0),0);
+      autoTic(performance.now(), total>0);
       $('aiState').innerHTML = total
         ? '<b>'+total+' personne'+(total>1?'s':'')+'</b> suivie'+(total>1?'s':'')
           +(n>1? ' sur '+n+' vues (analysées à tour de rôle)':'')+' — squelettes incrustés dans la vidéo.'
@@ -774,7 +818,11 @@ function render(tok){
   for(let i=0;i<n;i++){
     const el=elVue(i); if(!el || !el.videoWidth) continue;
     const cx=(i%g0.c)*cw, cy=Math.floor(i/g0.c)*ch;
-    g.drawImage(el,cx,cy,cw,ch);
+    // JAMAIS de déformation : la vue garde ses proportions dans sa case,
+    // quitte à laisser deux bandes noires. Une image étirée est une image fausse.
+    const k=Math.min(cw/el.videoWidth, ch/el.videoHeight);
+    const dw=el.videoWidth*k, dh=el.videoHeight*k;
+    g.drawImage(el, cx+(cw-dw)/2, cy+(ch-dh)/2, dw, dh);
   }
   if(n>1){                                        // séparateurs entre les vues
     g.strokeStyle='#2C383F'; g.lineWidth=2; g.beginPath();
@@ -1006,6 +1054,12 @@ async function sauver(blob, type, dur, preroll){
   const clip={ id:Date.now(), nom:'seance-'+stamp()+'.'+ext, mime:type, taille:blob.size,
     duree:Math.round(dur), vignette:thumb, cam:($('lieu').value||'tournage'), blob,
     source:'seance', son:recAudio, cameras:nbVues(), avant_s:preroll||0,
+    // l'état des témoins au moment de la sauvegarde : un fichier seul, dans un an,
+    // doit encore dire dans quelles conditions il est né
+    capteurs:{ seuil_son:(WA.ready? +WA.thr.toFixed(2):null), seuil_image:(WM.ready? +WM.thr.toFixed(2):null),
+      relevages_temoin:WA.raises+WM.raises, presence:mHits, temoin_bruit:cHits,
+      detection_personne:aiOn, capture_auto:autoCap, incrustation:incrust,
+      phrase:(MUR? MUR.phrase(): []) },
     journal:[...journal].reverse() };
   secoursFini();
   try{ await dbPut(clip); addJ(performance.now(),'fin','vidéo sauvegardée ('+mo(blob.size)+')'
@@ -1069,7 +1123,7 @@ addEventListener('load',function(){ try{ GBCapture.init({label:($('lieu').value|
 })();
 </script>
 <script>if('serviceWorker' in navigator){window.addEventListener('load',function(){navigator.serviceWorker.register('/ghost-box/sw.js').catch(function(){});});}</script>
-<script src="/ghost-box/lib/capture.js?v=9"></script>
-<script src="/ghost-box/lib/fullscreen.js?v=9"></script>
+<script src="/ghost-box/lib/capture.js?v=10"></script>
+<script src="/ghost-box/lib/fullscreen.js?v=10"></script>
 </body>
 </html>

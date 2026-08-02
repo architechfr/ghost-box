@@ -11,9 +11,10 @@ Cinq outils, rangés par **moment de séance**, pas par technique :
 | Dossier | Rôle |
 |---|---|
 | `seance/` | **Séance caméra** — une ou plusieurs caméras composées dans une seule image, détection de personne sur chaque vue, mouvement, son de la box, incrustation optionnelle des informations dans la vidéo, mémoire tampon, mur de mots, écran fixe |
-| `banc/` | **Séance capteurs** — capteurs de l'appareil, seuil auto-calibré, coïncidence, mode à l'aveugle, trace, mur de mots |
+| `banc/` | **Séance capteurs** — capteurs de l'appareil, seuil auto-calibré, trois modes (simple, coïncidence, **indépendants** : plusieurs capteurs dont chacun peut faire sortir un mot seul — son ET image en même temps), spectre audio en option, mode à l'aveugle, trace, mur de mots |
 | `mur/` | **Mur seul** — le mur sans caméra, micro comme capteur |
 | `bibliotheque/` | Tout ce qui a été gardé, de n'importe quel mode — vidéos, photos, **séances d'écoute et extraits sonores** : relecture avec journal, envoi vers le téléphone, suppression |
+| `reglages/` | **Réglages** — QR de partage, vérification du hors-ligne, diagnostic de l'appareil, remise à neuf des préférences |
 | `enregistreur/` | **Écoute** — micro brut, spectrogramme, marqueurs, export WAV, mur de mots sous le spectre, écran fixe « séance assise », sauvegarde continue |
 | `contact-ia/` | Expérimental : transcription Voxtral (clé Mistral, sort de l'appareil) |
 | `realisateur/`, `vision/` | **Redirections** vers `seance/` — ces deux modes ont fusionné. Ne pas y remettre de code : les raccourcis déjà posés sur l'écran d'accueil des téléphones pointent dessus |
@@ -27,6 +28,7 @@ Le code partagé, en un seul exemplaire :
 | `lib/ambiance.css` | **Identité visuelle partagée** : marque en tête de page, grain, vignettage, halos. Purement additive |
 | `lib/aide.js` | **Aide repliable** : les textes pédagogiques (.ex/.fine sans id) visibles à la première visite, repliés ensuite, bouton Aide pour rouvrir |
 | `lib/action.js` | **Barre d'action** : reflète le bouton principal de la page en bas d'écran, sous le pouce |
+| `lib/qr.js` | Générateur de QR (qrcode-generator, MIT, Kazuhiko Arase) — recopié dans le dépôt pour le hors-ligne |
 | `lib/fonts.css` | **Polices hébergées dans le dépôt** (woff2, latin + latin-ext) — plus aucune dépendance à Google Fonts |
 | `lib/retour.js` | **Retour au menu** — le même bouton visible sur toutes les pages, ajouté s'il manque |
 | `lib/secours.js` | **Filet de sécurité** : pendant une prise, chaque morceau est écrit tout de suite dans la base ; une prise interrompue se récupère au retour |
@@ -65,6 +67,9 @@ Ce projet a une exigence de sincérité qui prime sur toute fonctionnalité. Un 
 8octies. **Un bouton de sortie doit se voir.** Le retour au menu était un « ← » gris de 16 px sans cadre — invisible de nuit, à bout de bras — et il n'existait pas du tout dans Écoute, où l'application installée en plein écran n'a plus le bouton du navigateur. `lib/retour.js` pose le même bouton franc partout, et l'ajoute là où il manque. Ne jamais laisser une page sans sortie visible.
 8nonies. **L'écran fixe est une position de travail, pas une page agrandie.** Téléphone posé ou au bout d'une perche, l'écran se découpe en **bandes qui ne se recouvrent jamais** : bandeau d'information en haut, image (ou caméra) ensuite, mur de mots, puis les commandes. La première version laissait le texte passer sous le mur et les boutons se marcher dessus — inutilisable sur le terrain. Deux règles qui ont coûté cher à trouver : `env(safe-area-inset-*)` **sans repli** (`, 0px`) rend toute la `calc()` invalide et la bande atterrit n'importe où ; et un **style en ligne** posé par un module (position du mur, position mémorisée de la vue caméra) écrase toute mise en page — un module ne doit pas poser de style de position, et une page qui reprend la main doit poser le sien en ligne aussi.
 8decies. **Un bandeau de séance dit tout sans qu'on touche à rien.** Depuis quand ça tourne, si ça enregistre, ce que le micro entend, ce que l'image bouge, combien de personnes sont vues, où en sont les seuils, combien de mots sont sortis et lequel en dernier. Chaque valeur dans sa case, jamais une phrase à déchiffrer, et la hauteur du bandeau est **mesurée** pour que l'image commence pile en dessous.
+8undecies. **Une image étirée est une image fausse.** Dans toute composition multi-vues, chaque caméra est posée en « contain » dans sa case : proportions gardées, bandes noires s'il le faut. Ne jamais remplir une case en déformant.
+8duodecies. **La capture automatique réagit plus vite que la main.** Quand la détection de personne confirme une silhouette : photo immédiate (une apparition furtive ne laisse pas le temps d'appuyer) ; si elle persiste plus de 4 s, l'enregistrement démarre seul et s'arrête 5 s après sa disparition — et comme il passe par le bouton réel, la mémoire tampon lui donne les secondes d'AVANT l'apparition. Anti-rafale de 12 s entre photos. Tout est journalisé « auto ». Débrayable (`gb-autocap`), jamais silencieux.
+8terdecies. **Un enregistrement embarque les conditions de sa naissance.** Tout fichier sauvé porte l'état des témoins au moment de la prise : seuils, relevages, compteurs présence/témoin, mode de capteurs, phrase du mur, réglages actifs. Un fichier seul, dans un an, doit encore dire dans quelles conditions il est né. Ne jamais sauver un blob nu.
 9. **L'IA ne fabrique pas de sens.** Elle ne relie jamais les mots en phrases. La transcription est marquée « non vérifiée » car ces modèles inventent des mots sur du bruit.
 
 ## Architecture — pourquoi elle est ainsi
