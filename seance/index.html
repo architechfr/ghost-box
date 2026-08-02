@@ -12,8 +12,7 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="Ghost Box">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600&family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/ghost-box/lib/fonts.css?v=9">
 <style>
 :root{
   --bench:#0A0F12;--panel:#1D262B;--sunk:#0A0F12;--line:#2C383F;--hair:#212B31;
@@ -132,7 +131,7 @@ body.filming #quitFix{display:block;position:fixed;z-index:61;right:10px;
   top:calc(var(--hud) + 8px);padding:8px 11px;font-size:11px;
   background:rgba(4,8,11,.9);border-color:rgba(95,211,166,.45);color:var(--signal)}
 </style>
-<link rel="stylesheet" href="/ghost-box/lib/ambiance.css?v=8">
+<link rel="stylesheet" href="/ghost-box/lib/ambiance.css?v=9">
 </head>
 <body>
 
@@ -177,7 +176,7 @@ body.filming #quitFix{display:block;position:fixed;z-index:61;right:10px;
 <div class="row">
   <button id="aiBtn" disabled>Silhouette IA</button>
   <button id="murBtn">Mur de mots</button>
-  <button id="incrustBtn" class="act">Incrustation</button>
+  <button id="incrustBtn">Incrustation</button>
   <button id="fixBtn">Écran fixe</button>
   <button id="fsBtn">Plein écran</button>
 </div>
@@ -203,13 +202,16 @@ body.filming #quitFix{display:block;position:fixed;z-index:61;right:10px;
 <video id="vid3" playsinline muted></video>
 <video id="vid4" playsinline muted></video>
 
-<script src="/ghost-box/lib/moteur.js?v=8"></script>
-<script src="/ghost-box/lib/retour.js?v=8"></script>
-<script src="/ghost-box/lib/secours.js?v=8"></script>
-<script src="/ghost-box/lib/tampon.js?v=8"></script>
-<script src="/ghost-box/lib/mur.js?v=8"></script>
-<script src="/ghost-box/lib/media.js?v=8"></script>
-<script src="/ghost-box/lib/wakelock.js?v=8"></script>
+<script src="/ghost-box/lib/moteur.js?v=9"></script>
+<script src="/ghost-box/lib/retour.js?v=9"></script>
+<script src="/ghost-box/lib/aide.js?v=9"></script>
+<script src="/ghost-box/lib/action.js?v=9"></script>
+<script>addEventListener('load',function(){ try{ GBAction.init(['#recBtn','#prep']); }catch(e){} });</script>
+<script src="/ghost-box/lib/secours.js?v=9"></script>
+<script src="/ghost-box/lib/tampon.js?v=9"></script>
+<script src="/ghost-box/lib/mur.js?v=9"></script>
+<script src="/ghost-box/lib/media.js?v=9"></script>
+<script src="/ghost-box/lib/wakelock.js?v=9"></script>
 <script>
 (() => {
 "use strict";
@@ -458,7 +460,7 @@ $('murBtn').onclick=async ()=>{
 };
 $('incrustBtn').onclick=()=>{
   if(recording){ $('incrustState').textContent='Impossible pendant un enregistrement.'; return; }
-  incrust=!incrust;
+  incrust=!incrust; REG.note('gb-incrust',incrust?'1':'0');
   $('incrustBtn').className=incrust?'act':'';
   $('incrustState').innerHTML = incrust
     ? '<b>Incrustation allumée</b> : la vidéo enregistrée contient l\'heure, le lieu, le niveau sonore, les squelettes et les mots.'
@@ -557,7 +559,7 @@ $('aiBtn').onclick=async ()=>{
   if(!vstream){ $('aiState').textContent="Prépare d'abord le tournage."; return; }
   $('aiState').textContent='Chargement du modèle (~5 Mo, une seule fois)…';
   try{
-    if(!POSE) POSE=await import('/ghost-box/lib/pose.js?v=8');
+    if(!POSE) POSE=await import('/ghost-box/lib/pose.js?v=9');
     await POSE.load();
     aiOn=true; $('aiBtn').className='act';
     $('aiState').innerHTML='Détection active — jusqu\'à <b>4 personnes suivies en même temps</b>, chacune avec sa couleur et son numéro. Les squelettes s\'incrustent dans la vidéo enregistrée, et seulement si une personne réelle est reconnue.';
@@ -865,15 +867,22 @@ function secoursOuvrir(extra){
 function secoursMorceau(b){ if(SEC) SEC.ajouter(b); }
 function secoursFini(){ if(SEC){ try{ SEC.finir(); }catch(e){} SEC=null; } }
 
+/* ── réglages mémorisés : rien à retaper d'une séance à l'autre ── */
+const REG={ lis:(k,d)=>{ try{ return localStorage.getItem(k) ?? d; }catch(e){ return d; } },
+            note:(k,v)=>{ try{ localStorage.setItem(k,v); }catch(e){} } };
+$('lieu').value = REG.lis('gb-lieu','');
+$('lieu').addEventListener('change',()=>REG.note('gb-lieu',$('lieu').value));
+
 /* ═══════ mémoire tampon : les secondes d'AVANT le geste ═══════ */
-let tampon=null, tampSec=10, prerollDernier=0;
+let tampon=null, tampSec=+REG.lis('gb-tampon','10')||10, prerollDernier=0;
 /* Deux façons d'enregistrer, une seule page :
    — incrustation ALLUMÉE : c'est l'image composée (toutes les vues + heure, lieu,
      niveau sonore, squelettes, mots) qui part dans le fichier. Un seul fichier,
      relisible des années plus tard sans rien d'autre.
    — incrustation ÉTEINTE : c'est le flux brut de la caméra principale, sans rien
      dessus. Image plus propre, mais plus aucun contexte dans le fichier. */
-let incrust=true;
+let incrust = REG.lis('gb-incrust','1')==='1';
+$('incrustBtn').className = incrust? 'act':'';
 function fluxAEnregistrer(){
   const tracks=[];
   if(incrust){
@@ -932,9 +941,10 @@ $('tampBtn').onclick=()=>{
   } else { $('tampBtn').dataset.voulu='1'; tampDemarre(); }
 };
 [['t5',5],['t10',10],['t20',20]].forEach(([id,s])=>{
+  if(tampSec===s){ ['t5','t10','t20'].forEach(x=>$(x).className=''); $(id).className='act'; }
   $(id).onclick=()=>{
     if(tampon && tampon.enGarde()){ return; }
-    tampSec=s; ['t5','t10','t20'].forEach(x=>$(x).className=''); $(id).className='act';
+    tampSec=s; REG.note('gb-tampon',s); ['t5','t10','t20'].forEach(x=>$(x).className=''); $(id).className='act';
     if(tampon && tampon.actif()){ tampArrete(); tampDemarre(); }
   };
 });
@@ -1059,7 +1069,7 @@ addEventListener('load',function(){ try{ GBCapture.init({label:($('lieu').value|
 })();
 </script>
 <script>if('serviceWorker' in navigator){window.addEventListener('load',function(){navigator.serviceWorker.register('/ghost-box/sw.js').catch(function(){});});}</script>
-<script src="/ghost-box/lib/capture.js?v=8"></script>
-<script src="/ghost-box/lib/fullscreen.js?v=8"></script>
+<script src="/ghost-box/lib/capture.js?v=9"></script>
+<script src="/ghost-box/lib/fullscreen.js?v=9"></script>
 </body>
 </html>

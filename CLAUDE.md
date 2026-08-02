@@ -25,6 +25,9 @@ Le code partagé, en un seul exemplaire :
 | `lib/moteur.js` | Moteur de détection (statistique robuste, seuil auto, témoin de bruit) |
 | `lib/mur.js` | Mur de mots — **rendu canvas** (pluie de mots, faisceau de lecture, gel, équité des vitesses, phrase) |
 | `lib/ambiance.css` | **Identité visuelle partagée** : marque en tête de page, grain, vignettage, halos. Purement additive |
+| `lib/aide.js` | **Aide repliable** : les textes pédagogiques (.ex/.fine sans id) visibles à la première visite, repliés ensuite, bouton Aide pour rouvrir |
+| `lib/action.js` | **Barre d'action** : reflète le bouton principal de la page en bas d'écran, sous le pouce |
+| `lib/fonts.css` | **Polices hébergées dans le dépôt** (woff2, latin + latin-ext) — plus aucune dépendance à Google Fonts |
 | `lib/retour.js` | **Retour au menu** — le même bouton visible sur toutes les pages, ajouté s'il manque |
 | `lib/secours.js` | **Filet de sécurité** : pendant une prise, chaque morceau est écrit tout de suite dans la base ; une prise interrompue se récupère au retour |
 | `lib/tampon.js` | Mémoire tampon : encode en continu, ne garde que les N dernières secondes |
@@ -103,6 +106,18 @@ Les fichiers sortent d'une planche fournie par Florian et sont **découpés**, j
 | `favicon.png`, `apple-touch-icon.png`, `assets/icone-192/512.png` | Icônes de l'application installée (`manifest.json`) |
 
 Le fond des tuiles d'origine a été détouré par différence avec la couleur dominante, pour que la marque puisse se poser sur n'importe quel fond. Si une nouvelle planche arrive, refaire le découpage plutôt que de redessiner à la main : c'est son dessin, pas le mien.
+
+## Hors-ligne — désormais un engagement
+
+Le service worker (`sw.js`) n'est PLUS passif : il pré-met en cache l'enveloppe complète (pages, `lib/`, lexique, polices, marque) à l'installation. **L'application s'ouvre et fonctionne sans réseau** — c'était le manque le plus grave relevé à l'audit d'août 2026 : les lieux d'utilisation réels (caves, châteaux) sont ceux où le réseau manque, et l'application ne s'y ouvrait pas du tout. Stratégies : pages en réseau-d'abord/cache-en-secours ; fichiers versionnés (`?v=N`) en cache-d'abord ; modèle de pose (CDN) mis en cache à la première utilisation ; API Mistral jamais mise en cache. **À chaque livraison, incrémenter `VERSION` dans `sw.js` en même temps que les `?v=` des pages** — et ajouter tout nouveau fichier de `lib/` à la liste `ENVELOPPE`, sinon il manquera hors ligne. Les polices viennent de paquets Fontsource copiés dans `assets/fonts/` — ne jamais remettre un lien Google Fonts.
+
+## Ergonomie de terrain — acquis de l'audit d'août 2026
+
+- **L'application explique à la première visite, sert ensuite.** `lib/aide.js` replie les textes pédagogiques après la première visite (bouton Aide pour rouvrir, choix retenu). La règle pour écrire une page : les paragraphes pédagogiques en `p.ex`/`p.fine` SANS id ; les zones d'état avec un id — c'est ce qui décide de ce qui se replie.
+- **Le geste principal sous le pouce.** `lib/action.js` pose une barre fixe en bas qui reflète le bouton principal (`GBAction.init(['#recBtn','#prep'])` — le premier utilisable de la liste gagne). Ne pas créer de deuxième logique : la barre clique le vrai bouton.
+- **Ce qui se règle ne s'oublie pas** : lieu, durée du tampon, incrustation, vitesse du mur, balayage — en `localStorage` (`gb-lieu`, `gb-tampon`, `gb-incrust`, `gb-mur-vitesse`, `gb-balayage`). Tout nouveau réglage doit être mémorisé pareil.
+- Une page vide ne montre pas de bouton destructeur (bibliothèque : « Tout supprimer » n'existe que s'il y a quelque chose).
+- L'analyse complète est dans `docs/analyse-2026-08.md` ; restent ouverts : « Démarrer une séance » guidé sur l'accueil, économie de batterie (mur à 30 i/s en veille), historique des séances, voix partout où le mur est.
 
 ## Déploiement
 

@@ -12,8 +12,7 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="Ghost Box">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600&family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/ghost-box/lib/fonts.css?v=9">
 <style>
 :root{
   --bench:#141A1E;--panel:#1D262B;--sunk:#0A0F12;--line:#2C383F;--hair:#212B31;
@@ -182,7 +181,7 @@ video{display:none}
   font-family:var(--mono);font-size:9px;color:var(--signal);
   background:rgba(10,15,18,.75);padding:1px 4px;border-radius:2px;pointer-events:none}
 </style>
-<link rel="stylesheet" href="/ghost-box/lib/ambiance.css?v=8">
+<link rel="stylesheet" href="/ghost-box/lib/ambiance.css?v=9">
 </head>
 <body>
 <div class="wrap">
@@ -309,9 +308,12 @@ video{display:none}
 <video id="vid2" playsinline muted></video>
 </div>
 
-<script src="/ghost-box/lib/moteur.js?v=8"></script>
-<script src="/ghost-box/lib/retour.js?v=8"></script>
-<script src="/ghost-box/lib/mur.js?v=8"></script>
+<script src="/ghost-box/lib/moteur.js?v=9"></script>
+<script src="/ghost-box/lib/retour.js?v=9"></script>
+<script src="/ghost-box/lib/aide.js?v=9"></script>
+<script src="/ghost-box/lib/action.js?v=9"></script>
+<script>addEventListener('load',function(){ try{ GBAction.init(['#run']); }catch(e){} });</script>
+<script src="/ghost-box/lib/mur.js?v=9"></script>
 <script>
 (() => {
 "use strict";
@@ -1141,7 +1143,7 @@ $('camAi').onclick=async ()=>{
   if(!camActive){ $('aiState').textContent="Active d'abord la caméra."; return; }
   $('aiState').textContent='Chargement du modèle (~5 Mo, une seule fois)…';
   try{
-    if(!POSE) POSE=await import('/ghost-box/lib/pose.js?v=8');
+    if(!POSE) POSE=await import('/ghost-box/lib/pose.js?v=9');
     await POSE.load();
     aiOn=true; $('camAi').className='act';
     $('aiState').innerHTML='Détection active — un squelette n\'apparaît que si une <b>personne réelle</b> est reconnue. Dans le noir, le modèle ne voit rien : c\'est normal.';
@@ -1325,9 +1327,9 @@ addEventListener('load',function(){ try{ GBCapture.init({label:'seance-capteurs'
 })();
 </script>
 <script>if('serviceWorker' in navigator){window.addEventListener('load',function(){navigator.serviceWorker.register('/ghost-box/sw.js').catch(function(){});});}</script>
-<script src="/ghost-box/lib/wakelock.js?v=8"></script>
-<script src="/ghost-box/lib/media.js?v=8"></script>
-<script src="/ghost-box/lib/capture.js?v=8"></script>
-<script src="/ghost-box/lib/fullscreen.js?v=8"></script>
+<script src="/ghost-box/lib/wakelock.js?v=9"></script>
+<script src="/ghost-box/lib/media.js?v=9"></script>
+<script src="/ghost-box/lib/capture.js?v=9"></script>
+<script src="/ghost-box/lib/fullscreen.js?v=9"></script>
 </body>
 </html>

@@ -12,8 +12,7 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="Ghost Box">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600&family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/ghost-box/lib/fonts.css?v=9">
 <style>
 :root{
   --bench:#0A0F12;--panel:#1D262B;--sunk:#0A0F12;--line:#2C383F;--hair:#212B31;
@@ -76,7 +75,7 @@ body.filming #quitFix{display:block;position:fixed;z-index:61;right:10px;
   top:calc(10px + env(safe-area-inset-top));padding:8px 10px;font-size:11px;
   background:rgba(20,26,30,.85)}
 </style>
-<link rel="stylesheet" href="/ghost-box/lib/ambiance.css?v=8">
+<link rel="stylesheet" href="/ghost-box/lib/ambiance.css?v=9">
 </head>
 <body>
 
@@ -133,12 +132,15 @@ body.filming #quitFix{display:block;position:fixed;z-index:61;right:10px;
 
 </div>
 
-<script src="/ghost-box/lib/wakelock.js?v=8"></script>
-<script src="/ghost-box/lib/retour.js?v=8"></script>
-<script src="/ghost-box/lib/media.js?v=8"></script>
-<script src="/ghost-box/lib/moteur.js?v=8"></script>
-<script src="/ghost-box/lib/mur.js?v=8"></script>
-<script src="/ghost-box/lib/fullscreen.js?v=8"></script>
+<script src="/ghost-box/lib/wakelock.js?v=9"></script>
+<script src="/ghost-box/lib/retour.js?v=9"></script>
+<script src="/ghost-box/lib/aide.js?v=9"></script>
+<script src="/ghost-box/lib/action.js?v=9"></script>
+<script>addEventListener('load',function(){ try{ GBAction.init(['#prep']); }catch(e){} });</script>
+<script src="/ghost-box/lib/media.js?v=9"></script>
+<script src="/ghost-box/lib/moteur.js?v=9"></script>
+<script src="/ghost-box/lib/mur.js?v=9"></script>
+<script src="/ghost-box/lib/fullscreen.js?v=9"></script>
 <script>
 (() => {
 "use strict";
@@ -155,6 +157,10 @@ const M=window.GBMoteur;
 /* ═══════ le mur ═══════
    Composant partagé (lib/mur.js) : exactement le même mur que dans la séance
    caméra et la séance capteurs. Une seule implémentation, un seul comportement. */
+const REG={ lis:(k,d)=>{ try{ return localStorage.getItem(k) ?? d; }catch(e){ return d; } },
+            note:(k,v)=>{ try{ localStorage.setItem(k,v); }catch(e){} } };
+$('vit').value = +REG.lis('gb-mur-vitesse','330')||330;
+$('vitL').textContent = $('vit').value+' px/s';
 let MUR=null, pret=false;
 GBMur.lexique('../data/lexique.json').then(mots=>{
   MUR=GBMur.creer({hote:$('mur'), mots:mots, vitesse:+$('vit').value, onMot:majPhrase});
@@ -202,7 +208,7 @@ function figer(info,test){
     +' · colonne '+r.colonne+' · index '+r.index+'/'+r.taille+' · allure '+r.allure);
   return r;
 }
-$('vit').oninput=()=>{ $('vitL').textContent=$('vit').value+' px/s'; if(MUR) MUR.vitesse(+$('vit').value); };
+$('vit').oninput=()=>{ $('vitL').textContent=$('vit').value+' px/s'; REG.note('gb-mur-vitesse',$('vit').value); if(MUR) MUR.vitesse(+$('vit').value); };
 
 /* ═══════ capteur : le son de la pièce (et de la box posée à côté) ═══════ */
 let micStream=null, actx=null, ana=null, tdata=null, micBrut=false;

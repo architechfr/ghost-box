@@ -12,8 +12,7 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="Ghost Box">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600&family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/ghost-box/lib/fonts.css?v=9">
 <style>
 :root{
   --night:#0A0F12; --bench:#141A1E; --panel:#1D262B; --sunk:#080C0E;
@@ -143,7 +142,7 @@ body.assis #mark{position:fixed;left:10px;right:10px;bottom:calc(16px + env(safe
 body.assis #quitAssis{display:block;position:fixed;z-index:61;right:10px;
   top:calc(3px + env(safe-area-inset-top));padding:6px 9px;font-size:11px;background:rgba(20,26,30,.9)}
 </style>
-<link rel="stylesheet" href="/ghost-box/lib/ambiance.css?v=8">
+<link rel="stylesheet" href="/ghost-box/lib/ambiance.css?v=9">
 </head>
 <body>
 <div class="wrap">
@@ -288,6 +287,10 @@ let ctx,stream,src,proc,ana,wake,recording=false;
 let chunks=[],recLen=0,sr=TARGET,decim=1,outSR=TARGET;
 let rms=[],floorV=0,fInit=false,inEv=false,evS=0,evPk=0,up=0,down=0;
 let events=[],flags=[],t0=0,raf,clk,pcm=null,meta={};
+/* réglages mémorisés : le lieu et le balayage se retapaient à chaque séance */
+try{ $('place').value=localStorage.getItem('gb-lieu')||''; $('gear').value=localStorage.getItem('gb-balayage')||''; }catch(e){}
+$('place').addEventListener('change',()=>{ try{ localStorage.setItem('gb-lieu',$('place').value); }catch(e){} });
+$('gear').addEventListener('change',()=>{ try{ localStorage.setItem('gb-balayage',$('gear').value); }catch(e){} });
 let spg=null,spgCols=0,spgBins=NFFT/2;
 let cur=0,loop=false,rev=false,filt=false,spd=1,playing=false,pSrc=null;
 const K=()=>+$('sens').value/10;
@@ -914,11 +917,14 @@ if(!navigator.mediaDevices||!navigator.mediaDevices.getUserMedia)
 })();
 </script>
 <script>if('serviceWorker' in navigator){window.addEventListener('load',function(){navigator.serviceWorker.register('/ghost-box/sw.js').catch(function(){});});}</script>
-<script src="/ghost-box/lib/secours.js?v=8"></script>
-<script src="/ghost-box/lib/retour.js?v=8"></script>
-<script src="/ghost-box/lib/moteur.js?v=8"></script>
-<script src="/ghost-box/lib/mur.js?v=8"></script>
-<script src="/ghost-box/lib/wakelock.js?v=8"></script>
-<script src="/ghost-box/lib/fullscreen.js?v=8"></script>
+<script src="/ghost-box/lib/secours.js?v=9"></script>
+<script src="/ghost-box/lib/retour.js?v=9"></script>
+<script src="/ghost-box/lib/aide.js?v=9"></script>
+<script src="/ghost-box/lib/action.js?v=9"></script>
+<script>addEventListener('load',function(){ try{ GBAction.init(['#halt','#go']); }catch(e){} });</script>
+<script src="/ghost-box/lib/moteur.js?v=9"></script>
+<script src="/ghost-box/lib/mur.js?v=9"></script>
+<script src="/ghost-box/lib/wakelock.js?v=9"></script>
+<script src="/ghost-box/lib/fullscreen.js?v=9"></script>
 </body>
 </html>

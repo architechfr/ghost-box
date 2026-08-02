@@ -103,6 +103,17 @@ button.ko{ box-shadow:0 0 22px -8px rgba(226,87,76,.75); }
 /* ── le mot : quand quelque chose est retenu, ça doit se voir de loin ── */
 #word:not(.q){ text-shadow:0 0 34px rgba(233,180,76,.45); }
 
+/* ── curseurs : la couleur de l'or, partout — plus jamais le bleu système ── */
+input[type=range]{ accent-color:#E9B44C; }
+
+/* ── numéros de version : utiles pour vérifier le cache, pas pour décorer ── */
+.topin h1 span, h1 .wip{ opacity:.55; }
+h1 .wip{ white-space:nowrap; font-size:.45em; vertical-align:middle; }
+
+/* ── rien ne passe sous les boutons flottants ni sous la barre d'action ──
+   (les pages à barre ont leur propre marge, plus grande, via body.avecbarre) */
+body:not(.filming):not(.assis):not(.avecbarre){ padding-bottom:calc(150px + env(safe-area-inset-bottom, 0px)); }
+
 /* ── liens ── */
 a{ text-decoration-thickness:1px; text-underline-offset:2px; }
 

@@ -12,8 +12,7 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="Ghost Box">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600&family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/ghost-box/lib/fonts.css?v=9">
 <style>
 :root{
   --bench:#0A0F12;--panel:#1D262B;--sunk:#0A0F12;--line:#2C383F;--hair:#212B31;
@@ -53,7 +52,7 @@ button.on{background:var(--gold);color:#191204;border-color:var(--gold)}
 .empty{color:var(--dim);font-size:13.5px;padding:14px 0;line-height:1.55}
 video.player{width:100%;margin-top:8px;border:1px solid var(--line);border-radius:3px;background:#000}
 </style>
-<link rel="stylesheet" href="/ghost-box/lib/ambiance.css?v=8">
+<link rel="stylesheet" href="/ghost-box/lib/ambiance.css?v=9">
 </head>
 <body>
 
@@ -82,8 +81,9 @@ video.player{width:100%;margin-top:8px;border:1px solid var(--line);border-radiu
 
 </div>
 
-<script src="/ghost-box/lib/secours.js?v=8"></script>
-<script src="/ghost-box/lib/retour.js?v=8"></script>
+<script src="/ghost-box/lib/secours.js?v=9"></script>
+<script src="/ghost-box/lib/retour.js?v=9"></script>
+<script src="/ghost-box/lib/aide.js?v=9"></script>
 <script>
 (() => {
 "use strict";
@@ -128,6 +128,9 @@ async function render(){
     (!estPhoto(c) && !estAudio(c)));
   $('cnt').textContent = all.length? all.length+' fichier'+(all.length>1?'s':'') : '';
   const box=$('lib');
+  // rien à supprimer ni à envoyer : ces boutons n'ont pas à exister
+  $('wipe').parentElement.style.display = all.length? '' : 'none';
+  $('dlAll').parentElement.style.display = all.length? '' : 'none';
   if(!vus.length){ box.innerHTML='<p class="empty">Rien ici pour l\'instant.</p>'; $('libStat').textContent=''; return; }
   box.innerHTML=''; let total=0;
   vus.forEach(c=>{
@@ -229,6 +232,6 @@ secours(); render();
 })();
 </script>
 <script>if('serviceWorker' in navigator){window.addEventListener('load',function(){navigator.serviceWorker.register('/ghost-box/sw.js').catch(function(){});});}</script>
-<script src="/ghost-box/lib/fullscreen.js?v=8"></script>
+<script src="/ghost-box/lib/fullscreen.js?v=9"></script>
 </body>
 </html>
