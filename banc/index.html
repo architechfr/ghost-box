@@ -246,8 +246,9 @@ video{display:none}
 <video id="vid2" playsinline muted></video>
 </div>
 
-<script src="/ghost-box/lib/moteur.js?v=4"></script>
-<script src="/ghost-box/lib/mur.js?v=4"></script>
+<script src="/ghost-box/lib/moteur.js?v=5"></script>
+<script src="/ghost-box/lib/retour.js?v=5"></script>
+<script src="/ghost-box/lib/mur.js?v=5"></script>
 <script>
 (() => {
 "use strict";
@@ -1009,7 +1010,7 @@ $('camAi').onclick=async ()=>{
   if(!camActive){ $('aiState').textContent="Active d'abord la caméra."; return; }
   $('aiState').textContent='Chargement du modèle (~5 Mo, une seule fois)…';
   try{
-    if(!POSE) POSE=await import('/ghost-box/lib/pose.js?v=4');
+    if(!POSE) POSE=await import('/ghost-box/lib/pose.js?v=5');
     await POSE.load();
     aiOn=true; $('camAi').className='act';
     $('aiState').innerHTML='Détection active — un squelette n\'apparaît que si une <b>personne réelle</b> est reconnue. Dans le noir, le modèle ne voit rien : c\'est normal.';
@@ -1193,9 +1194,9 @@ addEventListener('load',function(){ try{ GBCapture.init({label:'seance-capteurs'
 })();
 </script>
 <script>if('serviceWorker' in navigator){window.addEventListener('load',function(){navigator.serviceWorker.register('/ghost-box/sw.js').catch(function(){});});}</script>
-<script src="/ghost-box/lib/wakelock.js?v=4"></script>
-<script src="/ghost-box/lib/media.js?v=4"></script>
-<script src="/ghost-box/lib/capture.js?v=4"></script>
-<script src="/ghost-box/lib/fullscreen.js?v=4"></script>
+<script src="/ghost-box/lib/wakelock.js?v=5"></script>
+<script src="/ghost-box/lib/media.js?v=5"></script>
+<script src="/ghost-box/lib/capture.js?v=5"></script>
+<script src="/ghost-box/lib/fullscreen.js?v=5"></script>
 </body>
 </html>

@@ -245,6 +245,7 @@ body.assis #quitAssis{display:block;position:fixed;z-index:61;right:10px;
       <button id="keep" class="tgl keep">Garder</button>
       <button id="drop" class="tgl drop">Écarter</button>
       <button id="exp1">Extraire</button>
+      <button id="exp1b">Garder l'extrait</button>
     </div>
 
     <hr>
@@ -535,7 +536,60 @@ $('halt').onclick=async()=>{
   await buildSpg();
   $('stTxt').textContent='séance terminée';$('tabA').disabled=false;
   cur=0;buildStrip();selectEv(0);mode('a');save();
+  rangerSeance();
 };
+
+/* ═══════ tout ce qui est enregistré va dans la bibliothèque ═══════
+   Le son partait aux téléchargements du téléphone ou nulle part : une séance
+   d'écoute n'était pas rangée avec les vidéos et les photos, alors qu'elle
+   fait partie de la même soirée. Elle y va maintenant toute seule, avec sa
+   durée, son lieu et son journal de repères. */
+function vignetteSpectre(){
+  try{
+    const src=$('overview'); if(!src||!src.width) return '';
+    const c=document.createElement('canvas'); c.width=156; c.height=Math.max(40,Math.round(156*src.height/src.width));
+    c.getContext('2d').drawImage(src,0,0,c.width,c.height);
+    return c.toDataURL('image/jpeg',.5);
+  }catch(e){ return ''; }
+}
+function dbPutClip(o){
+  return new Promise((res,rej)=>{
+    const r=indexedDB.open('ghostbox-vision',1);
+    r.onupgradeneeded=()=>{ if(!r.result.objectStoreNames.contains('clips')) r.result.createObjectStore('clips',{keyPath:'id'}); };
+    r.onsuccess=()=>{ try{ const t=r.result.transaction('clips','readwrite'); t.objectStore('clips').put(o);
+      t.oncomplete=()=>res(); t.onerror=()=>rej(t.error); }catch(e){ rej(e); } };
+    r.onerror=()=>rej(r.error);
+  });
+}
+async function rangerSeance(){
+  if(!pcm||!recLen) return;
+  try{
+    const blob=wav(0,meta.duration);
+    const clip={ id:Date.now(), nom:'ecoute-'+stamp()+'.wav', mime:'audio/wav',
+      taille:blob.size, duree:Math.round(meta.duration), vignette:vignetteSpectre(),
+      cam:(meta.place||'écoute'), blob:blob, type:'audio', source:'ecoute',
+      journal:events.map(e=>({heure:fmt(e.t), type:(e.kind==='man'?'marqueur':e.kind==='mot'?'mot':'pic'),
+        detail:(e.mot? e.mot+' · ' : '')+(e.db!=null? e.db.toFixed(0)+' dB':'')+(e.note? ' · '+e.note:'')})) };
+    await dbPutClip(clip);
+    $('msg').innerHTML='<b style="color:var(--signal)">Séance rangée dans la bibliothèque</b> ('
+      +(blob.size<1048576?(blob.size/1024).toFixed(0)+' Ko':(blob.size/1048576).toFixed(1)+' Mo')
+      +') — <a href="../bibliotheque/" style="color:var(--signal)">y aller</a>. Le WAV reste exportable ici.';
+  }catch(e){
+    $('msg').innerHTML='<b style="color:var(--gold)">Séance non rangée</b> (espace insuffisant ?) — '
+      +'exporte le WAV tout de suite avec « WAV complet ».';
+  }
+}
+/* garder aussi un extrait précis : c'est souvent lui qu'on veut réécouter */
+$('exp1b') && ($('exp1b').onclick=async ()=>{
+  const e=events[cur]; if(!e||!pcm) return;
+  try{
+    const blob=wav(e.a,e.b);
+    await dbPutClip({ id:Date.now(), nom:'extrait-'+fmt(e.t).replace(/:/g,'')+'-'+stamp()+'.wav',
+      mime:'audio/wav', taille:blob.size, duree:Math.round(e.b-e.a), vignette:'',
+      cam:(meta.place||'extrait'), blob:blob, type:'audio', source:'ecoute' });
+    $('msg').innerHTML='<b style="color:var(--signal)">Extrait rangé dans la bibliothèque.</b>';
+  }catch(err){ $('msg').textContent='Extrait non rangé (espace insuffisant ?).'; }
+});
 
 function fftPlan(N){
   const co=new Float32Array(N/2),si=new Float32Array(N/2),rev=new Uint32Array(N);
@@ -818,10 +872,11 @@ if(!navigator.mediaDevices||!navigator.mediaDevices.getUserMedia)
 })();
 </script>
 <script>if('serviceWorker' in navigator){window.addEventListener('load',function(){navigator.serviceWorker.register('/ghost-box/sw.js').catch(function(){});});}</script>
-<script src="/ghost-box/lib/secours.js?v=4"></script>
-<script src="/ghost-box/lib/moteur.js?v=4"></script>
-<script src="/ghost-box/lib/mur.js?v=4"></script>
-<script src="/ghost-box/lib/wakelock.js?v=4"></script>
-<script src="/ghost-box/lib/fullscreen.js?v=4"></script>
+<script src="/ghost-box/lib/secours.js?v=5"></script>
+<script src="/ghost-box/lib/retour.js?v=5"></script>
+<script src="/ghost-box/lib/moteur.js?v=5"></script>
+<script src="/ghost-box/lib/mur.js?v=5"></script>
+<script src="/ghost-box/lib/wakelock.js?v=5"></script>
+<script src="/ghost-box/lib/fullscreen.js?v=5"></script>
 </body>
 </html>

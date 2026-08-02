@@ -64,12 +64,13 @@ video.player{width:100%;margin-top:8px;border:1px solid var(--line);border-radiu
 <div class="wrap">
 
 <div class="step" style="border-top:0">
-  <p class="ex">Tout ce que l'application a gardé — vidéos de séance, photos instantanées, prises venues de la mémoire tampon — arrive <b>ici</b>, et nulle part ailleurs.</p>
+  <p class="ex">Tout ce que l'application a gardé — vidéos de séance, <b>séances d'écoute et extraits sonores</b>, photos instantanées, prises venues de la mémoire tampon — arrive <b>ici</b>, et nulle part ailleurs.</p>
   <div class="warn">Ces fichiers sont rangés <b>dans l'application</b>, pas dans la galerie photo du téléphone. Pour qu'un fichier rejoigne la galerie, appuie sur <b>Télécharger</b> : il ira dans les téléchargements de l'appareil, visible depuis la galerie et partageable.</div>
   <div class="row">
     <button id="fTout" class="on">Tout</button>
     <button id="fVid">Vidéos</button>
     <button id="fPho">Photos</button>
+    <button id="fAud">Audio</button>
   </div>
   <div id="secours"></div>
   <div class="row"><button id="dlAll">Tout envoyer vers le téléphone</button></div>
@@ -80,7 +81,8 @@ video.player{width:100%;margin-top:8px;border:1px solid var(--line);border-radiu
 
 </div>
 
-<script src="/ghost-box/lib/secours.js?v=4"></script>
+<script src="/ghost-box/lib/secours.js?v=5"></script>
+<script src="/ghost-box/lib/retour.js?v=5"></script>
 <script>
 (() => {
 "use strict";
@@ -107,39 +109,52 @@ function dl(blob,name){ const u=URL.createObjectURL(blob),a=document.createEleme
   a.href=u;a.download=name;a.click(); setTimeout(()=>URL.revokeObjectURL(u),6000); }
 
 let filtre='tout';
-[['fTout','tout'],['fVid','video'],['fPho','photo']].forEach(([id,f])=>{
-  $(id).onclick=()=>{ filtre=f; ['fTout','fVid','fPho'].forEach(x=>$(x).classList.remove('on'));
+[['fTout','tout'],['fVid','video'],['fPho','photo'],['fAud','audio']].forEach(([id,f])=>{
+  $(id).onclick=()=>{ filtre=f; ['fTout','fVid','fPho','fAud'].forEach(x=>$(x).classList.remove('on'));
     $(id).classList.add('on'); render(); };
 });
+const estAudio=c=>c.type==='audio'||/^audio\//.test(c.mime||'');
+const estPhoto=c=>c.type==='photo';
 
 async function render(){
   let all=[]; try{ all=await dbAll(); }catch(e){}
   all=all.filter(c=>!c.secours);           // les morceaux d'une prise en cours ne sont pas des fichiers
   all.sort((a,b)=>b.id-a.id);
-  const vus = all.filter(c => filtre==='tout' ? true : (filtre==='photo' ? c.type==='photo' : c.type!=='photo'));
+  const vus = all.filter(c =>
+    filtre==='tout' ? true :
+    filtre==='photo' ? estPhoto(c) :
+    filtre==='audio' ? estAudio(c) :
+    (!estPhoto(c) && !estAudio(c)));
   $('cnt').textContent = all.length? all.length+' fichier'+(all.length>1?'s':'') : '';
   const box=$('lib');
   if(!vus.length){ box.innerHTML='<p class="empty">Rien ici pour l\'instant.</p>'; $('libStat').textContent=''; return; }
   box.innerHTML=''; let total=0;
   vus.forEach(c=>{
     total+=c.taille||0;
-    const photo = c.type==='photo';
+    const photo = estPhoto(c), audio = estAudio(c);
     const d=document.createElement('div'); d.className='clip';
     // d'où vient le fichier, et ce qu'il contient : lisible sans l'ouvrir
-    const bits=[ photo? 'photo' : fmt(c.duree||0), mo(c.taille||0), esc(c.cam||'—') ];
+    const bits=[ photo? 'photo' : (audio? 'son · '+fmt(c.duree||0) : fmt(c.duree||0)), mo(c.taille||0), esc(c.cam||'—') ];
     if(c.avant_s) bits.push('dont '+c.avant_s+' s d\'avant le geste');
     if(c.cameras>1) bits.push(c.cameras+' caméras');
     if(c.son===false) bits.push('sans son');
     if(c.recupere) bits.push('prise récupérée');
-    d.innerHTML=(c.vignette? '<img src="'+c.vignette+'" alt="">':'<img alt="">')+
+    d.innerHTML=(c.vignette? '<img src="'+c.vignette+'" alt="">'
+        : '<img alt="" style="object-fit:contain;padding:8px;opacity:.5" src="data:image/svg+xml;utf8,'
+          +encodeURIComponent(audio
+            ? '<svg xmlns=\'http://www.w3.org/2000/svg\' viewBox=\'0 0 24 24\' fill=\'none\' stroke=\'%235FD3A6\' stroke-width=\'1.6\'><path d=\'M3 12h2l2-6 3 14 3-11 2 5h6\'/></svg>'
+            : '<svg xmlns=\'http://www.w3.org/2000/svg\' viewBox=\'0 0 24 24\' fill=\'none\' stroke=\'%2378868E\' stroke-width=\'1.6\'><rect x=\'3\' y=\'5\' width=\'18\' height=\'14\' rx=\'2\'/></svg>')+'">')+
       '<div class="meta"><div class="nm">'+esc(c.nom)+'</div>'+
       '<div class="sub">'+bits.join(' · ')+'</div><div class="acts"></div></div>';
     const acts=d.querySelector('.acts');
-    const bl=document.createElement('button'); bl.textContent = photo? 'Voir':'Lire';
+    const bl=document.createElement('button'); bl.textContent = photo? 'Voir' : (audio? 'Écouter':'Lire');
     bl.onclick=()=>{ const ex=d.querySelector('.player'); if(ex){ ex.remove(); return; }
       if(photo){ const im=document.createElement('img'); im.className='player';
         im.style.cssText='width:100%;height:auto;margin-top:8px;border:1px solid var(--line);border-radius:3px';
         im.src=URL.createObjectURL(c.blob); d.querySelector('.meta').appendChild(im);
+      } else if(audio){ const a=document.createElement('audio'); a.className='player'; a.controls=true;
+        a.style.cssText='width:100%;margin-top:8px';
+        a.src=URL.createObjectURL(c.blob); d.querySelector('.meta').appendChild(a); a.play().catch(()=>{});
       } else { const v=document.createElement('video'); v.className='player'; v.controls=true; v.playsInline=true;
         v.src=URL.createObjectURL(c.blob); d.querySelector('.meta').appendChild(v); v.play().catch(()=>{}); } };
     const bd=document.createElement('button'); bd.textContent='Télécharger'; bd.onclick=()=>dl(c.blob,c.nom);
@@ -213,6 +228,6 @@ secours(); render();
 })();
 </script>
 <script>if('serviceWorker' in navigator){window.addEventListener('load',function(){navigator.serviceWorker.register('/ghost-box/sw.js').catch(function(){});});}</script>
-<script src="/ghost-box/lib/fullscreen.js?v=4"></script>
+<script src="/ghost-box/lib/fullscreen.js?v=5"></script>
 </body>
 </html>
