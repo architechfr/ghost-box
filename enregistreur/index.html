@@ -147,7 +147,7 @@ body.assis #quitAssis{display:block;position:fixed;z-index:61;right:10px;
 <body>
 <div class="wrap">
 
-<div class="lg" style="padding:8px 0 0;text-align:right;opacity:.7">Écoute <span style="color:var(--signal)">v2</span></div>
+<div class="lg" style="padding:8px 0 0;text-align:right;opacity:.7">Écoute <span style="color:var(--signal)">v3</span></div>
 <nav>
   <button id="tabT" class="on">Terrain</button>
   <button id="tabA" disabled>Analyse</button>
@@ -184,6 +184,7 @@ body.assis #quitAssis{display:block;position:fixed;z-index:61;right:10px;
   <button id="quitAssis" type="button">Quitter</button>
   <div class="row">
     <button id="murBtn">Mur de mots</button>
+    <button id="murVoix">Voix</button>
     <button id="fixBtn">Écran fixe</button>
   </div>
   <p id="murState" class="fine">Le <b>mur de mots</b> montre tout le vocabulaire sous le spectre, écran tourné vers la pièce : ce qui peut être dit est visible en permanence, plutôt que rangé dans un fichier. Il ne se fige que si le niveau du micro dépasse tout ce que le bruit du lieu sait produire — seuil appris pendant les 30 premières secondes, jamais réglé à la main. Le mot est alors posé <b>sur la bande son</b> : à la relecture, tu peux réécouter exactement cet instant.</p>
@@ -262,7 +263,11 @@ body.assis #quitAssis{display:block;position:fixed;z-index:61;right:10px;
       <div class="between"><span class="lg" id="posAll">00:00</span><span class="lg" id="durAll">—</span></div>
       <p class="fine">Appuie <b>dans le spectre</b> pour sauter à ce moment-là. Les traits marquent les repères : jaune ceux que tu as posés, rouge les pics détectés, vert les mots retenus par le mur.</p>
       <div class="bar2">
+        <button id="ranger">Ranger dans la bibliothèque</button>
         <button id="expWav">WAV complet</button>
+      </div>
+      <p id="msgA" class="fine"></p>
+      <div class="bar2">
         <button id="expLog">Journal</button>
         <button id="fresh">Nouvelle séance</button>
       </div>
@@ -464,6 +469,24 @@ $('murBtn').onclick=async ()=>{
       +'Le seuil s\'apprend pendant les 30 premières secondes d\'enregistrement.';
   }catch(e){ $('murState').textContent='Mur indisponible (lexique introuvable ?).'; }
 };
+/* Voix : assis dans le noir, on n'a pas les yeux sur l'écran. Le mot retenu
+   est prononcé — c'est le même mot que celui figé sur le mur, rien d'autre. */
+let voix=false;
+$('murVoix').onclick=()=>{
+  if(!window.speechSynthesis){ $('murState').textContent='Ce navigateur ne sait pas parler.'; return; }
+  voix=!voix; $('murVoix').classList.toggle('on',voix);
+  // sur mobile, la synthèse vocale doit être réveillée par un geste de
+  // l'utilisateur : on prononce donc un mot tout de suite, sinon le premier
+  // vrai mot de la séance resterait muet
+  if(voix){ try{ const u=new SpeechSynthesisUtterance('voix active'); u.lang='fr-FR'; u.rate=1; speechSynthesis.speak(u); }catch(e){} }
+  $('murState').innerHTML = voix
+    ? '<b style="color:var(--signal)">Voix active</b> — le mot retenu sera prononcé. C\'est le même mot que celui figé sur le mur, rien d\'autre.'
+    : 'Voix coupée.';
+};
+function direMot(mot){
+  if(!voix||!window.speechSynthesis) return;
+  try{ const u=new SpeechSynthesisUtterance(mot); u.lang='fr-FR'; u.rate=.9; speechSynthesis.speak(u); }catch(e){}
+}
 function murFeed(r,t){
   if(!MUR || !WSON) return;
   const db=20*Math.log10(r||1e-9);
@@ -489,6 +512,7 @@ function murFeed(r,t){
       ev.mur={colonne:c.colonne,index:c.index,taille:c.taille,allure:c.allure};
       ev.sigma=+WSON.z.toFixed(2); ev.seuil=+WSON.thr.toFixed(2);
       events.push(ev); flags.push('w');
+      direMot(c.mot);
       if(navigator.vibrate) navigator.vibrate(80);
     }
   }
@@ -561,24 +585,40 @@ function dbPutClip(o){
     r.onerror=()=>rej(r.error);
   });
 }
+let clipId=null;      // même séance = même fiche : ranger deux fois ne fait pas deux copies
 async function rangerSeance(){
   if(!pcm||!recLen) return;
   try{
     const blob=wav(0,meta.duration);
-    const clip={ id:Date.now(), nom:'ecoute-'+stamp()+'.wav', mime:'audio/wav',
+    if(!clipId) clipId=Date.now();
+    const clip={ id:clipId, nom:'ecoute-'+stamp()+'.wav', mime:'audio/wav',
       taille:blob.size, duree:Math.round(meta.duration), vignette:vignetteSpectre(),
       cam:(meta.place||'écoute'), blob:blob, type:'audio', source:'ecoute',
       journal:events.map(e=>({heure:fmt(e.t), type:(e.kind==='man'?'marqueur':e.kind==='mot'?'mot':'pic'),
         detail:(e.mot? e.mot+' · ' : '')+(e.db!=null? e.db.toFixed(0)+' dB':'')+(e.note? ' · '+e.note:'')})) };
     await dbPutClip(clip);
-    $('msg').innerHTML='<b style="color:var(--signal)">Séance rangée dans la bibliothèque</b> ('
+    range=true;
+    dire('<b style="color:var(--signal)">Séance rangée dans la bibliothèque</b> ('
       +(blob.size<1048576?(blob.size/1024).toFixed(0)+' Ko':(blob.size/1048576).toFixed(1)+' Mo')
-      +') — <a href="../bibliotheque/" style="color:var(--signal)">y aller</a>. Le WAV reste exportable ici.';
+      +') — <a href="../bibliotheque/" style="color:var(--signal)">y aller</a>. Le WAV reste exportable ici.');
   }catch(e){
-    $('msg').innerHTML='<b style="color:var(--gold)">Séance non rangée</b> (espace insuffisant ?) — '
-      +'exporte le WAV tout de suite avec « WAV complet ».';
+    range=false;
+    dire('<b style="color:var(--flag)">Séance NON rangée</b> — '+(e&&e.name==='QuotaExceededError'
+      ? 'il n\'y a plus de place sur l\'appareil. Fais du ménage dans la <a href="../bibliotheque/" style="color:var(--gold)">bibliothèque</a>, puis réessaie avec « Ranger dans la bibliothèque ».'
+      : 'l\'appareil a refusé l\'écriture ('+(e&&e.name||'erreur')+'). ')
+      +' <b>Exporte le WAV tout de suite</b> pour ne rien perdre.');
   }
 }
+/* le message doit s'afficher là où l'utilisateur se trouve : après un arrêt,
+   c'est l'onglet Analyse — un message posé dans l'onglet Terrain est invisible */
+let range=false;
+function dire(html){ $('msgA').innerHTML=html; $('msg').innerHTML=html; }
+$('ranger').onclick=async ()=>{
+  if(!pcm||!recLen){ dire('Aucune séance à ranger.'); return; }
+  $('ranger').disabled=true; dire('Rangement…');
+  await rangerSeance();
+  $('ranger').disabled=false;
+};
 /* garder aussi un extrait précis : c'est souvent lui qu'on veut réécouter */
 $('exp1b') && ($('exp1b').onclick=async ()=>{
   const e=events[cur]; if(!e||!pcm) return;
@@ -856,6 +896,7 @@ $('fresh').onclick=()=>{
   if(urlLect){ URL.revokeObjectURL(urlLect); urlLect=null; }
   tLect=0; $('posAll').textContent='00:00'; $('durAll').textContent='—';
   $('playAll').textContent='▶ Écouter la séance';
+  clipId=null; range=false; $('msgA').innerHTML='';
   pcm=null;spg=null;events=[];chunks=[];recLen=0;rms=[];
   $('tabA').disabled=true;$('setup').style.display='flex';$('clock').textContent='00:00:00';
   $('stTxt').textContent="à l'arrêt";wipe();buildStrip();mode('t');
