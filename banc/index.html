@@ -91,6 +91,61 @@ input[type=range]{flex:1;accent-color:var(--gold);height:26px;min-width:0;touch-
 #murBox{display:none;margin-top:10px;height:30vh;min-height:160px;
   border:1px solid var(--line);border-radius:4px;overflow:hidden}
 body.avecmur #murBox{display:flex}
+#hud{display:none}
+#phraseBox{margin-top:12px}
+.ph{margin-top:6px;padding:12px;border:1px solid var(--line);border-radius:4px;background:#070C10;
+  font-family:var(--legend);text-transform:uppercase;letter-spacing:.05em;
+  font-size:clamp(18px,5.5vw,30px);line-height:1.25;color:var(--gold);min-height:56px;
+  word-break:break-word;text-shadow:0 0 26px rgba(233,180,76,.30)}
+.ph.vide{color:var(--dim);font-size:14px;letter-spacing:.1em;text-shadow:none}
+.ph .neuf{color:#FFF0C4;text-shadow:0 0 30px rgba(233,180,76,.75)}
+.chip{display:inline-flex;align-items:baseline;gap:5px;padding:3px 7px;border-radius:2px;
+  background:rgba(95,211,166,.07);border:1px solid rgba(95,211,166,.16);white-space:nowrap}
+.chip .k{font-family:var(--legend);text-transform:uppercase;letter-spacing:.12em;
+  font-size:8.5px;color:#6E8089}
+.chip .v{color:var(--text);font-size:11.5px}
+.chip.on{background:rgba(95,211,166,.16);border-color:rgba(95,211,166,.5)}
+.chip.alerte{background:rgba(233,180,76,.16);border-color:rgba(233,180,76,.55)}
+.chip.alerte .v{color:#F3D48A}
+
+/* ── écran fixe de séance : capteurs + caméra + mur + mots, sans rien toucher ──
+   C'est la position de travail : téléphone posé, écran tourné vers la pièce.
+   Chaque chose dans sa bande, aucune ne recouvre l'autre. */
+html.filming{height:100%;overflow:hidden}
+body.filming{position:fixed;inset:0;width:100%;height:100%;margin:0;padding:0;
+  overflow:hidden;overscroll-behavior:none;touch-action:none;
+  --hud:96px; --mot:104px; --cam:0px}
+body.filming.aveccam{ --cam:31vh; }
+/* en écran fixe, TOUT disparaît sauf les quatre bandes : bandeau, caméra,
+   mur, mots. Une page de réglages qui traîne derrière, c'est ce qui rendait
+   l'écran illisible. */
+body.filming .top,body.filming .wrap > *,body.filming #veilleStep > *,
+body.filming #camTag{display:none}
+body.filming #veilleStep{display:block;margin:0;border:0;padding:0}
+body.filming .wrap{max-width:none;padding:0;margin:0}
+body.filming #hud{display:flex !important;flex-wrap:wrap;gap:6px;position:fixed;left:0;right:0;top:0;z-index:60;
+  padding:calc(6px + env(safe-area-inset-top, 0px)) 10px 7px;
+  background:linear-gradient(180deg,rgba(4,8,11,.96),rgba(4,8,11,.82));
+  border-bottom:1px solid rgba(95,211,166,.20);font-family:var(--mono);font-size:11px}
+body.filming #camView{display:block !important;position:fixed;left:0;right:0;top:var(--hud);
+  width:100%;height:var(--cam);object-fit:cover;border:0;border-radius:0;z-index:45;
+  border-bottom:1px solid rgba(95,211,166,.20)}
+body.filming.avecmur #murBox{display:flex !important;position:fixed;left:0;right:0;
+  top:calc(var(--hud) + var(--cam));bottom:var(--mot);height:auto;margin:0;
+  border:0;border-radius:0;z-index:44}
+body.filming #phraseBox{display:block !important;position:fixed;left:0;right:0;bottom:0;z-index:60;margin:0;
+  padding:8px 10px calc(8px + env(safe-area-inset-bottom, 0px));
+  background:linear-gradient(0deg,rgba(4,8,11,.97),rgba(4,8,11,.85));
+  border-top:1px solid rgba(233,180,76,.22)}
+body.filming #phraseBox{padding-right:86px}   /* le bouton de capture flotte à droite */
+body.filming #phraseBox .lg{font-size:9px}
+body.filming .ph.vide{font-size:12px;letter-spacing:.08em}
+body.filming .ph{margin-top:4px;min-height:0;padding:6px 8px;border:0;background:transparent;
+  font-size:clamp(17px,5vw,26px);max-height:64px;overflow:hidden}
+#quitFix{display:none}
+body.filming #quitFix{display:block !important;position:fixed;z-index:61;right:10px;
+  top:calc(var(--hud) + 8px);padding:8px 11px;font-size:11px;
+  background:rgba(4,8,11,.9);border-color:rgba(95,211,166,.45);color:var(--signal)}
 #zmark{position:absolute;top:-3px;bottom:-3px;width:2px;background:var(--gold)}
 .zlab{display:flex;justify-content:space-between;margin-top:6px}
 #run{width:100%;margin-top:10px;padding:18px 0;font-size:16px;letter-spacing:.2em;
@@ -127,13 +182,13 @@ video{display:none}
   font-family:var(--mono);font-size:9px;color:var(--signal);
   background:rgba(10,15,18,.75);padding:1px 4px;border-radius:2px;pointer-events:none}
 </style>
-<link rel="stylesheet" href="/ghost-box/lib/ambiance.css?v=6">
+<link rel="stylesheet" href="/ghost-box/lib/ambiance.css?v=8">
 </head>
 <body>
 <div class="wrap">
 
 <p style="margin:14px 0 0"><a href="../" style="color:var(--dim);text-decoration:none;font-family:var(--mono);font-size:13px">← poste de terrain</a></p>
-<h1>Séance capteurs <span style="font-size:11px;color:var(--signal);letter-spacing:.12em">v18</span></h1>
+<h1>Séance capteurs <span style="font-size:11px;color:var(--signal);letter-spacing:.12em">v19</span></h1>
 <p class="sub">L'appareil est fait pour <b>se taire</b>. Il apprend le bruit normal du capteur, puis relève son seuil tant que ce bruit pourrait le faire parler. Un mot ne sort que si une mesure dépasse tout ce que l'appareil a vu de normal — <b>et le silence est le résultat attendu</b>. S'il n'y a rien, il n'y a rien.</p>
 
 <div class="step">
@@ -197,8 +252,9 @@ video{display:none}
   <p class="ex"><b>Voix</b> : le mot est prononcé en français, pour ne pas avoir à fixer l'écran. <b>À l'aveugle</b> : à chaque lancement, l'appareil tire à pile ou face entre le vrai capteur et un générateur aléatoire réglé sur la même statistique, sans dire lequel tourne. Tu notes tes impressions, puis tu révèles. C'est le seul moyen de savoir si le capteur apporte quelque chose.</p>
 </div>
 
-<div class="step">
+<div class="step" id="veilleStep">
   <div class="stepnum"><span class="n" id="n3">3</span><h2>Veille</h2><span class="r" id="upt"></span></div>
+  <div id="hud"></div>
   <div class="stage" id="stage">
     <div id="state">à l'arrêt</div>
     <div id="word" class="q">···</div>
@@ -209,6 +265,12 @@ video{display:none}
   <div id="murBox"></div>
   <div class="row">
     <button id="murBtn" class="tgl">Mur de mots</button>
+    <button id="fixBtn" class="tgl">Écran fixe</button>
+  </div>
+  <button id="quitFix" type="button">Quitter l'écran fixe</button>
+  <div id="phraseBox">
+    <div class="lg">ce qui a été retenu <span id="phCount" style="color:var(--paper)"></span></div>
+    <div id="phrase" class="ph vide">rien pour l'instant — c'est le résultat le plus fréquent</div>
   </div>
   <p id="murState" class="ex">Pendant toute la veille, le mur montre le vocabulaire à l'écran plutôt que de le garder dans un fichier : cinq colonnes qui défilent, une case de lecture qui les parcourt. Quand un capteur dépasse son seuil, <b>le mur se fige à cet instant</b> et le mot vient de la case. Les vitesses tournent entre les colonnes — aucune famille n'est durablement la plus rapide.</p>
   <button id="run" disabled>Lancer la veille</button>
@@ -247,9 +309,9 @@ video{display:none}
 <video id="vid2" playsinline muted></video>
 </div>
 
-<script src="/ghost-box/lib/moteur.js?v=6"></script>
-<script src="/ghost-box/lib/retour.js?v=6"></script>
-<script src="/ghost-box/lib/mur.js?v=6"></script>
+<script src="/ghost-box/lib/moteur.js?v=8"></script>
+<script src="/ghost-box/lib/retour.js?v=8"></script>
+<script src="/ghost-box/lib/mur.js?v=8"></script>
 <script>
 (() => {
 "use strict";
@@ -782,6 +844,7 @@ function tick(){
     $('zfill').style.background='var(--signal)';
     $('zfill').style.width=Math.min(100,(now-tPhase)/dur*100).toFixed(0)+'%';
     $('upt').textContent='apprentissage · '+dureeLisible((now-tPhase)/1000);
+    majHud(now,0);
     if(now-tPhase>=dur){
       for(const w of W){
         if(w.samples.length<30){ $('deriv').textContent='Pas assez de relevés sur '+w.label+' — choisis un autre capteur.'; stop(); return; }
@@ -840,7 +903,7 @@ function tick(){
     }
     if(z>maxz){ maxz=z; primary=w; }
   }
-  lastZ=maxz; drawZ(maxz);
+  lastZ=maxz; drawZ(maxz); majHud(now,maxz);
   $('upt').textContent='veille · '+dureeLisible((now-t0)/1000);
   $('zNow').textContent=maxz.toFixed(1).replace('.',',')+' σ';
   /* ── état vivant : depuis quand ça tourne, et ce que ça a donné ──
@@ -890,13 +953,80 @@ function drawZ(z){
 }
 function fmt(s){s=Math.max(0,s|0);return String(s/60|0).padStart(2,'0')+':'+String(s%60).padStart(2,'0');}
 
+/* ── bandeau de séance : tout ce qu'on doit lire sans toucher au téléphone ── */
+function chip(k,v,cls){ return '<span class="chip'+(cls?' '+cls:'')+'"><span class="k">'+k+'</span><span class="v">'+esc(String(v))+'</span></span>'; }
+let hudH=0;
+function majHud(now,maxz){
+  if(!filming) return;
+  const nMots=trace.filter(t=>!t.est_temoin).length;
+  let h = chip('veille', running? dureeLisible((now-t0)/1000) : 'à l\'arrêt', running?'on':'')
+    + chip('écart', maxz.toFixed(1).replace('.',',')+' σ', maxz>=(W[0]?W[0].thr*0.6:99)?'alerte':'')
+    + chip('seuil', W.map(w=>w.thr.toFixed(1)).join(' · ')+' σ','')
+    + chip('mots', nMots, nMots?'alerte':'');
+  W.forEach(w=> h += chip(w.label.slice(0,14), (w.v!=null? (+w.v).toFixed(2):'—')+(w.unit?' '+w.unit:''), ''));
+  if(phase==='learn') h += chip('apprentissage','en cours','alerte');
+  if(camActive) h += chip('caméra','active','on');
+  if(blind) h += chip('à l\'aveugle','oui','alerte');
+  $('hud').innerHTML=h;
+  const hh=$('hud').offsetHeight;
+  if(hh && Math.abs(hh-hudH)>2){ hudH=hh; document.body.style.setProperty('--hud',hh+'px'); }
+}
+/* la phrase : la suite exacte des mots retenus */
+function majPhrase(){
+  const mots = MUR? MUR.phrase() : trace.filter(t=>!t.est_temoin).map(t=>t.mot).reverse();
+  $('phCount').textContent = mots.length? '· '+mots.length : '';
+  const box=$('phrase');
+  if(!mots.length){ box.className='ph vide'; box.textContent='rien pour l\'instant — c\'est le résultat le plus fréquent'; return; }
+  box.className='ph';
+  box.innerHTML = mots.map((m,i)=> i===mots.length-1? '<span class="neuf">'+esc(m)+'</span>' : esc(m)).join(' ');
+}
+/* ── écran fixe : la position de travail ── */
+let filming=false, camRetour=null;
+function setFilming(on){
+  filming=!!on;
+  document.documentElement.classList.toggle('filming',filming);
+  document.body.classList.toggle('filming',filming);
+  document.body.classList.toggle('aveccam', filming && camActive);
+  // la vue caméra est flottante et déplaçable : sa position est écrite EN LIGNE,
+  // ce qui écrase toute mise en page. En écran fixe on la met de côté, et on la
+  // rend telle quelle en sortant — sinon la bande caméra reste haute de zéro.
+  const cvv=$('camView');
+  if(filming){
+    if(!cvv.dataset.avant) cvv.dataset.avant = cvv.getAttribute('style')||' ';
+    // géométrie posée EN LIGNE : c'est le seul moyen d'être sûr que rien
+    // (ni le CSS d'origine, ni le glisser-déposer) ne la reprenne
+    cvv.style.cssText='display:block;position:fixed;left:0;right:0;top:var(--hud);'
+      +'width:100%;height:var(--cam);object-fit:cover;z-index:45;border:0;border-radius:0;'
+      +'border-bottom:1px solid rgba(95,211,166,.20);margin:0;padding:0';
+    if(!camRetour){ camRetour={parent:cvv.parentNode, apres:cvv.nextSibling}; document.body.appendChild(cvv); }
+  } else if(cvv.dataset.avant!==undefined){
+    if(camRetour){ camRetour.parent.insertBefore(cvv, camRetour.apres); camRetour=null; }
+    const a=cvv.dataset.avant; delete cvv.dataset.avant;
+    if(a && a.trim()) cvv.setAttribute('style',a); else cvv.removeAttribute('style');
+  }
+  $('fixBtn').classList.toggle('on',filming);
+  if(filming){
+    try{GBWake.on();}catch(e){}
+    const el=document.documentElement, rq=el.requestFullscreen||el.webkitRequestFullscreen;
+    if(rq){ const r=rq.call(el,{navigationUI:'hide'}); if(r&&r.catch) r.catch(()=>{}); }
+    try{window.scrollTo(0,0);}catch(e){}
+  } else if(document.fullscreenElement||document.webkitFullscreenElement){
+    try{(document.exitFullscreen||document.webkitExitFullscreen).call(document);}catch(e){}
+  }
+  setTimeout(()=>{ if(MUR) MUR.placer(); },90);
+}
+$('fixBtn').onclick=()=>setFilming(!filming);
+$('quitFix').onclick=()=>setFilming(false);
+addEventListener('fullscreenchange',()=>{ if(!document.fullscreenElement && filming) setFilming(false); });
+addEventListener('touchmove',e=>{ if(filming) e.preventDefault(); },{passive:false});
+
 let MUR=null;
 $('murBtn').onclick=async ()=>{
   if(MUR){ MUR.arreter(); MUR=null; document.body.classList.remove('avecmur');
     $('murBtn').classList.remove('on'); $('murState').innerHTML='Mur éteint — le mot s\'affiche seul, comme avant.'; return; }
   try{
     const mots=await GBMur.lexique('../data/lexique.json');
-    MUR=GBMur.creer({hote:$('murBox'), mots:mots, graine:seed});
+    MUR=GBMur.creer({hote:$('murBox'), mots:mots, graine:seed, onMot:majPhrase});
     if(!MUR) throw new Error('indisponible');
     document.body.classList.add('avecmur'); MUR.demarrer(); $('murBtn').classList.add('on');
     $('murState').innerHTML='<b style="color:var(--signal)">Mur allumé</b> — '
@@ -953,7 +1083,7 @@ function emit(now){
     z:+zc.toFixed(2), seuil_auto:+W[0].thr.toFixed(2), index_calcule:idx, rehash:usedSalt, est_temoin:!realMode,
     contributeurs: W.map(w=>({code:w.code, valeur:+w.v.toFixed(3), moyenne:+w.moy.toFixed(3), ecart_type:+w.sd.toFixed(4), z:+w.z.toFixed(2), seuil:+w.thr.toFixed(2)})),
     preuve: preuve });
-  renderTrace();
+  renderTrace(); majPhrase();
 
   if(speak && window.speechSynthesis){
     const u=new SpeechSynthesisUtterance(mot); u.lang='fr-FR'; u.rate=.9; speechSynthesis.speak(u);
@@ -1011,7 +1141,7 @@ $('camAi').onclick=async ()=>{
   if(!camActive){ $('aiState').textContent="Active d'abord la caméra."; return; }
   $('aiState').textContent='Chargement du modèle (~5 Mo, une seule fois)…';
   try{
-    if(!POSE) POSE=await import('/ghost-box/lib/pose.js?v=6');
+    if(!POSE) POSE=await import('/ghost-box/lib/pose.js?v=8');
     await POSE.load();
     aiOn=true; $('camAi').className='act';
     $('aiState').innerHTML='Détection active — un squelette n\'apparaît que si une <b>personne réelle</b> est reconnue. Dans le noir, le modèle ne voit rien : c\'est normal.';
@@ -1195,9 +1325,9 @@ addEventListener('load',function(){ try{ GBCapture.init({label:'seance-capteurs'
 })();
 </script>
 <script>if('serviceWorker' in navigator){window.addEventListener('load',function(){navigator.serviceWorker.register('/ghost-box/sw.js').catch(function(){});});}</script>
-<script src="/ghost-box/lib/wakelock.js?v=6"></script>
-<script src="/ghost-box/lib/media.js?v=6"></script>
-<script src="/ghost-box/lib/capture.js?v=6"></script>
-<script src="/ghost-box/lib/fullscreen.js?v=6"></script>
+<script src="/ghost-box/lib/wakelock.js?v=8"></script>
+<script src="/ghost-box/lib/media.js?v=8"></script>
+<script src="/ghost-box/lib/capture.js?v=8"></script>
+<script src="/ghost-box/lib/fullscreen.js?v=8"></script>
 </body>
 </html>

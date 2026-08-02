@@ -23,10 +23,10 @@
 }
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
 html,body{margin:0;background:var(--bench);color:var(--text);font-family:var(--body);-webkit-font-smoothing:antialiased}
-body{padding:0 0 calc(env(safe-area-inset-bottom) + 24px)}
+body{padding:0 0 calc(env(safe-area-inset-bottom, 0px) + 24px)}
 .wrap{max-width:660px;margin:0 auto;padding:0 12px}
 .top{position:sticky;top:0;z-index:20;background:rgba(10,15,18,.96);backdrop-filter:blur(8px);
-  border-bottom:1px solid var(--line);padding:env(safe-area-inset-top) 0 0}
+  border-bottom:1px solid var(--line);padding:env(safe-area-inset-top, 0px) 0 0}
 .topin{max-width:660px;margin:0 auto;padding:10px 12px;display:flex;align-items:center;gap:10px}
 .topin a{color:var(--dim);text-decoration:none;font-family:var(--mono);font-size:16px}
 .topin h1{font-family:var(--legend);text-transform:uppercase;letter-spacing:.18em;font-size:15px;font-weight:600;margin:0;flex:1}
@@ -63,41 +63,81 @@ td.w{font-family:var(--body);font-size:14px;color:var(--paper)}
   font-size:12.5px;line-height:1.55;color:#E4D3AE}
 video{display:none}
 #vid2,#vid3,#vid4{display:none}
-/* ── écran fixe de tournage (mobile) ──
-   Pendant le tournage l'écran ne doit plus bouger : pas de défilement, pas de
-   rebond élastique, pas de barre qui apparaît. L'image occupe tout l'écran et
-   les seules commandes qui restent flottent par-dessus. */
+/* ── écran fixe de tournage ──
+   Un poste de terrain, pas une page web qui glisse. L'écran est découpé en
+   bandes qui ne se recouvrent JAMAIS : information en haut, image au milieu,
+   mur en bas, commandes tout en bas. La première version laissait le texte
+   passer sous le mur et les boutons se marcher dessus — sur un téléphone tenu
+   au bout d'une perche, c'est inutilisable. */
 html.filming{height:100%;overflow:hidden}
 body.filming{position:fixed;inset:0;width:100%;height:100%;padding:0;margin:0;
-  overflow:hidden;overscroll-behavior:none;touch-action:none}
+  overflow:hidden;overscroll-behavior:none;touch-action:none;
+  --hud:78px;                                  /* bandeau d'information */
+  --barre:calc(78px + env(safe-area-inset-bottom, 0px));  /* commandes du bas */
+  --mur:0px;}
+body.filming.avecmur{ --mur:31vh; }
 body.filming .top,body.filming #setup,body.filming #jSec,
-body.filming #aiState,body.filming #sonState,body.filming .row{display:none}
+body.filming #aiState,body.filming #sonState,body.filming #murState,
+body.filming #incrustState,body.filming .row{display:none}
 body.filming .wrap{max-width:none;padding:0;margin:0}
-body.filming #stageWrap{position:fixed;inset:0;margin:0;border:0;border-radius:0;background:#000;
-  display:flex;align-items:center;justify-content:center;z-index:40}
-body.filming #stage{width:auto;height:auto;max-width:100%;max-height:100%}
-body.filming #recBtn{position:fixed;z-index:60;left:10px;right:86px;width:auto;margin:0;
-  bottom:calc(14px + env(safe-area-inset-bottom));padding:16px 0;opacity:.94}
-body.filming #live{position:fixed;z-index:60;left:0;right:0;top:0;margin:0;
-  padding:6px 10px calc(6px) 10px;padding-top:calc(6px + env(safe-area-inset-top));
-  background:rgba(10,15,18,.6);font-size:11px;line-height:1.45}
+
+/* l'image : elle prend TOUTE la place qui reste, jamais moins */
+body.filming #stageWrap{position:fixed;left:0;right:0;background:#000;margin:0;
+  border:0;border-radius:0;z-index:40;display:flex;align-items:center;justify-content:center;
+  top:var(--hud);
+  bottom:calc(var(--barre) + var(--mur));}
+body.filming #stage{width:100%;height:100%;object-fit:contain}
+
+/* ── le mur prend TOUTE la place que l'image ne peut pas occuper ──
+   Une image 16/9 sur un écran de téléphone ne remplit jamais la hauteur : le
+   reste était du noir perdu. L'image garde sa taille naturelle (rien n'est
+   rogné, on voit exactement ce qui est enregistré) et le mur occupe le reste. */
+body.filming.avecmur #stageWrap{ height:var(--img); bottom:auto; }
+body.filming.avecmur #murBox{position:fixed;left:0;right:0;
+  top:calc(var(--hud) + var(--img));bottom:var(--barre);height:auto;
+  margin:0;border:0;border-top:1px solid rgba(95,211,166,.25);
+  border-radius:0;z-index:45;display:flex}
+
+/* ── le bandeau d'information : ce qu'un opérateur doit voir sans réfléchir ── */
+body.filming #live{position:fixed;left:0;right:0;top:0;margin:0;z-index:60;
+  padding:calc(6px + env(safe-area-inset-top, 0px)) 10px 7px;
+  background:linear-gradient(180deg,rgba(4,8,11,.96),rgba(4,8,11,.82));
+  border-bottom:1px solid rgba(95,211,166,.20);
+  font-family:var(--mono);font-size:11px;line-height:1.35;color:var(--dim);
+  display:flex;flex-direction:column;gap:5px;overflow:hidden}
+.hud1{display:flex;align-items:center;gap:8px;flex-wrap:nowrap;overflow:hidden}
+.hud2{display:flex;align-items:center;gap:6px;flex-wrap:wrap;overflow:hidden}
+.chip{display:inline-flex;align-items:baseline;gap:5px;padding:3px 7px;border-radius:2px;
+  background:rgba(95,211,166,.07);border:1px solid rgba(95,211,166,.16);white-space:nowrap}
+.chip .k{font-family:var(--legend);text-transform:uppercase;letter-spacing:.12em;
+  font-size:8.5px;color:#6E8089}
+.chip .v{color:var(--text);font-size:11.5px}
+.chip.on{background:rgba(95,211,166,.16);border-color:rgba(95,211,166,.5)}
+.chip.rec{background:rgba(226,87,76,.18);border-color:rgba(226,87,76,.6);color:#FFD9D5}
+.chip.rec .v{color:#FFB9B2}
+.chip.alerte{background:rgba(233,180,76,.16);border-color:rgba(233,180,76,.55)}
+.chip.alerte .v{color:#F3D48A}
+.vu{flex:1;min-width:60px;height:6px;border-radius:3px;background:#16222A;overflow:hidden;position:relative}
+.vu i{display:block;height:100%;background:var(--signal);width:0}
+.vu.fort i{background:var(--flag)}
+
+/* commandes du bas : chacune sa place, aucun chevauchement */
+body.filming #recBtn{position:fixed;z-index:60;left:10px;right:88px;width:auto;margin:0;
+  bottom:calc(12px + env(safe-area-inset-bottom, 0px));padding:17px 0;opacity:.96}
 #murBox{display:none;margin-top:10px;height:32vh;min-height:170px;
   border:1px solid var(--line);border-radius:4px;overflow:hidden}
 body.avecmur #murBox{display:flex}
-body.filming.avecmur #stageWrap{inset:0 0 42% 0}
-body.filming.avecmur #murBox{position:fixed;left:0;right:0;bottom:0;height:42%;
-  margin:0;border:0;border-top:1px solid var(--line);border-radius:0;z-index:45;display:flex}
 #quitFix{display:none}
 body.filming #quitFix{display:block;position:fixed;z-index:61;right:10px;
-  top:calc(46px + env(safe-area-inset-top));padding:8px 10px;font-size:11px;
-  background:rgba(20,26,30,.85)}
+  top:calc(var(--hud) + 8px);padding:8px 11px;font-size:11px;
+  background:rgba(4,8,11,.9);border-color:rgba(95,211,166,.45);color:var(--signal)}
 </style>
-<link rel="stylesheet" href="/ghost-box/lib/ambiance.css?v=6">
+<link rel="stylesheet" href="/ghost-box/lib/ambiance.css?v=8">
 </head>
 <body>
 
 <div class="top"><div class="topin">
-  <a href="../">←</a><h1>Séance caméra <span style="font-size:10px;color:var(--signal)">v2</span></h1>
+  <a href="../">←</a><h1>Séance caméra <span style="font-size:10px;color:var(--signal)">v3</span></h1>
   <span class="lg" id="phase">à préparer</span>
 </div></div>
 
@@ -163,13 +203,13 @@ body.filming #quitFix{display:block;position:fixed;z-index:61;right:10px;
 <video id="vid3" playsinline muted></video>
 <video id="vid4" playsinline muted></video>
 
-<script src="/ghost-box/lib/moteur.js?v=6"></script>
-<script src="/ghost-box/lib/retour.js?v=6"></script>
-<script src="/ghost-box/lib/secours.js?v=6"></script>
-<script src="/ghost-box/lib/tampon.js?v=6"></script>
-<script src="/ghost-box/lib/mur.js?v=6"></script>
-<script src="/ghost-box/lib/media.js?v=6"></script>
-<script src="/ghost-box/lib/wakelock.js?v=6"></script>
+<script src="/ghost-box/lib/moteur.js?v=8"></script>
+<script src="/ghost-box/lib/retour.js?v=8"></script>
+<script src="/ghost-box/lib/secours.js?v=8"></script>
+<script src="/ghost-box/lib/tampon.js?v=8"></script>
+<script src="/ghost-box/lib/mur.js?v=8"></script>
+<script src="/ghost-box/lib/media.js?v=8"></script>
+<script src="/ghost-box/lib/wakelock.js?v=8"></script>
 <script>
 (() => {
 "use strict";
@@ -426,6 +466,46 @@ $('incrustBtn').onclick=()=>{
   if(tampon && tampon.actif() && !tampon.enGarde()){ tampArrete(); tampDemarre(); }
 };
 
+/* ── le bandeau d'information de l'écran fixe ──
+   Ce qu'un opérateur doit pouvoir lire d'un coup d'œil, sans réfléchir et sans
+   toucher à rien : depuis quand il tourne, s'il enregistre, ce que le micro
+   entend, ce que l'image bouge, combien de personnes sont vues, où en sont les
+   seuils, et ce que le dernier mot a été. Chaque valeur dans sa case, jamais
+   une phrase à déchiffrer. */
+let hudH=0, imgH=0;
+function chip(k,v,cls){ return '<span class="chip'+(cls?' '+cls:'')+'"><span class="k">'+k+'</span><span class="v">'+v+'</span></span>'; }
+function hud(now, frac){
+  const lvl=Math.max(0,Math.min(1,(level+70)/60));
+  const pers=(function(){ let n=0; for(let i=0;i<poseVues.length;i++){ const pv=poseVues[i];
+    if(pv && now-pv.t<900) n+=pv.people.length; } return n; })();
+  const seuils = (WA.ready||WM.ready)
+    ? (WA.ready? WA.thr.toFixed(1):'—')+' / '+(WM.ready? WM.thr.toFixed(1):'—')+' σ'
+    : 'non armés';
+  const l1 = chip('temps', tStart? duree((now-tStart)/1000) : '—', 'on')
+    + (recording? chip('rec', fmt((now-recStart)/1000)+(prerollDernier?' +'+prerollDernier+'s':''), 'rec') : '')
+    + (tampon&&tampon.actif()&&!tampon.enGarde()? chip('tampon', Math.round(tampon.dispo())+' s', '') : '')
+    + '<span class="vu'+(lvl>.85?' fort':'')+'"><i style="width:'+(lvl*100).toFixed(0)+'%"></i></span>'
+    + chip('son', level.toFixed(0)+' dB', silence>50?'alerte':'');
+  const l2 = chip('mouv', frac.toFixed(1)+' %', box?'alerte':'')
+    + chip('vues', nbVues()+(aiOn? ' · '+pers+' pers.' : ''), aiOn&&pers?'on':'')
+    + chip('seuils', seuils, '')
+    + chip('présence', mHits+' / témoin '+cHits, '')
+    + (learning? chip('apprentissage', Math.ceil((LEARN_MS-(now-tLearn))/1000)+' s','alerte') : '')
+    + (lastWord? chip('mot', lastWord.toUpperCase(), (now-lastWordT<9000)?'alerte':'') : '');
+  $('live').innerHTML = '<div class="hud1">'+l1+'</div><div class="hud2">'+l2+'</div>';
+  // le bandeau fait la hauteur de son contenu : c'est lui qui dit à l'image
+  // où commencer, sinon une ligne de trop passe sous l'image ou par-dessus
+  const h=$('live').offsetHeight;
+  if(h && Math.abs(h-hudH)>2){ hudH=h; document.body.style.setProperty('--hud',h+'px'); }
+  // hauteur réelle de l'image à l'écran : ni plus (ce serait du noir), ni moins
+  if(cv.width && cv.height){
+    const dispo=window.innerHeight-h-90;
+    const nat=window.innerWidth*cv.height/cv.width;
+    const img=Math.max(120,Math.min(nat,dispo-150));
+    if(Math.abs(img-imgH)>2){ imgH=img; document.body.style.setProperty('--img',Math.round(img)+'px'); }
+  }
+}
+
 /* ── écran fixe de tournage ──
    Sur un téléphone au bout d'une perche, la page ne doit plus bouger : pas de
    défilement, pas de rebond, pas de barre d'adresse qui remonte. L'image occupe
@@ -477,7 +557,7 @@ $('aiBtn').onclick=async ()=>{
   if(!vstream){ $('aiState').textContent="Prépare d'abord le tournage."; return; }
   $('aiState').textContent='Chargement du modèle (~5 Mo, une seule fois)…';
   try{
-    if(!POSE) POSE=await import('/ghost-box/lib/pose.js?v=6');
+    if(!POSE) POSE=await import('/ghost-box/lib/pose.js?v=8');
     await POSE.load();
     aiOn=true; $('aiBtn').className='act';
     $('aiState').innerHTML='Détection active — jusqu\'à <b>4 personnes suivies en même temps</b>, chacune avec sa couleur et son numéro. Les squelettes s\'incrustent dans la vidéo enregistrée, et seulement si une personne réelle est reconnue.';
@@ -605,7 +685,8 @@ function measure(tok){
     ? ' · <b style="color:var(--flag)">aucun son ne parvient au micro</b>' : '';
   const cams = nbVues()>1 ? ' · <b>'+nbVues()+' caméras</b>'+(stackV?' empilées':'') : '';
   const depuis = tStart? ' · séance depuis <b>'+duree((now-tStart)/1000)+'</b>' : '';
-  $('live').innerHTML = learning
+  if(filming){ hud(now, frac); }
+  else $('live').innerHTML = learning
     ? 'Apprentissage — reste <b>'+Math.ceil((LEARN_MS-(now-tLearn))/1000)+' s</b>. Niveau '+level.toFixed(0)+' dBFS, mouvement '+frac.toFixed(1)+' %.'+mute+cams+depuis
     : 'Niveau <b>'+level.toFixed(0)+'</b> dBFS · mouvement <b>'+frac.toFixed(1)+'</b> % · seuils auto : son '
       +(WA.ready? WA.thr.toFixed(1)+' σ' : 'non armé')+', image '+(WM.ready? WM.thr.toFixed(1)+' σ' : 'non armé')
@@ -978,7 +1059,7 @@ addEventListener('load',function(){ try{ GBCapture.init({label:($('lieu').value|
 })();
 </script>
 <script>if('serviceWorker' in navigator){window.addEventListener('load',function(){navigator.serviceWorker.register('/ghost-box/sw.js').catch(function(){});});}</script>
-<script src="/ghost-box/lib/capture.js?v=6"></script>
-<script src="/ghost-box/lib/fullscreen.js?v=6"></script>
+<script src="/ghost-box/lib/capture.js?v=8"></script>
+<script src="/ghost-box/lib/fullscreen.js?v=8"></script>
 </body>
 </html>
