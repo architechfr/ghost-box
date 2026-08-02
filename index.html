@@ -51,7 +51,10 @@ td.v{font-family:var(--mono);font-size:12.5px}
 code{font-family:var(--mono);font-size:12px;color:var(--paper)}
 footer{margin-top:30px;font-size:12px;color:#4E5C64}
 footer a{color:var(--dim)}
+  .card .det{color:#6E7C84;font-size:12.5px;line-height:1.6;margin-top:8px;
+    padding-top:8px;border-top:1px solid rgba(95,211,166,.12)}
 </style>
+<link rel="stylesheet" href="/ghost-box/lib/ambiance.css?v=6">
 </head>
 <body>
 <div class="wrap">
@@ -63,19 +66,22 @@ footer a{color:var(--dim)}
 
 <a class="card" href="seance/">
   <h2>Séance caméra <span class="arrow">→</span></h2>
-  <p>Une ou <b>plusieurs caméras à la fois</b>, composées dans une seule image : tous les objectifs, détection de personne sur chaque vue, cadre du mouvement, son de la box radio. L'appareil peut <b>incruster dans la vidéo</b> le lieu, l'heure, le niveau sonore, les squelettes et les mots — ou enregistrer l'image brute, au choix. Mémoire tampon pour récupérer les secondes d'avant ton geste, mur de mots à côté de l'image, écran fixe pour poser le téléphone.</p>
+  <p>Jusqu'à <b>quatre caméras à la fois</b>, composées dans une seule image, avec le son de la box. Détection de personne sur chaque vue, cadre du mouvement, mur de mots à côté de l'image.</p>
+  <p class="det">Incrustation du lieu, de l'heure et des mots dans la vidéo — ou image brute, au choix. Mémoire tampon : les secondes d'<b>avant</b> ton geste sont gardées. Écran fixe pour poser le téléphone.</p>
   <span class="when">→ que tu explores un lieu à la perche ou que tu poses le téléphone dans une pièce</span>
 </a>
 
 <a class="card g" href="banc/">
   <h2>Séance capteurs <span class="arrow">→</span></h2>
-  <p>Les capteurs de l'appareil sondés en direct, seuil auto-calibré contre le bruit réel, coïncidence entre capteurs, mode témoin à l'aveugle, trace exportable. Le <b>mur de mots</b> peut y montrer le vocabulaire pendant toute la veille.</p>
+  <p>Les capteurs de l'appareil sondés en direct. Un mot ne sort que si une mesure dépasse <b>tout ce que le bruit du lieu sait produire</b>.</p>
+  <p class="det">Seuil auto-calibré, coïncidence entre capteurs, mode témoin à l'aveugle, trace exportable. Le mur de mots peut y montrer le vocabulaire pendant toute la veille.</p>
   <span class="when">→ pour laisser l'appareil en veille, sans rien toucher</span>
 </a>
 
 <a class="card g" href="mur/">
   <h2>Mur seul <span class="arrow">→</span></h2>
-  <p>Le mur de mots sans caméra : téléphone posé, écran tourné vers la pièce. Cinq colonnes qui défilent — réponses, personnes, lieux, actions, états — et une case de lecture qui les parcourt. Les vitesses tournent d'une colonne à l'autre : aucune famille n'est durablement la plus rapide. Le micro sert de capteur.</p>
+  <p>Le vocabulaire entier, <b>montré</b> : cinq colonnes qui tombent dans le noir et une case de lecture qui les parcourt. Écran tourné vers la pièce.</p>
+  <p class="det">Quand une mesure dépasse le seuil, le mur se fige et le mot de la case est retenu. Les mots retenus s'accumulent dans l'ordre : <b>une phrase se construit sur la durée d'une séance</b>. Le micro sert de capteur, les vitesses tournent entre les colonnes.</p>
   <span class="when">→ pour montrer ce qu'on propose, plutôt que de le garder pour soi</span>
 </a>
 
@@ -142,6 +148,6 @@ document.getElementById('ctx').innerHTML = ios
 })();
 </script>
 <script>if('serviceWorker' in navigator){window.addEventListener('load',function(){navigator.serviceWorker.register('/ghost-box/sw.js').catch(function(){});});}</script>
-<script src="/ghost-box/lib/fullscreen.js?v=4"></script>
+<script src="/ghost-box/lib/fullscreen.js?v=6"></script>
 </body>
 </html>

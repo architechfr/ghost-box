@@ -1,0 +1,90 @@
+/* ═══════════════════════════════════════════════════════════════════════
+   Ambiance — l'identité visuelle, en une seule couche, sur toutes les pages.
+
+   Ce qu'elle fait : elle pose l'atmosphère (grain, vignettage, halo froid,
+   veinure de balayage) et affine ce qui existe déjà — titres, boutons actifs,
+   cartes. Ce qu'elle ne fait PAS : redéfinir les mises en page. Chaque page
+   garde sa structure ; cette feuille ne fait qu'ajouter par-dessus. Une règle
+   de trop ici casse six pages à la fois — n'ajouter que de l'additif.
+
+   L'appareil est un instrument de mesure posé dans le noir : la couleur ne
+   doit jamais être décorative. Le vert du signal dit « ça mesure », l'or dit
+   « quelque chose est retenu », le rouge dit « attention, ou essai ». Rien
+   d'autre ne doit briller.
+   ═══════════════════════════════════════════════════════════════════════ */
+
+:root{
+  --halo:  rgba(95,211,166,.55);
+  --halo2: rgba(95,211,166,.18);
+  --nuit:  #05090C;
+}
+
+/* ── le fond : une nuit qui n'est pas plate ──
+   deux lueurs très basses + un grain fin, pour que l'écran ait de la
+   profondeur sans jamais gêner la lecture d'un chiffre. */
+html{ background:var(--nuit); }
+body{
+  background-color:var(--nuit);
+  background-image:
+    radial-gradient(1100px 620px at 12% -8%, rgba(95,211,166,.055), transparent 60%),
+    radial-gradient(900px 520px at 92% 8%, rgba(120,150,190,.045), transparent 62%);
+  background-attachment:fixed;
+}
+body::before{
+  content:"";position:fixed;inset:0;z-index:0;pointer-events:none;
+  /* grain : un bruit très léger, comme sur une pellicule poussée */
+  background-image:url("data:image/svg+xml;utf8,\
+<svg xmlns='http://www.w3.org/2000/svg' width='140' height='140'>\
+<filter id='n'><feTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='2'/>\
+<feColorMatrix type='saturate' values='0'/></filter>\
+<rect width='140' height='140' filter='url(%23n)' opacity='.42'/></svg>");
+  opacity:.05;mix-blend-mode:screen;
+}
+body::after{
+  content:"";position:fixed;inset:0;z-index:0;pointer-events:none;
+  /* vignettage + veinure horizontale : l'écran d'un appareil, pas d'un site */
+  background:
+    repeating-linear-gradient(to bottom, rgba(255,255,255,.014) 0 1px, transparent 1px 3px),
+    radial-gradient(120% 90% at 50% 45%, transparent 55%, rgba(0,0,0,.55) 100%);
+}
+/* le contenu passe au-dessus des deux couches */
+body > *{ position:relative; z-index:1; }
+
+/* ── titres : la ligne de crête de l'identité ── */
+.topin h1, h1, h2{ text-shadow:0 0 18px rgba(95,211,166,.16); }
+.top{ box-shadow:0 10px 30px -22px rgba(0,0,0,.9); }
+.lg{ color:#7E8E96; }
+
+/* ── boutons : discrets au repos, francs quand ils comptent ── */
+button{ transition:border-color .14s ease, color .14s ease, background-color .14s ease, box-shadow .14s ease; }
+button:hover{ border-color:#3B4B53; }
+button.act, button.on{ box-shadow:0 0 0 1px rgba(95,211,166,.10), 0 0 22px -6px var(--halo); }
+button.ko{ box-shadow:0 0 22px -8px rgba(226,87,76,.75); }
+
+/* ── ce qui mesure : cadres et scènes ── */
+.frame, .stage, #stageWrap, #mur, #murBox, #stage{
+  box-shadow:inset 0 0 60px -30px rgba(95,211,166,.30), 0 12px 34px -28px #000;
+}
+.stage.alert{ box-shadow:inset 0 0 70px -24px rgba(233,180,76,.45), 0 0 40px -18px rgba(233,180,76,.35); }
+
+/* ── cartes de l'accueil : on doit avoir envie d'y entrer ── */
+.card{ transition:border-color .16s ease, transform .16s ease, box-shadow .16s ease; }
+.card:hover{ border-color:#3E5259; transform:translateY(-1px);
+  box-shadow:0 18px 40px -32px #000, 0 0 40px -26px var(--halo); }
+.card:active{ transform:translateY(0); }
+.card h2{ letter-spacing:.02em; }
+
+/* ── le mot : quand quelque chose est retenu, ça doit se voir de loin ── */
+#word:not(.q){ text-shadow:0 0 34px rgba(233,180,76,.45); }
+
+/* ── liens ── */
+a{ text-decoration-thickness:1px; text-underline-offset:2px; }
+
+/* En écran fixe ou en séance assise, l'ambiance disparaît : à ce moment-là
+   l'image et les mots doivent être seuls, sans un pixel de décoration. */
+body.filming::before, body.filming::after,
+body.assis::before,  body.assis::after{ display:none; }
+
+@media (prefers-reduced-motion: reduce){
+  button, .card{ transition:none; }
+}

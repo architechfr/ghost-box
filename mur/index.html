@@ -53,6 +53,13 @@ th{font-family:var(--legend);text-transform:uppercase;letter-spacing:.12em;font-
 td{padding:7px 6px 7px 0;border-bottom:1px solid var(--hair);font-family:var(--mono);font-size:12px;vertical-align:top}
 td.w{font-family:var(--body);font-size:14px;color:var(--paper)}
 .empty{color:var(--dim);font-size:13px;padding:12px 0}
+#phraseBox{margin-top:14px;border-top:1px solid var(--line);padding-top:12px}
+.ph{margin-top:8px;padding:14px 12px;border:1px solid var(--line);border-radius:4px;
+  background:#070C10;font-family:var(--legend);text-transform:uppercase;letter-spacing:.05em;
+  font-size:clamp(20px,6.5vw,34px);line-height:1.25;color:var(--gold);min-height:64px;
+  word-break:break-word;text-shadow:0 0 26px rgba(233,180,76,.30)}
+.ph.vide{color:var(--dim);font-size:15px;letter-spacing:.12em;text-shadow:none}
+.ph .neuf{color:#FFF0C4;text-shadow:0 0 30px rgba(233,180,76,.75)}
 /* le décor du mur — colonnes, case de lecture, gel — vit dans lib/mur.js */
 #mur{position:relative;margin-top:12px;border:1px solid var(--line);border-radius:4px;
   height:52vh;min-height:280px}
@@ -60,7 +67,8 @@ td.w{font-family:var(--body);font-size:14px;color:var(--paper)}
 html.filming{height:100%;overflow:hidden}
 body.filming{position:fixed;inset:0;width:100%;height:100%;padding:0;margin:0;
   overflow:hidden;overscroll-behavior:none;touch-action:none}
-body.filming .top,body.filming #setup,body.filming #trace,body.filming .row,body.filming #etat{display:none}
+body.filming .top,body.filming #setup,body.filming #trace,body.filming .row,
+body.filming #etat,body.filming #phraseBox{display:none}
 body.filming .wrap{max-width:none;padding:0;margin:0}
 body.filming #mur{position:fixed;inset:0;height:100%;margin:0;border:0;border-radius:0;z-index:40}
 #quitFix{display:none}
@@ -68,11 +76,12 @@ body.filming #quitFix{display:block;position:fixed;z-index:61;right:10px;
   top:calc(10px + env(safe-area-inset-top));padding:8px 10px;font-size:11px;
   background:rgba(20,26,30,.85)}
 </style>
+<link rel="stylesheet" href="/ghost-box/lib/ambiance.css?v=6">
 </head>
 <body>
 
 <div class="top"><div class="topin">
-  <a href="../">←</a><h1>Mur seul <span style="font-size:10px;color:var(--signal)">v3</span></h1>
+  <a href="../">←</a><h1>Mur seul <span style="font-size:10px;color:var(--signal)">v4</span></h1>
   <span class="lg" id="phase">à préparer</span>
 </div></div>
 
@@ -93,6 +102,18 @@ body.filming #quitFix{display:block;position:fixed;z-index:61;right:10px;
 </div>
 
 <div id="mur"></div>
+<div id="phraseBox">
+  <div class="lg" style="display:flex;justify-content:space-between;align-items:baseline">
+    <span>ce qui a été retenu</span><span class="lg" id="phCount" style="color:var(--paper)"></span>
+  </div>
+  <div id="phrase" class="ph vide">—</div>
+  <div class="row">
+    <button id="phDire">Relire à voix haute</button>
+    <button id="phCopier">Copier</button>
+    <button id="phVider">Nouvelle phrase</button>
+  </div>
+  <p class="ex">C'est la suite <b>exacte</b> des mots retenus, dans l'ordre où ils sont sortis. L'appareil n'ajoute aucun mot, n'en réordonne aucun, ne conjugue rien, ne met ni article ni liaison. Ce n'est pas une phrase fabriquée : c'est ce qui a été mesuré, mis bout à bout. Le sens, s'il y en a un, ne vient pas d'ici — et un anti-rafale d'une minute sépare deux mots, donc <b>une phrase se construit sur la durée d'une séance</b>, pas en trente secondes.</p>
+</div>
 <button id="quitFix" type="button">Quitter</button>
 <div class="row">
   <button id="fixBtn">Écran fixe</button>
@@ -112,12 +133,12 @@ body.filming #quitFix{display:block;position:fixed;z-index:61;right:10px;
 
 </div>
 
-<script src="/ghost-box/lib/wakelock.js?v=5"></script>
-<script src="/ghost-box/lib/retour.js?v=5"></script>
-<script src="/ghost-box/lib/media.js?v=5"></script>
-<script src="/ghost-box/lib/moteur.js?v=5"></script>
-<script src="/ghost-box/lib/mur.js?v=5"></script>
-<script src="/ghost-box/lib/fullscreen.js?v=5"></script>
+<script src="/ghost-box/lib/wakelock.js?v=6"></script>
+<script src="/ghost-box/lib/retour.js?v=6"></script>
+<script src="/ghost-box/lib/media.js?v=6"></script>
+<script src="/ghost-box/lib/moteur.js?v=6"></script>
+<script src="/ghost-box/lib/mur.js?v=6"></script>
+<script src="/ghost-box/lib/fullscreen.js?v=6"></script>
 <script>
 (() => {
 "use strict";
@@ -136,7 +157,7 @@ const M=window.GBMoteur;
    caméra et la séance capteurs. Une seule implémentation, un seul comportement. */
 let MUR=null, pret=false;
 GBMur.lexique('../data/lexique.json').then(mots=>{
-  MUR=GBMur.creer({hote:$('mur'), mots:mots, vitesse:+$('vit').value});
+  MUR=GBMur.creer({hote:$('mur'), mots:mots, vitesse:+$('vit').value, onMot:majPhrase});
   if(!MUR){ $('colonnes').innerHTML='<b style="color:var(--flag)">Mur indisponible.</b>'; return; }
   MUR.demarrer(); pret=true;
   $('colonnes').innerHTML='Colonnes : '+MUR.colonnes().map(c=>'<b>'+c.famille+'</b> ('+c.mots+')').join(' · ')
@@ -144,6 +165,34 @@ GBMur.lexique('../data/lexique.json').then(mots=>{
     +'aucune famille n\'est durablement la plus rapide, et aucun mot ne passe systématiquement en coup de vent. '
     +'Graine de session <b>'+MUR.graine+'</b> — le défilement est reproductible.';
 }).catch(()=>{ $('colonnes').innerHTML='<b style="color:var(--flag)">Lexique introuvable.</b> Le mur ne peut pas s\'ouvrir.'; });
+
+/* ── la phrase : rien n'est ajouté, rien n'est réordonné ── */
+function majPhrase(){
+  if(!MUR) return;
+  const mots=MUR.phrase();
+  $('phCount').textContent = mots.length? mots.length+' mot'+(mots.length>1?'s':'') : '';
+  const box=$('phrase');
+  if(!mots.length){ box.className='ph vide'; box.textContent='rien pour l\'instant — c\'est le résultat le plus fréquent'; return; }
+  box.className='ph';
+  box.innerHTML = mots.map((m,i)=> i===mots.length-1? '<span class="neuf">'+esc(m)+'</span>' : esc(m)).join(' ');
+}
+$('phDire').onclick=()=>{
+  if(!MUR||!window.speechSynthesis) return;
+  const t=MUR.phrase().join(', ');
+  if(!t) return;
+  try{ const u=new SpeechSynthesisUtterance(t); u.lang='fr-FR'; u.rate=.85; speechSynthesis.speak(u); }catch(e){}
+};
+$('phCopier').onclick=async ()=>{
+  if(!MUR) return;
+  const t=MUR.phrase().join(' ');
+  try{ await navigator.clipboard.writeText(t); $('phCount').textContent='copié'; setTimeout(majPhrase,1200); }
+  catch(e){ $('phCount').textContent='copie refusée'; }
+};
+$('phVider').onclick=()=>{
+  if(!MUR) return;
+  if(MUR.phrase().length && !confirm('Repartir d\'une phrase vide ? Les mots restent dans la trace.')) return;
+  MUR.effacerPhrase(); majPhrase();
+};
 
 function figer(info,test){
   if(!MUR) return null;
@@ -238,7 +287,7 @@ $('essai').onclick=()=>{ if(MUR && !MUR.estFige()) figer('',true); };
 /* ═══════ trace ═══════ */
 function addJ(type,mot,detail){
   journal.unshift({t_ms:Math.round(performance.now()-tStart),heure:hhmm(new Date()),type,mot,detail});
-  renderJ();
+  renderJ(); majPhrase();
 }
 function renderJ(){
   $('jCount').textContent=journal.length? '· '+journal.length : '';
@@ -257,6 +306,7 @@ $('expJ').onclick=()=>{
     capteur:{code:'son',normale:+WS.moy.toFixed(3),ecart_type:+WS.sd.toFixed(4),
              seuil_sigma:+WS.thr.toFixed(2),relevages_temoin:WS.raises,arme:WS.ready},
     apprentissage_s:APPREND_MS/1000, stabilisation_ms:SETTLE, anti_rafale_ms:ANTI_RAFALE,
+    phrase:(MUR?MUR.phrase():[]), phrase_detail:(MUR?MUR.retenus():[]),
     evenements:[...journal].reverse()},null,1)],{type:'application/json'});
   const u=URL.createObjectURL(b),a=document.createElement('a');
   a.href=u;a.download='mur-'+stamp()+'.json';a.click();setTimeout(()=>URL.revokeObjectURL(u),4000);
