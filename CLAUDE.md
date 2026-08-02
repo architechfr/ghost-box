@@ -24,7 +24,7 @@ Le code partagé, en un seul exemplaire :
 |---|---|
 | `lib/moteur.js` | Moteur de détection (statistique robuste, seuil auto, témoin de bruit) |
 | `lib/mur.js` | Mur de mots — **rendu canvas** (pluie de mots, faisceau de lecture, gel, équité des vitesses, phrase) |
-| `lib/ambiance.css` | **Identité visuelle partagée** : grain, vignettage, halos. Purement additive |
+| `lib/ambiance.css` | **Identité visuelle partagée** : marque en tête de page, grain, vignettage, halos. Purement additive |
 | `lib/retour.js` | **Retour au menu** — le même bouton visible sur toutes les pages, ajouté s'il manque |
 | `lib/secours.js` | **Filet de sécurité** : pendant une prise, chaque morceau est écrit tout de suite dans la base ; une prise interrompue se récupère au retour |
 | `lib/tampon.js` | Mémoire tampon : encode en continu, ne garde que les N dernières secondes |
@@ -88,6 +88,19 @@ Ce projet a une exigence de sincérité qui prime sur toute fonctionnalité. Un 
 - Un téléphone **n'a pas de récepteur radio** : le micro enregistre le *son* de la box, pas les ondes.
 - Pas de capteur de profondeur : la détection de personne est fragile dans le noir.
 - La clé Mistral est stockée en `localStorage` de l'appareil, jamais dans le dépôt.
+
+## La marque
+
+Les fichiers sortent d'une planche fournie par Florian et sont **découpés**, jamais redessinés :
+
+| Fichier | Usage |
+|---|---|
+| `assets/wordmark.png` | Bandeau large — en-tête de l'accueil |
+| `assets/lockup.png` | Version compacte icône + nom |
+| `assets/marque.png` | **Le radar au fantôme, fond transparent** — posé devant chaque titre de page par `ambiance.css` |
+| `favicon.png`, `apple-touch-icon.png`, `assets/icone-192/512.png` | Icônes de l'application installée (`manifest.json`) |
+
+Le fond des tuiles d'origine a été détouré par différence avec la couleur dominante, pour que la marque puisse se poser sur n'importe quel fond. Si une nouvelle planche arrive, refaire le découpage plutôt que de redessiner à la main : c'est son dessin, pas le mien.
 
 ## Déploiement
 
