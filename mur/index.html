@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="theme-color" content="#0A0F12">
-<title>Mur de mots — l'écran à lire</title>
+<title>Le mur — l'écran à lire</title>
 <link rel="icon" type="image/png" href="/ghost-box/favicon.png">
 <link rel="apple-touch-icon" href="/ghost-box/apple-touch-icon.png">
 <link rel="manifest" href="/ghost-box/manifest.json">
@@ -12,7 +12,7 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="Ghost Box">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<link rel="stylesheet" href="/ghost-box/lib/fonts.css?v=10">
+<link rel="stylesheet" href="/ghost-box/lib/fonts.css?v=11">
 <style>
 :root{
   --bench:#0A0F12;--panel:#1D262B;--sunk:#0A0F12;--line:#2C383F;--hair:#212B31;
@@ -22,10 +22,10 @@
 }
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
 html,body{margin:0;background:var(--bench);color:var(--text);font-family:var(--body);-webkit-font-smoothing:antialiased}
-body{padding:0 0 calc(env(safe-area-inset-bottom) + 24px)}
+body{padding:0 0 calc(env(safe-area-inset-bottom, 0px) + 24px)}
 .wrap{max-width:660px;margin:0 auto;padding:0 12px}
 .top{position:sticky;top:0;z-index:20;background:rgba(10,15,18,.96);backdrop-filter:blur(8px);
-  border-bottom:1px solid var(--line);padding:env(safe-area-inset-top) 0 0}
+  border-bottom:1px solid var(--line);padding:env(safe-area-inset-top, 0px) 0 0}
 .topin{max-width:660px;margin:0 auto;padding:10px 12px;display:flex;align-items:center;gap:10px}
 .topin a{color:var(--dim);text-decoration:none;font-family:var(--mono);font-size:16px}
 .topin h1{font-family:var(--legend);text-transform:uppercase;letter-spacing:.18em;font-size:15px;font-weight:600;margin:0;flex:1}
@@ -39,10 +39,10 @@ button{font-family:var(--legend);text-transform:uppercase;letter-spacing:.13em;f
 button:active{transform:translateY(1px)}
 button:disabled{opacity:.35;cursor:default}
 button.act{border-color:var(--signal);color:var(--signal)}
+button.or{border-color:var(--gold);color:var(--gold)}
 .row{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}.row>button{flex:1;min-width:118px}
 .fld{display:flex;align-items:center;gap:10px;margin-top:12px}
 .fld .lg{min-width:74px}
-/* pan-y : faire défiler la page au-dessus d'un curseur ne doit jamais le déplacer */
 input[type=range]{flex:1;min-width:0;touch-action:pan-y}
 .stat{font-family:var(--mono);font-size:12px;color:var(--dim);margin-top:8px;line-height:1.65}
 .stat b{color:var(--signal)}
@@ -52,6 +52,18 @@ th{font-family:var(--legend);text-transform:uppercase;letter-spacing:.12em;font-
 td{padding:7px 6px 7px 0;border-bottom:1px solid var(--hair);font-family:var(--mono);font-size:12px;vertical-align:top}
 td.w{font-family:var(--body);font-size:14px;color:var(--paper)}
 .empty{color:var(--dim);font-size:13px;padding:12px 0}
+/* ── voies de capteur ── */
+.voie{display:flex;align-items:baseline;gap:8px;padding:7px 0;border-bottom:1px solid var(--hair)}
+.voie .n{font-family:var(--body);font-size:13px;color:var(--text);flex:1;min-width:0}
+.voie .v{font-family:var(--mono);font-size:12px;color:var(--signal);white-space:nowrap}
+.voie .why{font-family:var(--body);font-size:11.5px;color:var(--dim);flex:1;min-width:0;line-height:1.45}
+.voie.off .n{color:var(--dim)}
+.pt{width:7px;height:7px;border-radius:50%;background:var(--line);flex:none;align-self:center}
+.pt.on{background:var(--signal);box-shadow:0 0 8px rgba(95,211,166,.8)}
+.pt.arme{background:var(--gold);box-shadow:0 0 8px rgba(233,180,76,.8)}
+#spectre{display:none;width:100%;height:120px;margin-top:12px;border:1px solid var(--line);border-radius:4px;background:#05090C}
+#camPrev{display:none;margin-top:10px}
+#camPrev video{width:100%;max-height:150px;object-fit:contain;background:#05090C;border:1px solid var(--line);border-radius:4px}
 #phraseBox{margin-top:14px;border-top:1px solid var(--line);padding-top:12px}
 .ph{margin-top:8px;padding:14px 12px;border:1px solid var(--line);border-radius:4px;
   background:#070C10;font-family:var(--legend);text-transform:uppercase;letter-spacing:.05em;
@@ -59,48 +71,105 @@ td.w{font-family:var(--body);font-size:14px;color:var(--paper)}
   word-break:break-word;text-shadow:0 0 26px rgba(233,180,76,.30)}
 .ph.vide{color:var(--dim);font-size:15px;letter-spacing:.12em;text-shadow:none}
 .ph .neuf{color:#FFF0C4;text-shadow:0 0 30px rgba(233,180,76,.75)}
-/* le décor du mur — colonnes, case de lecture, gel — vit dans lib/mur.js */
+/* le décor du mur — colonnes, escalier, gel — vit dans lib/mur.js */
 #mur{position:relative;margin-top:12px;border:1px solid var(--line);border-radius:4px;
   height:52vh;min-height:280px}
-/* ── écran fixe : le mur seul, plein écran, rien d'autre ── */
+/* ── écran fixe : bandeau, spectre, mur, phrase — rien qui se recouvre ──
+   Le repli « , 0px » de env() n'est pas décoratif : sans lui, toute la calc()
+   devient invalide sur les navigateurs qui ne connaissent pas la variable, et
+   les bandes se chevauchent. */
 html.filming{height:100%;overflow:hidden}
 body.filming{position:fixed;inset:0;width:100%;height:100%;padding:0;margin:0;
-  overflow:hidden;overscroll-behavior:none;touch-action:none}
+  overflow:hidden;overscroll-behavior:none;touch-action:none;
+  --hud:0px;--sp:0px;--phr:74px}
+body.filming.avecspectre{--sp:96px}
 body.filming .top,body.filming #setup,body.filming #trace,body.filming .row,
-body.filming #etat,body.filming #phraseBox{display:none}
+body.filming #etat,body.filming #camPrev,body.filming #capteursBox,body.filming #maniere{display:none}
 body.filming .wrap{max-width:none;padding:0;margin:0}
-body.filming #mur{position:fixed;inset:0;height:100%;margin:0;border:0;border-radius:0;z-index:40}
+body.filming #hud{display:block;position:fixed;left:0;right:0;top:0;z-index:52;
+  padding:calc(env(safe-area-inset-top, 0px) + 7px) 10px 7px;background:rgba(6,10,13,.94);
+  border-bottom:1px solid var(--line)}
+body.filming #spectre{display:block;position:fixed;left:0;right:0;top:var(--hud);
+  height:var(--sp);margin:0;border:0;border-bottom:1px solid var(--line);z-index:50}
+body.filming #mur{position:fixed;left:0;right:0;top:calc(var(--hud) + var(--sp));
+  bottom:var(--phr);height:auto;margin:0;border:0;border-radius:0;z-index:40}
+body.filming #phraseBox{display:block;position:fixed;left:0;right:0;bottom:0;z-index:52;
+  margin:0;padding:6px 10px calc(env(safe-area-inset-bottom, 0px) + 6px);
+  background:rgba(6,10,13,.94);border-top:1px solid var(--line)}
+body.filming #phraseBox .lg,body.filming #phraseBox .ex,body.filming #phraseBox .row{display:none}
+body.filming #phraseBox .ph{margin:0;padding:6px 8px;min-height:0;border:0;background:transparent;
+  font-size:clamp(15px,4.6vw,24px);line-height:1.15;max-height:56px;overflow:hidden}
+#hud{display:none}
+#hud .chip{display:inline-flex;gap:6px;align-items:baseline;margin:0 8px 0 0;
+  font-family:var(--mono);font-size:11px;white-space:nowrap}
+#hud .chip .k{color:var(--dim);text-transform:uppercase;letter-spacing:.1em;font-size:9px}
+#hud .chip .v{color:var(--text)}
+#hud .chip.on .v{color:var(--signal)}
+#hud .chip.al .v{color:var(--gold)}
 #quitFix{display:none}
+/* le bouton plein écran flottant recouvrait « Quitter » et interceptait
+   les appuis : en écran fixe il disparaît, « Quitter » fait le même travail */
+body.filming #fsFloat{display:none !important}
 body.filming #quitFix{display:block;position:fixed;z-index:61;right:10px;
-  top:calc(10px + env(safe-area-inset-top));padding:8px 10px;font-size:11px;
+  top:calc(10px + env(safe-area-inset-top, 0px));padding:6px 9px;font-size:11px;
   background:rgba(20,26,30,.85)}
 </style>
-<link rel="stylesheet" href="/ghost-box/lib/ambiance.css?v=10">
+<link rel="stylesheet" href="/ghost-box/lib/ambiance.css?v=11">
 </head>
 <body>
 
 <div class="top"><div class="topin">
-  <a href="../">←</a><h1>Mur seul <span style="font-size:10px;color:var(--signal)">v4</span></h1>
+  <a href="../">←</a><h1>Le mur <span style="font-size:10px;color:var(--signal)">v5</span></h1>
   <span class="lg" id="phase">à préparer</span>
 </div></div>
 
 <div class="wrap">
 
 <div class="step" id="setup" style="border-top:0">
-  <p class="ex">Le mur, sans caméra : téléphone posé, écran tourné vers la pièce. Tout le vocabulaire est <b>montré</b> en continu, rangé par famille — <b>réponses, personnes, lieux, actions, états</b> — et une case de lecture parcourt les colonnes sans arrêt.</p>
-  <p class="ex">Si — et seulement si — une mesure dépasse tout ce que le bruit du lieu sait produire, <b>le mur se fige à cet instant précis</b> et le mot qui se trouvait dans la case est retenu. C'est <b>l'instant</b> qui désigne, rien d'autre : ni moi, ni un tirage caché. La plupart des séances ne figent rien, et c'est le résultat normal.</p>
-  <p class="ex">Le même mur est disponible dans la <a href="../seance/" style="color:var(--signal)">séance caméra</a> et dans la <a href="../banc/" style="color:var(--signal)">séance capteurs</a> — c'est le même composant, le même comportement.</p>
+  <p class="ex">Le téléphone est <b>posé, écran tourné vers la pièce</b>. Tout le vocabulaire est montré en continu — rangé par famille : réponses, personnes, lieux, actions, états. Le mur ne se fige que si un capteur dépasse ce que le bruit du lieu sait produire. La plupart des séances ne figent rien, et <b>c'est le résultat normal</b>.</p>
+  <p class="ex">Le même mur est disponible dans la <a href="../seance/" style="color:var(--signal)">séance caméra</a> et dans la <a href="../banc/" style="color:var(--signal)">séance capteurs</a>. Si tu ne sais pas par où commencer, le <a href="../manuel/" style="color:var(--gold)">mode d'emploi</a> explique tout.</p>
+</div>
+
+<div class="step" id="capteursBox">
+  <div class="lg">1 · Ce qui écoute</div>
+  <p class="ex">Allume ce que cet appareil possède réellement. Chaque voie dit ce qu'elle mesure, et quand elle manque, <b>pourquoi</b> elle manque. Sur un ordinateur il n'y a ni accéléromètre ni boussole : micro et caméra suffisent à travailler.</p>
+  <div class="row">
+    <button id="bMic">Micro</button>
+    <button id="bMvt">Mouvement</button>
+    <button id="bMag">Champ magnétique</button>
+    <button id="bCam">Caméra</button>
+  </div>
+  <div id="voies"></div>
+  <div id="camPrev"></div>
+  <p id="capState" class="ex"></p>
+</div>
+
+<div class="step" id="maniere">
+  <div class="lg">2 · Comment un mot est désigné</div>
+  <div class="row">
+    <button id="mInstant" class="act">Instant simple</button>
+    <button id="mEscalier">Escalier</button>
+  </div>
+  <p id="modeEx" class="ex"></p>
+</div>
+
+<div class="step" id="armer">
+  <div class="lg">3 · Apprendre le lieu</div>
+  <p class="ex">Pendant <b>45 secondes</b>, l'appareil écoute le lieu tel qu'il est pour apprendre son bruit normal. Le seuil de chaque voie est ensuite ancré sur le pire pic entendu, jamais réglé à la main — et il continue de monter tout seul chaque fois qu'un témoin de bruit aurait suffi à faire sortir un mot.</p>
   <div class="row">
     <button id="prep">Ouvrir le mur</button>
     <button id="essai" disabled>Essai (faux mot)</button>
   </div>
   <p id="colonnes" class="ex">Chargement du lexique…</p>
-  <p id="prepState" class="ex">Le micro sert de capteur : c'est le son de la pièce — et celui de ta box radio si elle est posée à côté. L'appareil apprend 45 s le bruit normal avant de pouvoir figer quoi que ce soit.</p>
+  <p id="prepState" class="ex"></p>
   <div class="fld"><span class="lg">vitesse</span><input type="range" id="vit" min="30" max="900" value="330"><span class="stat" id="vitL" style="margin:0;min-width:74px">330 px/s</span></div>
-  <p class="ex">Le défilement peut être rendu très rapide : les mots ne sont pas là pour être lus par toi, mais pour être tous <b>disponibles</b> à chaque seconde.</p>
+  <p class="ex">Le défilement peut être rendu très rapide : les mots ne sont pas là pour être lus par toi, mais pour être tous <b>disponibles</b> à chaque seconde. En escalier, la vitesse ne concerne que la première étape.</p>
 </div>
 
+<div id="hud"></div>
+<canvas id="spectre" width="10" height="10"></canvas>
 <div id="mur"></div>
+
 <div id="phraseBox">
   <div class="lg" style="display:flex;justify-content:space-between;align-items:baseline">
     <span>ce qui a été retenu</span><span class="lg" id="phCount" style="color:var(--paper)"></span>
@@ -111,8 +180,9 @@ body.filming #quitFix{display:block;position:fixed;z-index:61;right:10px;
     <button id="phCopier">Copier</button>
     <button id="phVider">Nouvelle phrase</button>
   </div>
-  <p class="ex">C'est la suite <b>exacte</b> des mots retenus, dans l'ordre où ils sont sortis. L'appareil n'ajoute aucun mot, n'en réordonne aucun, ne conjugue rien, ne met ni article ni liaison. Ce n'est pas une phrase fabriquée : c'est ce qui a été mesuré, mis bout à bout. Le sens, s'il y en a un, ne vient pas d'ici — et un anti-rafale d'une minute sépare deux mots, donc <b>une phrase se construit sur la durée d'une séance</b>, pas en trente secondes.</p>
+  <p class="ex">C'est la suite <b>exacte</b> des mots retenus, dans l'ordre où ils sont sortis. L'appareil n'ajoute aucun mot, n'en réordonne aucun, ne conjugue rien, ne met ni article ni liaison. Le sens, s'il y en a un, ne vient pas d'ici.</p>
 </div>
+
 <button id="quitFix" type="button">Quitter</button>
 <div class="row">
   <button id="fixBtn">Écran fixe</button>
@@ -127,20 +197,22 @@ body.filming #quitFix{display:block;position:fixed;z-index:61;right:10px;
     <button id="expJ">Export JSON</button>
     <button id="clrJ">Effacer</button>
   </div>
-  <p class="ex">Chaque mot retenu garde l'instant, la mesure brute, l'écart en σ, le seuil du moment, la colonne, l'index et l'allure de la colonne — le choix peut être refait à la main depuis l'export.</p>
+  <p class="ex">Chaque événement garde l'instant, la voie qui a tiré, la mesure brute, l'écart en σ, le seuil du moment et — en escalier — le chemin complet des trois marches. Le choix peut être refait à la main depuis l'export.</p>
 </div>
 
 </div>
 
-<script src="/ghost-box/lib/wakelock.js?v=10"></script>
-<script src="/ghost-box/lib/retour.js?v=10"></script>
-<script src="/ghost-box/lib/aide.js?v=10"></script>
-<script src="/ghost-box/lib/action.js?v=10"></script>
+<script src="/ghost-box/lib/wakelock.js?v=11"></script>
+<script src="/ghost-box/lib/retour.js?v=11"></script>
+<script src="/ghost-box/lib/aide.js?v=11"></script>
+<script src="/ghost-box/lib/action.js?v=11"></script>
 <script>addEventListener('load',function(){ try{ GBAction.init(['#prep']); }catch(e){} });</script>
-<script src="/ghost-box/lib/media.js?v=10"></script>
-<script src="/ghost-box/lib/moteur.js?v=10"></script>
-<script src="/ghost-box/lib/mur.js?v=10"></script>
-<script src="/ghost-box/lib/fullscreen.js?v=10"></script>
+<script src="/ghost-box/lib/media.js?v=11"></script>
+<script src="/ghost-box/lib/moteur.js?v=11"></script>
+<script src="/ghost-box/lib/capteurs.js?v=11"></script>
+<script src="/ghost-box/lib/spectre.js?v=11"></script>
+<script src="/ghost-box/lib/mur.js?v=11"></script>
+<script src="/ghost-box/lib/fullscreen.js?v=11"></script>
 <script>
 (() => {
 "use strict";
@@ -153,26 +225,233 @@ const duree=sec=>{ sec=Math.max(0,Math.round(sec));
   const h=Math.floor(sec/3600), m=Math.floor((sec%3600)/60), s2=sec%60;
   return h? h+' h '+String(m).padStart(2,'0') : (m? m+' min '+String(s2).padStart(2,'0') : s2+' s'); };
 const M=window.GBMoteur;
-
-/* ═══════ le mur ═══════
-   Composant partagé (lib/mur.js) : exactement le même mur que dans la séance
-   caméra et la séance capteurs. Une seule implémentation, un seul comportement. */
 const REG={ lis:(k,d)=>{ try{ return localStorage.getItem(k) ?? d; }catch(e){ return d; } },
             note:(k,v)=>{ try{ localStorage.setItem(k,v); }catch(e){} } };
+
+/* ═══════════ le mur ═══════════ */
 $('vit').value = +REG.lis('gb-mur-vitesse','330')||330;
 $('vitL').textContent = $('vit').value+' px/s';
 let MUR=null, pret=false;
+let MODE = REG.lis('gb-mur-mode','instant')==='escalier' ? 'escalier' : 'instant';
+
 GBMur.lexique('../data/lexique.json').then(mots=>{
-  MUR=GBMur.creer({hote:$('mur'), mots:mots, vitesse:+$('vit').value, onMot:majPhrase});
+  MUR=GBMur.creer({hote:$('mur'), mots:mots, vitesse:+$('vit').value, mode:MODE,
+                   onMot:motRetenu, onEtape:etapeFranchie});
   if(!MUR){ $('colonnes').innerHTML='<b style="color:var(--flag)">Mur indisponible.</b>'; return; }
   MUR.demarrer(); pret=true;
-  $('colonnes').innerHTML='Colonnes : '+MUR.colonnes().map(c=>'<b>'+c.famille+'</b> ('+c.mots+')').join(' · ')
+  const c=MUR.colonnes();
+  $('colonnes').innerHTML='Colonnes : '+c.map(x=>'<b>'+x.famille+'</b> ('+x.mots+' mots, '+x.pages+' page'+(x.pages>1?'s':'')+')').join(' · ')
     +'. Les vitesses <b>tournent d\'une colonne à l\'autre toutes les '+(MUR.rotation_ms/1000)+' s</b> : '
-    +'aucune famille n\'est durablement la plus rapide, et aucun mot ne passe systématiquement en coup de vent. '
-    +'Graine de session <b>'+MUR.graine+'</b> — le défilement est reproductible.';
+    +'aucune famille n\'est durablement la plus rapide. Graine de session <b>'+MUR.graine+'</b> — le défilement est reproductible.';
+  majMode();
 }).catch(()=>{ $('colonnes').innerHTML='<b style="color:var(--flag)">Lexique introuvable.</b> Le mur ne peut pas s\'ouvrir.'; });
 
-/* ── la phrase : rien n'est ajouté, rien n'est réordonné ── */
+$('vit').oninput=()=>{ $('vitL').textContent=$('vit').value+' px/s'; REG.note('gb-mur-vitesse',$('vit').value); if(MUR) MUR.vitesse(+$('vit').value); };
+
+/* ═══════════ manière de désigner ═══════════ */
+function majMode(){
+  $('mInstant').className = MODE==='instant' ? 'act' : '';
+  $('mEscalier').className = MODE==='escalier' ? 'or' : '';
+  $('modeEx').innerHTML = MODE==='instant'
+    ? 'Un événement, un mot : le mur se fige et retient le mot qui passait dans la case de lecture. '
+      + 'Il faut le dire franchement — <b>ce mot n\'est pas visable</b> : à cette vitesse un mot passe toutes les 68 à 130 ms. '
+      + 'L\'instant est vrai, le mot est un tirage. C\'est une mesure, pas un dialogue.'
+    : 'Trois événements, un mot — et cette fois il est visable. <b>La famille</b> (5 colonnes encadrées '
+      + (GBMur.PAS_FAMILLE/1000).toFixed(1).replace('.',',')+' s chacune), puis <b>la page</b> ('+GBMur.PAGE+' mots, '
+      + (GBMur.PAS_PAGE/1000).toFixed(1).replace('.',',')+' s par page), puis <b>le mot</b> ('+GBMur.PAS_MOT+' ms chacun). '
+      + 'Aucun seuil n\'est baissé : c\'est la <b>cible</b> qui est agrandie. Trois franchissements réels valent bien plus qu\'un seul. '
+      + 'Si une marche reste sans événement pendant '+(GBMur.FENETRE/1000)+' s, la séquence est abandonnée et <b>rien n\'est écrit</b>.';
+}
+$('mInstant').onclick=()=>{ MODE='instant'; REG.note('gb-mur-mode',MODE); if(MUR) MUR.mode(MODE); majMode(); };
+$('mEscalier').onclick=()=>{ MODE='escalier'; REG.note('gb-mur-mode',MODE); if(MUR) MUR.mode(MODE); majMode(); };
+
+/* ═══════════ les capteurs ═══════════ */
+const B = GBCapteurs.creer();
+const ETAT = {micro:false, mouvement:false, magnetique:false, camera:false};
+const BTN = {micro:'bMic', mouvement:'bMvt', magnetique:'bMag', camera:'bCam'};
+let SP=null;
+
+async function bascule(f){
+  const b=$(BTN[f]);
+  if(ETAT[f]){ B.couper(f); ETAT[f]=false; b.className='';
+    if(f==='micro' && SP){ SP.arreter(); $('spectre').style.display='none'; }
+    if(f==='camera') $('camPrev').style.display='none';
+    majVoies(); return; }
+  b.disabled=true;
+  try{
+    await B.activer(f);
+    ETAT[f]=true; b.className='act'; $('capState').textContent='';
+    if(f==='micro'){
+      $('spectre').style.display='block';
+      SP = GBSpectre.creer({canvas:$('spectre'), analyser:B.analyser(),
+                            sampleRate:()=>B.contexte()? B.contexte().sampleRate : 44100});
+      SP.demarrer();
+    }
+    if(f==='camera'){
+      const v=B.videoEl();
+      if(v){ $('camPrev').innerHTML=''; $('camPrev').appendChild(v); $('camPrev').style.display='block'; }
+    }
+  }catch(e){
+    $('capState').innerHTML='<b style="color:var(--flag)">'+esc(f)+' indisponible.</b> '
+      + (window.GBMedia? GBMedia.explain(e) : (e&&e.name||'accès impossible'))
+      + ' Ce n\'est pas grave : les autres voies continuent.';
+  }
+  b.disabled=false; majVoies();
+}
+$('bMic').onclick=()=>bascule('micro');
+$('bMvt').onclick=()=>bascule('mouvement');
+$('bMag').onclick=()=>bascule('magnetique');
+$('bCam').onclick=()=>bascule('camera');
+
+function majVoies(){
+  const vs=B.voies();
+  $('voies').innerHTML = vs.map(v=>{
+    const w = W[v.code];
+    const arme = w && w.ready;
+    const cls = 'pt' + (arme? ' arme' : (v.vivante? ' on' : ''));
+    const val = (v.val!=null && v.vivante) ? (Math.abs(v.val)>=100? v.val.toFixed(0) : v.val.toFixed(1))+' '+v.unite : '';
+    return '<div class="voie'+(v.vivante?'':' off')+'">'
+      + '<span class="'+cls+'"></span>'
+      + '<span class="n">'+esc(v.label)+'</span>'
+      + (v.vivante ? '<span class="v">'+esc(val)+(arme? ' · seuil '+w.thr.toFixed(1)+' σ':'')+'</span>'
+                   : '<span class="why">'+esc(v.raison||'—')+'</span>')
+      + '</div>';
+  }).join('');
+}
+
+/* ═══════════ armement et mesure ═══════════ */
+const W = {};                    /* un témoin de moteur par voie */
+const ATTAQUE = {};              /* instant du DÉBUT de chaque excursion */
+let filming=false;               /* déclaré AVANT la boucle de mesure : elle le lit dès son premier tour */
+let apprend=false, tApprend=0, tPret=0, tStart=0, armees=0;
+const APPREND_MS=45000, SETTLE=60000, ANTI_RAFALE=60000, ANTI_PAS=8000;
+let lastMot=-1e9, lastPas=-1e9, journal=[], nMots=0, nPas=0;
+
+$('prep').onclick=async ()=>{
+  if(!pret){ $('prepState').textContent='Le lexique n\'est pas encore chargé.'; return; }
+  const vivantes = B.voies().filter(v=>v.vivante);
+  if(!vivantes.length){
+    // le micro est le minimum vital : on essaie de l'allumer tout seul
+    try{ await bascule('micro'); }catch(e){}
+    if(!B.voies().some(v=>v.vivante)){
+      $('prepState').innerHTML='<b style="color:var(--flag)">Aucun capteur ne donne de mesure.</b> '
+        + 'Allume au moins le micro : sans capteur, le mur défilerait sans jamais pouvoir se figer — ce serait un décor, pas une mesure.';
+      return;
+    }
+  }
+  for(const k in W) delete W[k];
+  B.voies().forEach(v=>{ if(v.vivante) W[v.code]=M.mk(v.code, v.label); });
+  apprend=true; tApprend=performance.now(); tStart=tApprend;
+  $('prep').className='act'; $('prep').textContent='Mur ouvert';
+  $('essai').disabled=false;
+  $('phase').textContent='apprentissage';
+  $('prepState').innerHTML='Apprentissage du bruit du lieu sur <b>'+Object.keys(W).length+' voie'
+    +(Object.keys(W).length>1?'s':'')+'</b> — <b>laisse la pièce telle qu\'elle est</b> pendant ce temps.';
+  try{GBWake.on();}catch(e){}
+};
+
+function mesure(){
+  const now=performance.now();
+
+  if(apprend){
+    B.voies().forEach(v=>{ const w=W[v.code]; if(w && v.vivante && v.val!=null) M.feed(w, v.val, true); });
+    if(now-tApprend>=APPREND_MS){
+      apprend=false; tPret=now; armees=0;
+      const refus=[];
+      Object.keys(W).forEach(k=>{
+        const w=W[k];
+        if(M.seal(w)) armees++;
+        else refus.push(w.label + (w.plat? ' (n\'a pas bougé d\'un cheveu — capteur figé, couvert ou coupé)' : ' (pas assez de relevés)'));
+      });
+      $('phase').textContent = armees? 'en veille' : 'non armé';
+      $('prepState').innerHTML = armees
+        ? '<b>'+armees+' voie'+(armees>1?'s armées':' armée')+'</b> sur '+Object.keys(W).length+'. '
+          + 'Chaque seuil est ancré sur le pire pic entendu pendant l\'apprentissage et montera encore de lui-même. '
+          + 'Rien ne peut sortir pendant la première minute.'
+          + (refus.length? '<br>Écartée'+(refus.length>1?'s':'')+' : '+esc(refus.join(' ; '))+'. C\'est un résultat, pas une panne.' : '')
+        : '<b style="color:var(--flag)">Aucune voie n\'a pu être armée.</b> '+esc(refus.join(' ; '))
+          + '. Le mur défile, mais il ne se figera pas.';
+      majVoies();
+    }
+  } else if(armees){
+    let tireur=null, tAtt=now;
+    B.voies().forEach(v=>{
+      const w=W[v.code];
+      if(!w || !w.ready || !v.vivante || v.val==null) return;
+      const p0=w.persist;
+      const feu=M.feed(w, v.val, false);
+      if(w.persist===1 && p0===0) ATTAQUE[v.code]=now;      // début de l'excursion
+      if(feu && !tireur){ tireur=v; tAtt=ATTAQUE[v.code] ?? now; }
+    });
+    if(tireur && (now-tPret)>=SETTLE && MUR && !MUR.estFige()){
+      const w=W[tireur.code];
+      const guard = (MODE==='escalier' && MUR.etatEscalier() && MUR.etatEscalier().etape>1) ? ANTI_PAS : ANTI_RAFALE;
+      const depuis = (MODE==='escalier' && MUR.etatEscalier() && MUR.etatEscalier().etape>1) ? lastPas : lastMot;
+      if(now-depuis>=guard){
+        lastPas=now;
+        const info = tireur.label+' '+w.v.toFixed(1)+(tireur.unite==='—'?'':' '+tireur.unite)
+                   + ' · écart '+w.z.toFixed(1)+' σ · seuil '+w.thr.toFixed(1)+' σ';
+        if(SP) SP.marquer('mot');
+        const r=MUR.figer(info, false, tAtt);
+        if(r && !r.final && r.etape) nPas++;
+        addJ(r && r.mot ? 'mot' : 'marche', (r && (r.mot||r.valeur)) || '—',
+             info + (r && r.etape? ' · marche « '+r.etape+' »' : '')
+                  + ' · retard rattrapé '+Math.round(now-tAtt)+' ms');
+      }
+    }
+  }
+
+  majEtat(now);
+  if(SP){
+    const wn = W['son_niveau'];
+    if(wn && wn.ready) SP.niveau(B.lire('son_niveau'), wn.moy + wn.thr*wn.sd);
+    else SP.niveau(B.lire('son_niveau'), null);
+  }
+  setTimeout(mesure,100);
+}
+mesure();
+
+function majEtat(now){
+  let txt;
+  if(apprend){
+    txt = 'Apprentissage — reste <b>'+Math.ceil((APPREND_MS-(now-tApprend))/1000)+' s</b> sur '
+        + Object.keys(W).length+' voie'+(Object.keys(W).length>1?'s':'')+'.';
+  } else if(armees){
+    const zmax = Object.keys(W).reduce((m,k)=> W[k].ready? Math.max(m, W[k].z) : m, 0);
+    const rel = Object.keys(W).reduce((m,k)=> m + (W[k].raises||0), 0);
+    txt = '<b>'+armees+'</b> voie'+(armees>1?'s armées':' armée')
+        + ' · plus fort écart courant <b>'+zmax.toFixed(1)+'</b> σ'
+        + ' · relevages du témoin '+rel
+        + ' · mots retenus <b>'+nMots+'</b>'
+        + ' · en veille depuis <b>'+duree((now-tPret)/1000)+'</b>'
+        + ((now-tPret)<SETTLE? ' · stabilisation '+Math.ceil((SETTLE-(now-tPret))/1000)+' s':'');
+    if(MODE==='escalier' && MUR){
+      const e=MUR.etatEscalier();
+      if(e) txt += '<br>Escalier — étape <b>'+e.etape+'/'+e.sur+'</b>, cible « <b>'+esc(String(e.cible))+'</b> »'
+                 + (e.reste_ms!=null? ' · fenêtre '+Math.ceil(e.reste_ms/1000)+' s':'')
+                 + (e.pas.length? ' · déjà : '+esc(e.pas.map(p=>p.valeur).join(' → ')) : '');
+    }
+  } else if(Object.keys(W).length){
+    txt = 'Le mur défile, mais aucune voie n\'est armée : rien ne peut être retenu.';
+  } else {
+    txt = 'Allume au moins un capteur, puis « Ouvrir le mur ».';
+  }
+  $('etat').innerHTML = txt;
+  if(filming) majHud(now);
+  if(!majVoies.tick || now-majVoies.tick>500){ majVoies.tick=now; majVoies(); }
+}
+
+/* ═══════════ ce qui sort ═══════════ */
+function motRetenu(d){ nMots++; majPhrase(); }
+function etapeFranchie(e){
+  if(e.type==='abandon'){
+    addJ('abandon','—','séquence abandonnée ('+e.pourquoi+')'
+      + (e.pas && e.pas.length? ' · marches perdues : '+e.pas.map(p=>p.valeur).join(' → ') : '')
+      + ' — rien n\'a été écrit');
+  }
+  if(e.type==='mot') lastMot=performance.now();
+}
+
 function majPhrase(){
   if(!MUR) return;
   const mots=MUR.phrase();
@@ -190,8 +469,7 @@ $('phDire').onclick=()=>{
 };
 $('phCopier').onclick=async ()=>{
   if(!MUR) return;
-  const t=MUR.phrase().join(' ');
-  try{ await navigator.clipboard.writeText(t); $('phCount').textContent='copié'; setTimeout(majPhrase,1200); }
+  try{ await navigator.clipboard.writeText(MUR.phrase().join(' ')); $('phCount').textContent='copié'; setTimeout(majPhrase,1200); }
   catch(e){ $('phCount').textContent='copie refusée'; }
 };
 $('phVider').onclick=()=>{
@@ -199,101 +477,16 @@ $('phVider').onclick=()=>{
   if(MUR.phrase().length && !confirm('Repartir d\'une phrase vide ? Les mots restent dans la trace.')) return;
   MUR.effacerPhrase(); majPhrase();
 };
-
-function figer(info,test){
-  if(!MUR) return null;
-  const r=MUR.figer(info,test);
-  if(r) addJ(test?'ESSAI':'mot', r.mot,
-    (test? 'figé à la main — aucune mesure derrière' : info)
-    +' · colonne '+r.colonne+' · index '+r.index+'/'+r.taille+' · allure '+r.allure);
-  return r;
-}
-$('vit').oninput=()=>{ $('vitL').textContent=$('vit').value+' px/s'; REG.note('gb-mur-vitesse',$('vit').value); if(MUR) MUR.vitesse(+$('vit').value); };
-
-/* ═══════ capteur : le son de la pièce (et de la box posée à côté) ═══════ */
-let micStream=null, actx=null, ana=null, tdata=null, micBrut=false;
-let WS=M.mk('son','Niveau sonore'), apprend=false, tApprend=0, tPret=0, tStart=0;
-const APPREND_MS=45000, SETTLE=60000, ANTI_RAFALE=60000;
-let lastEmit=-1e9, niveau=-100, journal=[], nMots=0;
-
-$('prep').onclick=async ()=>{
-  if(!pret){ $('prepState').textContent='Le lexique n\'est pas encore chargé.'; return; }
-  $('prepState').textContent='Autorisation du micro…';
-  try{
-    micBrut=true;
-    try{ micStream=await navigator.mediaDevices.getUserMedia({audio:{
-      echoCancellation:false,noiseSuppression:false,autoGainControl:false,voiceIsolation:false}}); }
-    catch(e){ micBrut=false; micStream=await navigator.mediaDevices.getUserMedia({audio:true}); }
-    actx=new (window.AudioContext||window.webkitAudioContext)(); await actx.resume();
-    ana=actx.createAnalyser(); ana.fftSize=1024; ana.smoothingTimeConstant=.4;
-    actx.createMediaStreamSource(micStream).connect(ana);
-    tdata=new Float32Array(ana.fftSize);
-  }catch(e){
-    $('prepState').innerHTML='<b style="color:var(--flag)">Micro indisponible.</b> '
-      +(window.GBMedia?GBMedia.explain(e):'Accès impossible.')
-      +' Sans capteur, le mur défilerait sans jamais pouvoir se figer : ce serait un décor, pas une mesure.';
-    return;
-  }
-  WS=M.mk('son','Niveau sonore');
-  apprend=true; tApprend=performance.now(); tStart=tApprend;
-  $('prep').className='act'; $('prep').textContent='Mur ouvert';
-  $('essai').disabled=false;
-  $('phase').textContent='apprentissage';
-  $('prepState').innerHTML='Apprentissage du bruit du lieu — <b>laisse la pièce telle qu\'elle est</b> pendant ce temps.';
-  try{GBWake.on();}catch(e){}
-  mesure();
+$('essai').onclick=()=>{
+  if(!MUR || MUR.estFige()) return;
+  const r=MUR.figer('',true);
+  if(r) addJ('ESSAI', r.mot, 'figé à la main — aucune mesure derrière ce mot');
 };
 
-function mesure(){
-  const now=performance.now();
-  const vive=!!(ana&&actx&&actx.state==='running');
-  if(vive){ ana.getFloatTimeDomainData(tdata);
-    let s=0; for(let i=0;i<tdata.length;i++) s+=tdata[i]*tdata[i];
-    niveau=20*Math.log10(Math.sqrt(s/tdata.length)+1e-9); }
-  else if(actx&&actx.state!=='running'){ try{actx.resume();}catch(e){} }
-
-  if(apprend){
-    if(vive) M.feed(WS,niveau,true);
-    if(now-tApprend>=APPREND_MS){
-      apprend=false; tPret=now;
-      if(M.seal(WS)){
-        $('phase').textContent='en veille';
-        $('prepState').innerHTML='Mur en veille. Seuil ancré sur le pire pic entendu pendant l\'apprentissage : <b>'
-          +WS.thr.toFixed(1)+' σ</b> — il montera encore de lui-même chaque fois que le témoin de bruit '
-          +'aurait suffi à figer le mur. Rien ne peut sortir pendant la première minute.';
-      } else {
-        $('phase').textContent='non armé';
-        $('prepState').innerHTML= WS.plat
-          ? '<b style="color:var(--flag)">Le micro n\'a pas bougé d\'un cheveu</b> — capteur figé ou coupé. '
-            +'Sans bruit à comparer, la moindre variation vaudrait une fausse alerte : le mur défile, mais il ne se figera pas.'
-          : 'Pas assez de relevés — relance l\'ouverture du mur.';
-      }
-    }
-  } else if(WS.ready){
-    const feu=vive&&M.feed(WS,niveau,false);
-    if(feu && (now-tPret)>=SETTLE && (now-lastEmit)>=ANTI_RAFALE && MUR && !MUR.estFige()){
-      lastEmit=now; nMots++;
-      figer('niveau '+WS.v.toFixed(1)+' dBFS · écart '+WS.z.toFixed(1)+' σ · seuil '+WS.thr.toFixed(1)+' σ', false);
-    }
-  }
-
-  $('etat').innerHTML = apprend
-    ? 'Apprentissage — reste <b>'+Math.ceil((APPREND_MS-(now-tApprend))/1000)+' s</b>. Niveau '+niveau.toFixed(0)+' dBFS.'
-    : (WS.ready
-        ? 'Niveau <b>'+niveau.toFixed(0)+'</b> dBFS · écart '+WS.z.toFixed(1)+' σ · seuil auto <b>'+WS.thr.toFixed(1)
-          +'</b> σ (relevé '+WS.raises+'×) · mots retenus <b>'+nMots+'</b>'
-          +' · en veille depuis <b>'+duree((now-tPret)/1000)+'</b>'
-          +((now-tPret)<SETTLE? ' · stabilisation '+Math.ceil((SETTLE-(now-tPret))/1000)+' s':'')
-        : 'Le mur défile, mais aucun capteur n\'est armé : rien ne peut être retenu.');
-  setTimeout(mesure,100);
-}
-
-$('essai').onclick=()=>{ if(MUR && !MUR.estFige()) figer('',true); };
-
-/* ═══════ trace ═══════ */
+/* ═══════════ trace ═══════════ */
 function addJ(type,mot,detail){
-  journal.unshift({t_ms:Math.round(performance.now()-tStart),heure:hhmm(new Date()),type,mot,detail});
-  renderJ(); majPhrase();
+  journal.unshift({t_ms:Math.round(performance.now()-(tStart||performance.now())),heure:hhmm(new Date()),type,mot,detail});
+  renderJ();
 }
 function renderJ(){
   $('jCount').textContent=journal.length? '· '+journal.length : '';
@@ -301,17 +494,25 @@ function renderJ(){
   $('jTbl').innerHTML='<table><thead><tr><th>t</th><th>heure</th><th>mot</th><th>mesure</th></tr></thead><tbody>'+
     journal.slice(0,40).map(r=>'<tr><td>'+fmt(r.t_ms/1000)+'</td><td>'+r.heure+'</td><td class="w">'+
     esc(r.mot)+(r.type==='ESSAI'?' <span style="color:var(--flag)">(essai)</span>':'')+
+    (r.type==='marche'?' <span style="color:var(--gold)">(marche)</span>':'')+
+    (r.type==='abandon'?' <span style="color:var(--dim)">(abandon)</span>':'')+
     '</td><td>'+esc(r.detail)+'</td></tr>').join('')+'</tbody></table>';
 }
 $('clrJ').onclick=()=>{ journal=[]; renderJ(); };
 $('expJ').onclick=()=>{
+  const capteurs={};
+  Object.keys(W).forEach(k=>{ const w=W[k];
+    capteurs[k]={label:w.label, arme:!!w.ready, normale:+(w.moy||0).toFixed(4),
+                 ecart_type:+(w.sd||0).toFixed(5), seuil_sigma:+(w.thr||0).toFixed(2),
+                 relevages_temoin:w.raises||0, plat:!!w.plat}; });
   const b=new Blob([JSON.stringify({
-    mur:'mur-seul', date:new Date().toISOString(), graine:(MUR?MUR.graine:0),
-    vitesse_px_s:+$('vit').value, hauteur_case_px:GBMur.ROW, sejour_case_ms:GBMur.DWELL,
-    rotation_vitesses_ms:(MUR?MUR.rotation_ms:null), colonnes:(MUR?MUR.equite():[]),
-    capteur:{code:'son',normale:+WS.moy.toFixed(3),ecart_type:+WS.sd.toFixed(4),
-             seuil_sigma:+WS.thr.toFixed(2),relevages_temoin:WS.raises,arme:WS.ready},
-    apprentissage_s:APPREND_MS/1000, stabilisation_ms:SETTLE, anti_rafale_ms:ANTI_RAFALE,
+    page:'mur', version:5, date:new Date().toISOString(),
+    maniere:MODE, graine:(MUR?MUR.graine:0), vitesse_px_s:+$('vit').value,
+    reglages_mur:(MUR?MUR.reglages:null), colonnes:(MUR?MUR.equite():[]),
+    capteurs_disponibles:B.voies().map(v=>({code:v.code,label:v.label,dispo:v.vivante,raison:v.raison})),
+    capteurs:capteurs,
+    apprentissage_s:APPREND_MS/1000, stabilisation_ms:SETTLE,
+    anti_rafale_ms:ANTI_RAFALE, anti_rafale_entre_marches_ms:ANTI_PAS,
     phrase:(MUR?MUR.phrase():[]), phrase_detail:(MUR?MUR.retenus():[]),
     evenements:[...journal].reverse()},null,1)],{type:'application/json'});
   const u=URL.createObjectURL(b),a=document.createElement('a');
@@ -319,23 +520,41 @@ $('expJ').onclick=()=>{
 };
 renderJ();
 
-/* ═══════ écran fixe ═══════ */
-let filming=false;
+/* ═══════════ écran fixe ═══════════ */
+function chip(k,v,cls){ return '<span class="chip'+(cls?' '+cls:'')+'"><span class="k">'+k+'</span><span class="v">'+esc(String(v))+'</span></span>'; }
+function majHud(now){
+  let h = chip('veille', armees? duree((now-tPret)/1000) : (apprend? 'apprentissage':'à l\'arrêt'), armees?'on':'')
+        + chip('voies', armees+'/'+Object.keys(W).length, armees?'on':'')
+        + chip('mots', nMots, nMots?'al':'');
+  if(MODE==='escalier' && MUR){
+    const e=MUR.etatEscalier();
+    if(e) h += chip('étape', e.etape+'/'+e.sur, 'al') + chip('cible', String(e.cible).slice(0,14), 'al');
+  } else {
+    const zmax = Object.keys(W).reduce((m,k)=> W[k].ready? Math.max(m, W[k].z) : m, 0);
+    h += chip('écart', zmax.toFixed(1)+' σ');
+  }
+  $('hud').innerHTML = h;
+  const hh = $('hud').getBoundingClientRect().height;
+  if(Math.abs(hh - (majHud.h||0)) > 1){ majHud.h=hh; document.body.style.setProperty('--hud', Math.round(hh)+'px');
+    setTimeout(()=>{ if(MUR) MUR.placer(); if(SP) SP.placer(); }, 60); }
+}
 function setFilming(on){
   filming=!!on;
   document.documentElement.classList.toggle('filming',filming);
   document.body.classList.toggle('filming',filming);
+  document.body.classList.toggle('avecspectre', filming && !!SP && SP.actif());
   $('fixBtn').className=filming?'act':'';
   $('fixBtn').textContent=filming?'Quitter':'Écran fixe';
   if(filming){
     try{GBWake.on();}catch(e){}
+    majHud(performance.now());
     const el=document.documentElement, rq=el.requestFullscreen||el.webkitRequestFullscreen;
     if(rq){ const r=rq.call(el,{navigationUI:'hide'}); if(r&&r.catch) r.catch(()=>{}); }
     try{window.scrollTo(0,0);}catch(e){}
   } else if(document.fullscreenElement||document.webkitFullscreenElement){
     try{(document.exitFullscreen||document.webkitExitFullscreen).call(document);}catch(e){}
   }
-  setTimeout(()=>{ if(MUR) MUR.placer(); },80);
+  setTimeout(()=>{ if(MUR) MUR.placer(); if(SP) SP.placer(); },80);
 }
 $('fixBtn').onclick=()=>setFilming(!filming);
 $('quitFix').onclick=()=>setFilming(false);
@@ -350,8 +569,9 @@ $('fsBtn').onclick=()=>{
     if(rq){ const r=rq.call(el,{navigationUI:'hide'}); if(r&&r.catch) r.catch(()=>{}); }
   }
 };
-/* le micro est rendu quand on quitte : sinon il reste pris pour les autres modes */
-addEventListener('pagehide',()=>{ try{ if(micStream) micStream.getTracks().forEach(t=>t.stop()); }catch(e){} });
+/* les capteurs sont rendus quand on quitte : sinon ils restent pris pour les autres modes */
+addEventListener('pagehide',()=>{ try{ B.couperTout(); }catch(e){} });
+majVoies(); majMode(); majPhrase();
 })();
 </script>
 <script>if('serviceWorker' in navigator){window.addEventListener('load',function(){navigator.serviceWorker.register('/ghost-box/sw.js').catch(function(){});});}</script>

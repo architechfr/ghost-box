@@ -1,0 +1,209 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#0A0F12">
+<title>Mode d'emploi — Ghost Box</title>
+<link rel="icon" type="image/png" href="/ghost-box/favicon.png">
+<link rel="apple-touch-icon" href="/ghost-box/apple-touch-icon.png">
+<link rel="manifest" href="/ghost-box/manifest.json">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Ghost Box">
+<link rel="stylesheet" href="/ghost-box/lib/fonts.css?v=11">
+<style>
+:root{
+  --bench:#0A0F12;--panel:#1D262B;--line:#2C383F;--hair:#212B31;
+  --signal:#5FD3A6;--gold:#E9B44C;--flag:#E2574C;--paper:#CFC6B4;--dim:#78868E;--text:#DDE6EA;
+  --legend:"Barlow Condensed","Arial Narrow",sans-serif;
+  --body:"IBM Plex Sans",system-ui,sans-serif;--mono:"IBM Plex Mono",ui-monospace,monospace;
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;background:var(--bench);color:var(--text);font-family:var(--body);-webkit-font-smoothing:antialiased}
+body{padding:0 0 calc(env(safe-area-inset-bottom, 0px) + 40px)}
+.wrap{max-width:680px;margin:0 auto;padding:0 16px}
+.top{position:sticky;top:0;z-index:20;background:rgba(10,15,18,.96);backdrop-filter:blur(8px);
+  border-bottom:1px solid var(--line);padding:env(safe-area-inset-top, 0px) 0 0}
+.topin{max-width:680px;margin:0 auto;padding:10px 16px;display:flex;align-items:center;gap:10px}
+.topin a{color:var(--dim);text-decoration:none;font-family:var(--mono);font-size:16px}
+.topin h1{font-family:var(--legend);text-transform:uppercase;letter-spacing:.18em;font-size:15px;font-weight:600;margin:0;flex:1}
+h2{font-family:var(--legend);text-transform:uppercase;letter-spacing:.16em;font-size:17px;font-weight:600;
+  margin:34px 0 2px;color:var(--text);scroll-margin-top:64px}
+h2 .num{color:var(--signal);font-size:13px;margin-right:8px}
+h3{font-family:var(--legend);text-transform:uppercase;letter-spacing:.13em;font-size:13px;font-weight:600;
+  margin:20px 0 2px;color:var(--gold)}
+p{font-size:14.5px;line-height:1.72;color:#AEBBC2;margin:9px 0 0}
+p b{color:var(--paper);font-weight:600}
+p.fort{color:var(--text)}
+hr{border:0;border-top:1px solid var(--line);margin:30px 0 0}
+.som{margin:18px 0 0;padding:14px 16px;border:1px solid var(--line);border-radius:4px;background:#101820}
+.som a{display:block;color:var(--signal);text-decoration:none;font-size:13.5px;padding:5px 0;
+  border-bottom:1px solid var(--hair)}
+.som a:last-child{border-bottom:0}
+.som a .n{color:var(--dim);font-family:var(--mono);font-size:11px;margin-right:8px}
+.enc{margin:14px 0 0;padding:12px 14px;border-left:2px solid var(--gold);background:#171410;border-radius:0 3px 3px 0}
+.enc p{margin:0;color:#E0D3B4}
+.enc.vert{border-left-color:var(--signal);background:#101A16}
+.enc.vert p{color:#BFE3D3}
+.enc.rouge{border-left-color:var(--flag);background:#1B1211}
+.enc.rouge p{color:#E8C4C0}
+.enc .lg{display:block;font-family:var(--legend);text-transform:uppercase;letter-spacing:.16em;
+  font-size:10.5px;color:var(--gold);margin-bottom:5px;font-weight:600}
+.enc.vert .lg{color:var(--signal)}.enc.rouge .lg{color:var(--flag)}
+a.lien{color:var(--signal);text-decoration:none;border-bottom:1px solid rgba(95,211,166,.35)}
+code{font-family:var(--mono);font-size:12.5px;color:var(--paper);background:#141C22;padding:1px 5px;border-radius:2px}
+.haut{display:block;text-align:right;font-family:var(--mono);font-size:11px;color:var(--dim);
+  text-decoration:none;margin-top:14px}
+footer{margin-top:36px;padding-top:16px;border-top:1px solid var(--line);font-size:12px;color:#55636B;line-height:1.7}
+</style>
+<link rel="stylesheet" href="/ghost-box/lib/ambiance.css?v=11">
+</head>
+<body>
+
+<div class="top"><div class="topin">
+  <a href="../">←</a><h1>Mode d'emploi</h1>
+</div></div>
+
+<div class="wrap">
+
+<p class="fort" style="margin-top:18px">Ce texte explique l'appareil en entier : ce qu'il fait, comment il le fait, et surtout <b>ce qu'il refuse de faire</b>. Il est enregistré avec l'application : il s'ouvre sans réseau, au fond d'une cave, quand c'est justement le moment d'avoir une réponse.</p>
+
+<div class="som" id="haut">
+  <a href="#p1"><span class="n">01</span>Ce que fait l'appareil, et ce qu'il ne fait pas</a>
+  <a href="#p2"><span class="n">02</span>La règle qui commande tout le reste</a>
+  <a href="#p3"><span class="n">03</span>Comment un seuil est appris</a>
+  <a href="#p4"><span class="n">04</span>Les capteurs, un par un</a>
+  <a href="#p5"><span class="n">05</span>Le mur de mots : deux manières de désigner</a>
+  <a href="#p6"><span class="n">06</span>Les six modes du menu</a>
+  <a href="#p7"><span class="n">07</span>Conduire une séance</a>
+  <a href="#p8"><span class="n">08</span>Lire un résultat sans se raconter d'histoires</a>
+  <a href="#p9"><span class="n">09</span>Où vont les enregistrements</a>
+  <a href="#p10"><span class="n">10</span>Hors réseau, batterie, installation</a>
+  <a href="#p11"><span class="n">11</span>Quand rien ne sort</a>
+  <a href="#p12"><span class="n">12</span>Ce qui quitte l'appareil</a>
+</div>
+
+<h2 id="p1"><span class="num">01</span>Ce que fait l'appareil, et ce qu'il ne fait pas</h2>
+<p>Ghost Box est un <b>poste de mesure</b>. Il surveille en continu ce que les capteurs du téléphone perçoivent — le son, la vibration, le champ magnétique, l'image — et il signale les moments où l'un d'eux sort franchement de son ordinaire. C'est tout ce qu'il fait, et c'est déjà beaucoup, parce que le faire honnêtement est difficile.</p>
+<p>Il ne devine rien. Il n'interprète rien. Il ne complète aucune phrase, ne conjugue aucun verbe, n'ajoute ni article ni liaison. Il ne fabrique pas d'ambiance, ne joue pas de son, ne fait rien apparaître à l'écran pour meubler le silence.</p>
+<div class="enc"><span class="lg">le principe fondateur</span>
+<p>Le contact avec un fantôme est quelque chose de très rare. Donc <b>un mot ne doit jamais sortir pour rien</b>. Il ne s'agit pas de s'inventer des histoires. S'il n'y a rien, eh bien c'est ainsi — et c'est le résultat normal d'une séance.</p></div>
+<p>C'est pour cela qu'il n'y a nulle part de réglage « sensibilité », nulle part de quota du genre « au moins un mot toutes les dix minutes ». Une application qui garantit de faire sortir des mots ne mesure rien : elle décore.</p>
+<a class="haut" href="#haut">↑ sommaire</a>
+
+<h2 id="p2"><span class="num">02</span>La règle qui commande tout le reste</h2>
+<p>Un faux positif — un mot sorti alors que rien ne s'est passé — est bien plus grave qu'un événement manqué. Un mot manqué, on ne le saura jamais et rien n'est abîmé. Un mot sorti pour rien empoisonne toute la séance : il fait chercher un sens là où il n'y en a pas, et il décrédibilise ceux qui sortiront ensuite.</p>
+<p>Tout l'appareil est donc réglé dans ce sens, quitte à rater. Le moteur a été éprouvé sur <b>900 heures de bruit simulé</b>, avec trois générateurs différents — bruit autocorrélé à queues lourdes, bruit très fortement corrélé, bruit par bouffées. Résultat : <b>zéro mot</b> sur ces 900 heures. Sur la même mesure, une excursion franche et soutenue de 8 σ passe <b>cent fois sur cent</b>. C'est ce couple de chiffres qui définit le réglage, pas une intuition.</p>
+<a class="haut" href="#haut">↑ sommaire</a>
+
+<h2 id="p3"><span class="num">03</span>Comment un seuil est appris</h2>
+<p>Il n'y a aucun seuil théorique dans cette application. « Trois écarts-types », le chiffre qu'on lit partout, est un mensonge sur un capteur réel : le bruit d'une pièce est corrélé dans le temps et il a des queues lourdes, c'est-à-dire qu'il produit tout seul, de temps en temps, des pics énormes.</p>
+<h3>L'apprentissage</h3>
+<p>Au démarrage d'une séance, l'appareil écoute le lieu pendant <b>30 à 45 secondes selon le mode</b>, sans rien pouvoir déclencher. Il en tire la valeur normale de chaque voie et sa dispersion, calculées par <b>médiane et écart absolu médian</b> — deux mesures qu'un pic parasite ne dérange pas, contrairement à la moyenne et à l'écart-type.</p>
+<p>Pendant ce temps, <b>laisse la pièce telle qu'elle sera</b>. Si tu parles, marches ou déplaces le téléphone pendant l'apprentissage, l'appareil apprend que tout cela est normal — et il deviendra sourd à ce qui lui ressemble.</p>
+<h3>L'ancrage</h3>
+<p>Le seuil est ensuite posé sur <b>le pire pic réellement entendu pendant l'apprentissage, multiplié par 1,4</b>, et jamais en dessous d'un plancher de <b>6,5 σ</b>. Ce plancher est mesuré, pas choisi : à 5 σ, les 900 heures de bruit laissaient encore sortir 74 mots. À 6,5 σ, aucun.</p>
+<h3>Le témoin de bruit</h3>
+<p>C'est la pièce la plus importante, et la plus difficile à expliquer. En même temps qu'il surveille le réel, l'appareil <b>rejoue le bruit qu'il a lui-même enregistré</b>, par blocs de trois secondes pour conserver sa texture — mêmes pics, même corrélation, mais aucun événement réel derrière. Si ce bruit rejoué suffisait à faire sortir un mot, c'est un faux positif certain : le seuil monte alors de 15 %.</p>
+<p>Ce témoin est éprouvé <b>seize fois par mesure</b>. Il rencontre donc les coups de chance du bruit bien avant que la réalité ne les rencontre, et relève le seuil à temps. C'est pour cela que tu verras le seuil grimper tout seul au fil des heures : ce n'est pas une dérive, c'est l'appareil qui se protège.</p>
+<h3>Le capteur plat</h3>
+<p>Un capteur absent, gelé, couvert ou débranché ne bouge pas d'un cheveu. Sa dispersion est nulle, donc la moindre variation vaudrait des milliers d'écarts-types et ferait sortir un mot pour rien. L'appareil <b>refuse d'armer une voie plate</b> et te le dit en toutes lettres. Filmer et enregistrer restent possibles ; seule la sortie de mots est bloquée.</p>
+<a class="haut" href="#haut">↑ sommaire</a>
+
+<h2 id="p4"><span class="num">04</span>Les capteurs, un par un</h2>
+<p>Une voie n'existe dans cette application que si elle correspond à une vraie mesure faite par un vrai composant. Quand un capteur manque, la voie dit qu'elle manque et <b>pourquoi</b> — c'est un résultat, pas une panne à masquer.</p>
+<h3>Le micro</h3>
+<p>Le niveau global, puis trois bandes séparées — <b>grave 100–300 Hz</b> (un pas dans un plancher, une porte, un souffle d'air), <b>médium 300 Hz–3 kHz</b> (la bande de la voix humaine), <b>aigu 3–8 kHz</b> (frottements et craquements secs). S'y ajoutent une <b>bande 15–20 kHz</b>, presque vide dans une maison, donc où une excursion est plus parlante ; et le <b>changement de timbre</b>, qui voit ce qui change de nature à volume constant — ce que le niveau seul ne peut pas voir.</p>
+<p>Les traitements du téléphone — réduction de bruit, correction d'écho, gain automatique — sont désactivés partout où c'est possible. Ce sont des filtres : ils modifient ce qu'on prétend mesurer.</p>
+<h3>Le mouvement</h3>
+<p>Accéléromètre, gyroscope, inclinaison. Téléphone posé sur une table ou un plancher, un choc dans la structure du bâtiment y arrive. Très sensible, donc seuil très sévère — et inutile si tu tiens l'appareil à la main.</p>
+<h3>Le champ magnétique</h3>
+<p>Le magnétomètre directement, quand le navigateur l'expose. Sinon la <b>perturbation du cap boussole</b>, qui lit exactement le même capteur autrement : un cap qui bouge alors que l'appareil est posé, c'est le champ qui a bougé.</p>
+<h3>La caméra</h3>
+<p>La clarté moyenne de l'image et la part de l'image qui a changé depuis la vue précédente. Caméra fixe, c'est ce qui bouge dans le champ. La séance caméra y ajoute la détection de silhouette humaine et le suivi de forme.</p>
+<div class="enc rouge"><span class="lg">ce qui n'existe pas et n'existera pas</span>
+<p>Aucun navigateur ne donne accès à la température, à la pression atmosphérique, au champ électrique, à l'infrarouge ni aux ondes radio. On pourrait les « estimer » : ce serait de la décoration. Il n'y en aura pas. De même, aucun générateur de nombres au hasard ne sera jamais déguisé en instrument.</p></div>
+<p>Sur un ordinateur il n'y a ni accéléromètre ni boussole : <b>micro et caméra suffisent à travailler</b>, et les autres voies se déclarent absentes sans rien casser.</p>
+<a class="haut" href="#haut">↑ sommaire</a>
+
+<h2 id="p5"><span class="num">05</span>Le mur de mots : deux manières de désigner</h2>
+<p>Le mur montre <b>tout le vocabulaire</b> — 567 mots rangés en cinq familles : réponses, personnes, lieux, actions, états et temps. Il existe parce qu'un lexique rangé dans un fichier ne se propose à personne : on ne peut pas demander à une présence de trouver toute seule une base de données. Ce qui peut être dit doit être <b>visible</b>, en permanence, écran tourné vers la pièce.</p>
+<p>Les vitesses des colonnes <b>tournent d'un cran toutes les vingt secondes</b> : aucune famille n'est durablement la plus rapide, et aucun mot ne passe systématiquement en coup de vent. La graine de session est affichée : le défilement est reproductible, donc vérifiable après coup.</p>
+<h3>Instant simple — un événement, un mot</h3>
+<p>Une case de lecture parcourt les colonnes. Quand un capteur franchit son seuil, le mur se fige et le mot qui se trouvait dans la case est retenu.</p>
+<div class="enc"><span class="lg">à savoir, et ce n'est pas un détail</span>
+<p>Ce mot <b>n'est pas visable</b>. À 330 pixels par seconde pour une case de 30 pixels, un mot passe toutes les 68 à 130 millisecondes, et la case change de colonne toutes les 420 millisecondes. Viser un mot précis demanderait une justesse au dixième de seconde et la connaissance d'un défilement qu'on ne contrôle pas. En instant simple, <b>l'instant est vrai et le mot est un tirage</b>. C'est une mesure honnête, ce n'est pas un dialogue.</p></div>
+<h3>Escalier — trois événements, un mot</h3>
+<p>L'escalier répond à ce problème sans toucher au seuil : au lieu d'affaiblir la garde, <b>il agrandit la cible</b>. Le mot se construit en trois marches. D'abord <b>la famille</b> : les cinq colonnes sont encadrées à tour de rôle, 2,5 secondes chacune. Puis <b>la page</b> : les mots de la famille retenue défilent par pages de 24, 2,5 secondes par page. Puis <b>le mot</b> : les 24 mots de la page sont éclairés un par un, 800 millisecondes chacun.</p>
+<p>Trois franchissements de seuil réels valent bien plus qu'un seul, puisque la probabilité qu'un hasard en produise trois dans les fenêtres utiles est le produit de trois probabilités déjà minuscules. <b>L'escalier est plus sévère que l'instant simple, pas moins.</b></p>
+<p>Si une marche reste sans événement pendant deux minutes, la séquence est abandonnée et <b>rien n'est écrit</b> — pas de demi-mot, pas de trace ambiguë. L'abandon, lui, est noté : il fait partie de ce qui s'est passé.</p>
+<h3>L'horodatage à l'attaque</h3>
+<p>Le moteur ne confirme un franchissement qu'après quatre relevés, soit environ 400 millisecondes après le début réel de l'excursion — trois à six mots de défilement plus loin. Le mur remonte donc le défilement jusqu'à <b>l'instant d'attaque</b>, pas jusqu'à celui de la confirmation. Sans cela, même une intention parfaitement synchronisée manquerait sa cible.</p>
+<h3>La phrase</h3>
+<p>Les mots retenus s'accumulent dans l'ordre exact où ils sont sortis. Rien n'est ajouté, rien n'est réordonné, rien n'est conjugué. Ce n'est pas une phrase fabriquée : c'est la suite de ce qui a été mesuré, mise bout à bout. <b>Le sens, s'il y en a un, ne vient pas de l'appareil.</b> Une minute au minimum sépare deux mots, donc une phrase se construit sur la durée d'une séance, pas en trente secondes.</p>
+<a class="haut" href="#haut">↑ sommaire</a>
+
+<h2 id="p6"><span class="num">06</span>Les six modes du menu</h2>
+<h3>Séance caméra</h3>
+<p>Jusqu'à quatre caméras à la fois, composées dans une seule image — <b>jamais déformées</b> : chaque vue garde ses proportions et se centre dans sa case. Détection de silhouette humaine sur chaque vue, cadre du mouvement, mur de mots à côté de l'image. Incrustation du lieu, de l'heure et des mots dans la vidéo, ou image brute au choix. Une <b>mémoire tampon</b> garde en permanence les secondes qui précèdent : quand tu appuies, tu récupères aussi ce qui vient de se passer. Capture automatique d'une photo si une silhouette apparaît furtivement, et bascule en vidéo si elle reste.</p>
+<h3>Séance capteurs</h3>
+<p>Le banc complet, sondé en direct, avec trois manières de faire parler les voies : une seule voie, la <b>coïncidence</b> entre plusieurs voies, ou les <b>voies indépendantes</b> — chacune peut parler seule, et la trace dit laquelle a tiré. Spectre audio en option, mur de mots en option, écran fixe pour poser le téléphone et ne plus y toucher.</p>
+<h3>Le mur</h3>
+<p>Le mur comme outil principal, avec tous les capteurs de l'appareil en écoute et le choix entre instant simple et escalier. C'est le mode à utiliser quand l'objectif de la séance est <b>que quelque chose s'exprime</b>, plutôt que d'observer.</p>
+<h3>Écoute</h3>
+<p>Micro sans traitement, spectrogramme défilant, marqueurs posés à la main, détection de pics. Relecture avec boucle, rognage et filtres réglables, export WAV. C'est le mode fait pour la box radio elle-même.</p>
+<h3>Bibliothèque</h3>
+<p>Tout ce qui a été gardé, quel que soit le mode : vidéos, photos, prises audio, extraits venus de la mémoire tampon. Relecture avec le journal de séance, envoi vers les téléchargements du téléphone, suppression.</p>
+<h3>Contact via IA</h3>
+<p>Expérimental, et signalé comme tel. Transcription de la box radio par un service externe, et détection de silhouette. À traiter comme des <b>pistes à vérifier</b>, jamais comme des preuves : une IA de transcription fabrique des mots à partir du bruit, c'est sa nature même.</p>
+<a class="haut" href="#haut">↑ sommaire</a>
+
+<h2 id="p7"><span class="num">07</span>Conduire une séance</h2>
+<p>Arrive et <b>ne fais rien pendant quelques minutes</b>. Laisse le lieu revenir à son état ordinaire : les portes qui claquent, le chauffage qui se met en route, ton propre souffle après avoir monté un escalier, tout cela doit être retombé avant l'apprentissage.</p>
+<p>Pose le téléphone plutôt que de le tenir. Sur un support stable, pas sur une table qui bouge, pas sur quelque chose qui vibre. Écran tourné vers la pièce si tu utilises le mur. Coupe les notifications ; une vibration entrante est un événement mesurable qui n'a rien de surnaturel.</p>
+<p>Lance l'apprentissage et <b>tiens-toi tranquille pendant sa durée</b>. Ensuite, une minute de stabilisation passe avant que quoi que ce soit puisse sortir : c'est voulu.</p>
+<p>Pendant la séance, parle si tu veux — mais sache que ta propre voix est le principal fournisseur de faux positifs sur la voie médium. Si tu poses des questions à voix haute, éloigne-toi du téléphone ou accepte que les mots qui suivent immédiatement tes phrases soient les plus douteux de la séance.</p>
+<p>Enregistre. Toujours. Une séance non enregistrée ne peut être ni revérifiée ni partagée, et le souvenir se déforme en quelques heures.</p>
+<a class="haut" href="#haut">↑ sommaire</a>
+
+<h2 id="p8"><span class="num">08</span>Lire un résultat sans se raconter d'histoires</h2>
+<p>Un mot sorti veut dire une seule chose : <b>à cet instant, une mesure physique est sortie de l'ordinaire du lieu, plus franchement que tout ce que le bruit de ce lieu a produit pendant l'apprentissage</b>. Rien de plus.</p>
+<p>Ça ne veut pas dire qu'une présence a choisi ce mot — sauf en escalier, où la cible est assez large pour avoir pu être visée, et encore : trois marches réussies restent compatibles avec un enchaînement de hasards, simplement beaucoup moins probable.</p>
+<p>Ça ne veut pas dire non plus qu'aucune cause ordinaire n'existe. Un camion, une chaudière, un plancher qui travaille en refroidissant, un téléphone qui cherche du réseau, un insecte devant la caméra : tout cela est réel, mesurable, et sort de l'ordinaire. <b>L'appareil mesure une anomalie, il n'en désigne pas la cause.</b> C'est à toi de chercher la cause ordinaire d'abord, et de ne garder l'autre hypothèse que si aucune ne tient.</p>
+<p>L'export JSON de chaque mode contient l'instant, la voie qui a tiré, la mesure brute, l'écart en σ, le seuil du moment, le nombre de relevages du témoin, la graine du défilement et — en escalier — le chemin complet des trois marches. <b>Le choix peut être entièrement refait à la main depuis cet export.</b> C'est ce qui distingue une mesure d'une croyance.</p>
+<a class="haut" href="#haut">↑ sommaire</a>
+
+<h2 id="p9"><span class="num">09</span>Où vont les enregistrements</h2>
+<p>Tout ce qui est enregistré, quel que soit le mode, rejoint la <a class="lien" href="../bibliotheque/">Bibliothèque</a> de l'appareil. Rien n'est envoyé nulle part.</p>
+<p>Une prise n'est jamais gardée en mémoire vive seule. Chaque morceau est écrit <b>au fil de l'eau</b> dans le stockage du téléphone : si l'application est fermée brutalement, si la batterie tombe, si le navigateur reprend la main, la séance interrompue est retrouvée et récupérable au retour. Cette pièce a été ajoutée après une séance réellement perdue — elle n'aurait jamais dû manquer.</p>
+<p>Chaque enregistrement embarque ses conditions : le seuil de chaque voie, le nombre de relevages du témoin, la détection de personne, la capture automatique, l'incrustation et la phrase du mur au moment de la prise. Un fichier sans ses conditions ne prouve rien.</p>
+<a class="haut" href="#haut">↑ sommaire</a>
+
+<h2 id="p10"><span class="num">10</span>Hors réseau, batterie, installation</h2>
+<p>Les lieux où l'on travaille sont ceux où le réseau manque. L'application est donc <b>entièrement mise en cache</b> : pages, modules, lexique, polices, marque. Une fois ouverte en ligne une seule fois, elle s'ouvre ensuite sans réseau. La page <a class="lien" href="../reglages/">Réglages</a> a un bouton qui le <b>vérifie réellement</b>, en contrôlant la présence de chaque page dans le cache — à faire avant de partir, pas sur le parking.</p>
+<p>Installe-la sur l'écran d'accueil (menu du navigateur, « Ajouter à l'écran d'accueil »). Elle s'ouvre alors sans barre de navigateur, en vrai plein écran, et l'écran ne se met plus en veille pendant une séance.</p>
+<p>Une séance longue consomme : caméra, micro, écran allumé. Prends une batterie externe pour toute veille dépassant deux heures. L'écran fixe existe pour ça : poser le téléphone, tout lire d'un coup d'œil, ne plus y toucher.</p>
+<a class="haut" href="#haut">↑ sommaire</a>
+
+<h2 id="p11"><span class="num">11</span>Quand rien ne sort</h2>
+<div class="enc vert"><span class="lg">c'est le résultat normal</span>
+<p>La plupart des séances ne produisent aucun mot. Ce n'est ni une panne, ni un échec, ni un mauvais réglage : c'est ce à quoi il faut s'attendre quand on refuse de tricher. Une soirée entière sans un seul mot est une soirée où l'appareil a bien travaillé.</p></div>
+<p>Si tu veux vérifier que la mécanique fonctionne, le bouton <b>Essai</b> fige le mur à la main et affiche un mot en rouge, marqué comme essai dans la trace : il montre le mécanisme sans jamais se faire passer pour une mesure.</p>
+<p>Si aucune voie n'a pu être armée, l'appareil te dit laquelle et pourquoi. Le cas le plus fréquent est le micro couvert par la housse ou pris par une autre application, et la caméra occupée par une autre application ouverte en arrière-plan.</p>
+<a class="haut" href="#haut">↑ sommaire</a>
+
+<h2 id="p12"><span class="num">12</span>Ce qui quitte l'appareil</h2>
+<p>Rien, sauf sur un point précis. Les enregistrements, les photos, les traces, les phrases, les réglages : tout reste dans le stockage du téléphone et n'est envoyé à aucun serveur. Il n'y a ni compte, ni suivi, ni statistique.</p>
+<p>La seule exception est le mode <b>Contact via IA</b>, qui envoie l'audio à un service de transcription externe — et il le dit avant de le faire. La clé de ce service est gardée sur l'appareil et n'a jamais été mise dans le dépôt du code.</p>
+<footer>
+Ghost Box — poste de terrain. Application locale, sans compte et sans suivi.<br>
+Les réglages du moteur cités ici (plancher 6,5 σ, témoin éprouvé 16 fois par mesure, quatre relevés de confirmation) sont mesurés sur 900 heures de bruit simulé. Toute modification de ces valeurs oblige à refaire cette mesure.
+</footer>
+
+</div>
+
+<script src="/ghost-box/lib/retour.js?v=11"></script>
+<script>if('serviceWorker' in navigator){window.addEventListener('load',function(){navigator.serviceWorker.register('/ghost-box/sw.js').catch(function(){});});}</script>
+</body>
+</html>

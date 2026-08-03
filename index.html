@@ -12,7 +12,7 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="Ghost Box">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<link rel="stylesheet" href="/ghost-box/lib/fonts.css?v=10">
+<link rel="stylesheet" href="/ghost-box/lib/fonts.css?v=11">
 <style>
 :root{--night:#0A0F12;--panel:#1D262B;--sunk:#0A0F12;--line:#2C383F;--hair:#212B31;
   --signal:#5FD3A6;--gold:#E9B44C;--flag:#E2574C;--paper:#CFC6B4;--dim:#78868E;--text:#DDE6EA;
@@ -20,7 +20,9 @@
   --mono:"IBM Plex Mono",ui-monospace,monospace}
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
 html,body{margin:0;background:var(--night);color:var(--text);font-family:var(--body);-webkit-font-smoothing:antialiased}
-body{padding:env(safe-area-inset-top) 0 calc(env(safe-area-inset-bottom) + 30px)}
+/* le repli « , 0px » n'est pas décoratif : sans lui, un navigateur qui ne
+   connaît pas la variable rend toute la calc() invalide et la marge saute */
+body{padding:env(safe-area-inset-top, 0px) 0 calc(env(safe-area-inset-bottom, 0px) + 30px)}
 .wrap{max-width:600px;margin:0 auto;padding:0 16px}
 .lg{font-family:var(--legend);text-transform:uppercase;letter-spacing:.18em;font-size:11px;color:var(--dim);font-weight:600}
 h1{font-family:var(--legend);text-transform:uppercase;letter-spacing:.22em;font-size:20px;font-weight:600;margin:26px 0 4px}
@@ -53,13 +55,19 @@ footer a{color:var(--dim)}
   .card .det{color:#6E7C84;font-size:12.5px;line-height:1.6;margin-top:8px;
     padding-top:8px;border-top:1px solid rgba(95,211,166,.12)}
 </style>
-<link rel="stylesheet" href="/ghost-box/lib/ambiance.css?v=10">
+<link rel="stylesheet" href="/ghost-box/lib/ambiance.css?v=11">
 </head>
 <body>
 <div class="wrap">
 
-<img src="assets/wordmark.png" alt="Ghost Box — poste de terrain" style="display:block;width:100%;max-width:440px;margin:24px 0 10px">
-<p>Cinq outils, rangés par moment : ce qu'on fait <b>pendant</b> la séance, et ce qu'on en fait <b>après</b>. Tout reste sur l'appareil, sauf la transcription du dernier outil.</p>
+<!-- La marque est un PNG à fond TRANSPARENT, rogné au dessin près : son bord
+     gauche est donc exactement celui du texte en dessous. La version
+     précédente embarquait sa propre plaque sombre découpée dans une planche
+     à fond blanc — d'où le filet blanc tout autour et le décalage. La marge
+     de droite laisse la place au bouton plein écran, qui flotte par-dessus. -->
+<img src="assets/wordmark.png" alt="Ghost Box — poste de terrain"
+     style="display:block;width:calc(100% - 46px);max-width:410px;margin:22px 0 12px">
+<p>Les outils sont rangés par moment : ce qu'on fait <b>pendant</b> la séance, et ce qu'on en fait <b>après</b>. Tout reste sur l'appareil, sauf la transcription du dernier outil. Si tu ouvres l'application pour la première fois, commence par le <a href="manuel/" style="color:var(--gold)">mode d'emploi</a>.</p>
 
 <div class="sect">pendant la séance</div>
 
@@ -78,10 +86,10 @@ footer a{color:var(--dim)}
 </a>
 
 <a class="card g" href="mur/">
-  <h2>Mur seul <span class="arrow">→</span></h2>
-  <p>Le vocabulaire entier, <b>montré</b> : cinq colonnes qui tombent dans le noir et une case de lecture qui les parcourt. Écran tourné vers la pièce.</p>
-  <p class="det">Quand une mesure dépasse le seuil, le mur se fige et le mot de la case est retenu. Les mots retenus s'accumulent dans l'ordre : <b>une phrase se construit sur la durée d'une séance</b>. Le micro sert de capteur, les vitesses tournent entre les colonnes.</p>
-  <span class="when">→ pour montrer ce qu'on propose, plutôt que de le garder pour soi</span>
+  <h2>Le mur <span class="arrow">→</span></h2>
+  <p>Le vocabulaire entier, <b>montré</b> : cinq colonnes qui tombent dans le noir. Écran tourné vers la pièce, et <b>tous les capteurs de l'appareil</b> en écoute — micro, mouvement, champ magnétique, caméra.</p>
+  <p class="det">Deux manières de désigner un mot. <b>Instant simple</b> : un événement, un mot — l'instant est vrai, mais le mot reste un tirage. <b>Escalier</b> : trois événements pour un mot — la famille, puis la page, puis le mot — cibles assez larges pour être visées, et aucun seuil baissé. Séquence interrompue, rien n'est écrit.</p>
+  <span class="when">→ pour laisser une place à ce qui voudrait s'exprimer, sans rien inventer</span>
 </a>
 
 <div class="sect">après la séance</div>
@@ -102,6 +110,12 @@ footer a{color:var(--dim)}
   <h2>Réglages <span class="arrow">→</span></h2>
   <p>Partager l'application par <b>QR code</b>, vérifier que le hors-ligne est prêt avant de partir, voir l'état de l'appareil, remettre les préférences à neuf.</p>
   <span class="when">→ avant de partir sur le terrain, ou pour équiper un autre téléphone</span>
+</a>
+
+<a class="card g" href="manuel/">
+  <h2>Mode d'emploi <span class="arrow">→</span></h2>
+  <p>Tout ce que fait l'appareil, expliqué en entier : chaque mode, comment le seuil est appris, ce qu'un mot veut dire et ce qu'il ne veut pas dire, comment conduire une séance, où vont les enregistrements.</p>
+  <span class="when">→ à lire une fois posément ; il fonctionne aussi sans réseau</span>
 </a>
 
 <a class="card f" href="contact-ia/">
@@ -153,6 +167,6 @@ document.getElementById('ctx').innerHTML = ios
 })();
 </script>
 <script>if('serviceWorker' in navigator){window.addEventListener('load',function(){navigator.serviceWorker.register('/ghost-box/sw.js').catch(function(){});});}</script>
-<script src="/ghost-box/lib/fullscreen.js?v=10"></script>
+<script src="/ghost-box/lib/fullscreen.js?v=11"></script>
 </body>
 </html>

@@ -10,7 +10,7 @@
 <link rel="manifest" href="/ghost-box/manifest.json">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
-<link rel="stylesheet" href="/ghost-box/lib/fonts.css?v=10">
+<link rel="stylesheet" href="/ghost-box/lib/fonts.css?v=11">
 <style>
 :root{
   --bench:#0A0F12;--panel:#1D262B;--line:#2C383F;--hair:#212B31;
@@ -45,17 +45,23 @@ table{width:100%;border-collapse:collapse;margin-top:8px}
 td{padding:7px 6px 7px 0;border-bottom:1px solid var(--hair);font-family:var(--mono);font-size:12px}
 td:first-child{color:var(--dim);width:46%}
 </style>
-<link rel="stylesheet" href="/ghost-box/lib/ambiance.css?v=10">
+<link rel="stylesheet" href="/ghost-box/lib/ambiance.css?v=11">
 </head>
 <body>
 
 <div class="top"><div class="topin">
-  <a href="../">←</a><h1>Réglages <span style="font-size:10px;color:var(--signal)">v1</span></h1>
+  <a href="../">←</a><h1>Réglages <span style="font-size:10px;color:var(--signal)">v2</span></h1>
 </div></div>
 
 <div class="wrap">
 
 <div class="step" style="border-top:0">
+  <div class="lg">Mode d'emploi</div>
+  <p class="ex">Tout ce que fait l'appareil, expliqué en entier : chaque mode, comment le seuil est appris, ce qu'un mot veut dire et ce qu'il ne veut pas dire, comment conduire une séance, où vont les enregistrements, que faire quand rien ne sort. Il est enregistré avec l'application : <b>il s'ouvre sans réseau</b>.</p>
+  <div class="row"><button id="manuel">Ouvrir le mode d'emploi</button></div>
+</div>
+
+<div class="step">
   <div class="lg">Partager l'application</div>
   <p class="ex">Fais scanner ce code par un autre téléphone : il ouvre directement le poste de terrain. Sur place, chacun peut ensuite l'installer (« Ajouter à l'écran d'accueil ») et il fonctionnera même sans réseau.</p>
   <div id="qrBox"><img id="qrImg" alt="QR code vers l'application"></div>
@@ -86,14 +92,15 @@ td:first-child{color:var(--dim);width:46%}
 
 </div>
 
-<script src="/ghost-box/lib/qr.js?v=10"></script>
-<script src="/ghost-box/lib/retour.js?v=10"></script>
-<script src="/ghost-box/lib/aide.js?v=10"></script>
+<script src="/ghost-box/lib/qr.js?v=11"></script>
+<script src="/ghost-box/lib/retour.js?v=11"></script>
+<script src="/ghost-box/lib/aide.js?v=11"></script>
 <script>
 (() => {
 "use strict";
 const $=id=>document.getElementById(id);
 const URL_APP='https://architechfr.github.io/ghost-box/';
+$('manuel').onclick=()=>{ location.href='../manuel/'; };
 
 /* ═══════ le QR ═══════ */
 try{
@@ -142,7 +149,7 @@ diag();
 $('verifCache').onclick=async ()=>{
   $('cacheState').textContent='Vérification…';
   const doitEtre=['/ghost-box/','/ghost-box/seance/','/ghost-box/banc/','/ghost-box/mur/',
-    '/ghost-box/enregistreur/','/ghost-box/bibliotheque/','/ghost-box/data/lexique.json'];
+    '/ghost-box/enregistreur/','/ghost-box/bibliotheque/','/ghost-box/manuel/','/ghost-box/data/lexique.json'];
   try{
     const ks=await caches.keys(); const k=ks.find(x=>x.startsWith('ghostbox-'));
     if(!k){ $('cacheState').innerHTML='<b style="color:var(--flag)">Aucun cache</b> — recharge la page une fois avec du réseau.'; return; }

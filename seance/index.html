@@ -12,7 +12,7 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="Ghost Box">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<link rel="stylesheet" href="/ghost-box/lib/fonts.css?v=10">
+<link rel="stylesheet" href="/ghost-box/lib/fonts.css?v=11">
 <style>
 :root{
   --bench:#0A0F12;--panel:#1D262B;--sunk:#0A0F12;--line:#2C383F;--hair:#212B31;
@@ -127,11 +127,14 @@ body.filming #recBtn{position:fixed;z-index:60;left:10px;right:88px;width:auto;m
   border:1px solid var(--line);border-radius:4px;overflow:hidden}
 body.avecmur #murBox{display:flex}
 #quitFix{display:none}
+/* le bouton plein écran flottant recouvrait « Quitter » et interceptait
+   les appuis : en écran fixe il disparaît, « Quitter » fait le même travail */
+body.filming #fsFloat{display:none !important}
 body.filming #quitFix{display:block;position:fixed;z-index:61;right:10px;
   top:calc(var(--hud) + 8px);padding:8px 11px;font-size:11px;
   background:rgba(4,8,11,.9);border-color:rgba(95,211,166,.45);color:var(--signal)}
 </style>
-<link rel="stylesheet" href="/ghost-box/lib/ambiance.css?v=10">
+<link rel="stylesheet" href="/ghost-box/lib/ambiance.css?v=11">
 </head>
 <body>
 
@@ -204,16 +207,16 @@ body.filming #quitFix{display:block;position:fixed;z-index:61;right:10px;
 <video id="vid3" playsinline muted></video>
 <video id="vid4" playsinline muted></video>
 
-<script src="/ghost-box/lib/moteur.js?v=10"></script>
-<script src="/ghost-box/lib/retour.js?v=10"></script>
-<script src="/ghost-box/lib/aide.js?v=10"></script>
-<script src="/ghost-box/lib/action.js?v=10"></script>
+<script src="/ghost-box/lib/moteur.js?v=11"></script>
+<script src="/ghost-box/lib/retour.js?v=11"></script>
+<script src="/ghost-box/lib/aide.js?v=11"></script>
+<script src="/ghost-box/lib/action.js?v=11"></script>
 <script>addEventListener('load',function(){ try{ GBAction.init(['#recBtn','#prep']); }catch(e){} });</script>
-<script src="/ghost-box/lib/secours.js?v=10"></script>
-<script src="/ghost-box/lib/tampon.js?v=10"></script>
-<script src="/ghost-box/lib/mur.js?v=10"></script>
-<script src="/ghost-box/lib/media.js?v=10"></script>
-<script src="/ghost-box/lib/wakelock.js?v=10"></script>
+<script src="/ghost-box/lib/secours.js?v=11"></script>
+<script src="/ghost-box/lib/tampon.js?v=11"></script>
+<script src="/ghost-box/lib/mur.js?v=11"></script>
+<script src="/ghost-box/lib/media.js?v=11"></script>
+<script src="/ghost-box/lib/wakelock.js?v=11"></script>
 <script>
 (() => {
 "use strict";
@@ -554,6 +557,15 @@ $('fsBtn').onclick=()=>{
 /* ── capture automatique : l'appareil réagit plus vite que la main ── */
 let autoCap = (function(){ try{ return localStorage.getItem('gb-autocap')!=='0'; }catch(e){ return true; } })();
 let autoDernierePhoto=-1e9, autoPresenceDebut=0, autoAbsenceDebut=0, autoRecEnCours=false, autoPresent=false;
+let autoIncrustForcee=false;
+/* l'état des témoins à un instant donné — rangé avec chaque preuve produite
+   automatiquement : une capture sans ses conditions ne prouve rien */
+function etatCapteursSeance(){
+  return { seuil_son:(WA&&WA.ready? +WA.thr.toFixed(2):null),
+           seuil_image:(WM&&WM.ready? +WM.thr.toFixed(2):null),
+           relevages_temoin:(WA?WA.raises:0)+(WM?WM.raises:0),
+           presence:mHits, temoin_bruit:cHits };
+}
 $('autoBtn').className = autoCap? 'act':'';
 $('autoBtn').onclick=()=>{
   autoCap=!autoCap;
@@ -564,6 +576,43 @@ $('autoBtn').onclick=()=>{
     : 'Capture auto coupée — rien ne se déclenche tout seul.';
 };
 const AUTO_PHOTO_GAP=12000, AUTO_VIDEO_APRES=4000, AUTO_STOP_APRES=5000;
+
+/* ── la photo de capture auto embarque CE QUE L'APPAREIL A VU ──
+   Défaut corrigé ici : l'ancienne capture prenait l'image composée de l'écran,
+   qui ne dessine le squelette qu'à l'image SUIVANTE. Sur une apparition
+   furtive — le cas le plus intéressant — la photo partait donc sans le
+   squelette : on avait la preuve qu'il s'était passé quelque chose, mais plus
+   ce que l'appareil avait vu. La photo est maintenant composée À L'INSTANT de
+   la détection, à partir de la vue analysée, avec le squelette dessiné dessus
+   et un bandeau factuel (vue, nombre de personnes, points nets, confiance).
+   Les mêmes chiffres sont rangés dans la fiche du clip : l'image et sa raison
+   d'être voyagent ensemble. */
+function photoPreuve(now){
+  const i=lastPoseVue, v=elVue(i), pv=poseVues[i];
+  if(!v || !v.videoWidth || !pv || !pv.people.length){ try{ GBCapture.photo(); }catch(e){} return null; }
+  const c=document.createElement('canvas');
+  c.width=v.videoWidth; c.height=v.videoHeight;
+  const gg=c.getContext('2d'), S2=c.width/960;
+  gg.drawImage(v,0,0,c.width,c.height);
+  try{ POSE.drawAll(gg, pv.people, c.width, c.height, S2); }catch(e){}
+  // bandeau factuel : ce que la détection a réellement mesuré
+  const det=pv.people.map((p,k)=>{
+    const pts=(p.strong!=null? p.strong : (p.pts!=null? p.pts : '—'));
+    const conf=(p.pct!=null? p.pct+' %' : (p.mean!=null? Math.round(p.mean*100)+' %' : '—'));
+    return 'p'+(k+1)+' : '+pts+' points nets · confiance '+conf;
+  });
+  gg.fillStyle='rgba(10,15,18,.72)'; gg.fillRect(0,0,c.width,(26+det.length*16)*S2);
+  gg.fillStyle='#E9B44C'; gg.font='600 '+(13*S2|0)+'px monospace';
+  gg.fillText('CAPTURE AUTO — '+pv.people.length+' SILHOUETTE'+(pv.people.length>1?'S':'')+' · vue '+(i+1), 8*S2, 16*S2);
+  gg.fillStyle='#CFC6B4'; gg.font=(11*S2|0)+'px monospace';
+  det.forEach((l,k)=>gg.fillText(l, 8*S2, (32+k*16)*S2));
+  const fiche={ declencheur:'silhouette', vue:i+1,
+    detection:pv.people.map(p=>({points_nets:p.strong??p.pts??null, confiance_pc:p.pct??(p.mean!=null?Math.round(p.mean*100):null)})),
+    capteurs:(typeof etatCapteursSeance==='function'? etatCapteursSeance() : undefined) };
+  try{ GBCapture.photoCanvas(c, fiche); }catch(e){ try{ GBCapture.photo(); }catch(e2){} }
+  return det.join(' · ');
+}
+
 function autoTic(now, quelquun){
   if(!autoCap || !aiOn) return;
   if(quelquun){
@@ -572,10 +621,16 @@ function autoTic(now, quelquun){
       autoPresent=true; autoPresenceDebut=now;
       if(now-autoDernierePhoto>AUTO_PHOTO_GAP){
         autoDernierePhoto=now;
-        try{ GBCapture.photo(); addJ(now,'auto','photo déclenchée — silhouette confirmée'); }catch(e){}
+        const d=photoPreuve(now);
+        addJ(now,'auto','photo déclenchée — silhouette confirmée'+(d? ' · '+d : ''));
       }
     } else if(now-autoPresenceDebut>AUTO_VIDEO_APRES && !recording){
       autoRecEnCours=true;                             // elle RESTE — la vidéo prend le relais
+      // la preuve doit être DANS le fichier : un enregistrement déclenché par
+      // une silhouette bascule d'office sur l'image composée, squelettes
+      // incrustés, même si l'incrustation était éteinte pour les prises à la main
+      if(!incrust){ autoIncrustForcee=true; incrust=true; $('incrustBtn').className='act';
+        addJ(now,'auto','incrustation forcée le temps de la prise — le squelette doit être dans le fichier'); }
       addJ(now,'auto','enregistrement déclenché — la silhouette persiste ('+Math.round((now-autoPresenceDebut)/1000)+' s)');
       try{ $('recBtn').click(); }catch(e){}
     }
@@ -587,6 +642,9 @@ function autoTic(now, quelquun){
         autoRecEnCours=false;
         addJ(now,'auto','enregistrement arrêté — silhouette disparue depuis '+Math.round(AUTO_STOP_APRES/1000)+' s');
         try{ $('recBtn').click(); }catch(e){}
+        // l'incrustation forcée le temps de la prise revient à ce qu'elle était
+        if(autoIncrustForcee){ autoIncrustForcee=false; incrust=false; $('incrustBtn').className='';
+          addJ(now,'auto','incrustation revenue à son réglage d\'avant la prise'); }
       }
     }
   }
@@ -602,7 +660,7 @@ $('aiBtn').onclick=async ()=>{
   if(!vstream){ $('aiState').textContent="Prépare d'abord le tournage."; return; }
   $('aiState').textContent='Chargement du modèle (~5 Mo, une seule fois)…';
   try{
-    if(!POSE) POSE=await import('/ghost-box/lib/pose.js?v=10');
+    if(!POSE) POSE=await import('/ghost-box/lib/pose.js?v=11');
     await POSE.load();
     aiOn=true; $('aiBtn').className='act';
     $('aiState').innerHTML='Détection active — jusqu\'à <b>4 personnes suivies en même temps</b>, chacune avec sa couleur et son numéro. Les squelettes s\'incrustent dans la vidéo enregistrée, et seulement si une personne réelle est reconnue.';
@@ -1123,7 +1181,7 @@ addEventListener('load',function(){ try{ GBCapture.init({label:($('lieu').value|
 })();
 </script>
 <script>if('serviceWorker' in navigator){window.addEventListener('load',function(){navigator.serviceWorker.register('/ghost-box/sw.js').catch(function(){});});}</script>
-<script src="/ghost-box/lib/capture.js?v=10"></script>
-<script src="/ghost-box/lib/fullscreen.js?v=10"></script>
+<script src="/ghost-box/lib/capture.js?v=11"></script>
+<script src="/ghost-box/lib/fullscreen.js?v=11"></script>
 </body>
 </html>

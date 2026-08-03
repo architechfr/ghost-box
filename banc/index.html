@@ -12,7 +12,7 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="Ghost Box">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<link rel="stylesheet" href="/ghost-box/lib/fonts.css?v=10">
+<link rel="stylesheet" href="/ghost-box/lib/fonts.css?v=11">
 <style>
 :root{
   --bench:#141A1E;--panel:#1D262B;--sunk:#0A0F12;--line:#2C383F;--hair:#212B31;
@@ -148,6 +148,9 @@ body.filming .ph.vide{font-size:12px;letter-spacing:.08em}
 body.filming .ph{margin-top:4px;min-height:0;padding:6px 8px;border:0;background:transparent;
   font-size:clamp(17px,5vw,26px);max-height:64px;overflow:hidden}
 #quitFix{display:none}
+/* le bouton plein écran flottant recouvrait « Quitter » et interceptait
+   les appuis : en écran fixe il disparaît, « Quitter » fait le même travail */
+body.filming #fsFloat{display:none !important}
 body.filming #quitFix{display:block !important;position:fixed;z-index:61;right:10px;
   top:calc(var(--hud) + 8px);padding:8px 11px;font-size:11px;
   background:rgba(4,8,11,.9);border-color:rgba(95,211,166,.45);color:var(--signal)}
@@ -187,7 +190,7 @@ video{display:none}
   font-family:var(--mono);font-size:9px;color:var(--signal);
   background:rgba(10,15,18,.75);padding:1px 4px;border-radius:2px;pointer-events:none}
 </style>
-<link rel="stylesheet" href="/ghost-box/lib/ambiance.css?v=10">
+<link rel="stylesheet" href="/ghost-box/lib/ambiance.css?v=11">
 </head>
 <body>
 <div class="wrap">
@@ -220,7 +223,7 @@ video{display:none}
     <button id="spectreBtn">Spectre audio</button>
     <button id="camHide">Masquer la vue</button>
   </div>
-  <canvas id="spectreBox" width="10" height="10" style="display:none;width:100%;height:96px;
+  <canvas id="spectreBox" width="10" height="10" style="display:none;width:100%;height:120px;
     margin-top:8px;background:#05090C;border:1px solid var(--line);border-radius:4px"></canvas>
   <p id="spectreState" class="ex" style="display:none"></p>
   <p id="twoState" class="ex"></p>
@@ -322,12 +325,13 @@ video{display:none}
 <video id="vid2" playsinline muted></video>
 </div>
 
-<script src="/ghost-box/lib/moteur.js?v=10"></script>
-<script src="/ghost-box/lib/retour.js?v=10"></script>
-<script src="/ghost-box/lib/aide.js?v=10"></script>
-<script src="/ghost-box/lib/action.js?v=10"></script>
+<script src="/ghost-box/lib/moteur.js?v=11"></script>
+<script src="/ghost-box/lib/spectre.js?v=11"></script>
+<script src="/ghost-box/lib/retour.js?v=11"></script>
+<script src="/ghost-box/lib/aide.js?v=11"></script>
+<script src="/ghost-box/lib/action.js?v=11"></script>
 <script>addEventListener('load',function(){ try{ GBAction.init(['#run']); }catch(e){} });</script>
-<script src="/ghost-box/lib/mur.js?v=10"></script>
+<script src="/ghost-box/lib/mur.js?v=11"></script>
 <script>
 (() => {
 "use strict";
@@ -1010,15 +1014,19 @@ function drawZ(z){
 function fmt(s){s=Math.max(0,s|0);return String(s/60|0).padStart(2,'0')+':'+String(s%60).padStart(2,'0');}
 
 /* ═══════ spectre audio, en option ═══════
-   Le son de la pièce (et de la box posée à côté), rendu VISIBLE en continu :
-   le temps défile, les fréquences montent, ce qui sonne laisse une trace.
-   Purement documentaire — il n'émet rien, il montre ce que le micro entend. */
-let spectreOn=false, spectreRaf=0;
+   Le son de la pièce (et de la box posée à côté), rendu VISIBLE en continu.
+   Le rendu vient de lib/spectre.js — LE spectre de l'application, le même que
+   celui d'Écoute. Il y en avait deux auparavant, et celui d'ici était le moins
+   bon : simple dégradé de vert, sans repère de fréquence, sans niveau, sans
+   mémoire des mots. Aucune raison à cela, c'est le même son et le même besoin.
+   Purement documentaire : il n'émet rien, il montre ce que le micro entend. */
+let SPEC=null, spectreOn=false;
 $('spectreBtn').onclick=async ()=>{
   if(spectreOn){
-    spectreOn=false; cancelAnimationFrame(spectreRaf);
+    spectreOn=false; if(SPEC) SPEC.arreter();
     $('spectreBtn').classList.remove('act');
     $('spectreBox').style.display='none'; $('spectreState').style.display='none';
+    document.body.classList.remove('avecspectre');
     return;
   }
   try{ await ensureMic(); }
@@ -1026,30 +1034,21 @@ $('spectreBtn').onclick=async ()=>{
     $('spectreState').innerHTML='<b style="color:var(--flag)">Micro refusé</b> — le spectre a besoin du micro.'; return; }
   spectreOn=true; $('spectreBtn').classList.add('act');
   $('spectreBox').style.display='block'; $('spectreState').style.display='block';
-  $('spectreState').innerHTML='Le temps défile vers la gauche, les fréquences montent (0 → ~8 kHz). '
-    +'Ce que la box fait entendre laisse une trace verticale. Purement documentaire : le spectre n\'émet aucun mot.';
-  const cvS=$('spectreBox'), gS=cvS.getContext('2d');
-  const fit=()=>{ const r=cvS.getBoundingClientRect(), d=Math.min(devicePixelRatio||1,2);
-    if(Math.abs(cvS.width-r.width*d)>4){ cvS.width=r.width*d|0; cvS.height=r.height*d|0;
-      gS.fillStyle='#05090C'; gS.fillRect(0,0,cvS.width,cvS.height); } };
-  fit();
-  const bins=ana.frequencyBinCount, data=new Uint8Array(bins);
-  const ramp=v=>{ const t=v/255;
-    return 'rgb('+(t*95|0)+','+(30+t*211|0)+','+(20+t*146|0)+')'; };
-  (function boucleS(){
-    if(!spectreOn) return;
-    fit();
-    ana.getByteFrequencyData(data);
-    const Wc=cvS.width, Hc=cvS.height, S2=2*Math.min(devicePixelRatio||1,2);
-    gS.drawImage(cvS,-S2,0);
-    const mx=Math.max(8,Math.round(bins*8000/((actx?actx.sampleRate:44100)/2)));
-    for(let y=0;y<Hc;y++){
-      gS.fillStyle=ramp(data[Math.floor((1-y/Hc)*(mx-1))]);
-      gS.fillRect(Wc-S2,y,S2,1);
-    }
-    spectreRaf=requestAnimationFrame(boucleS);
-  })();
+  $('spectreState').innerHTML='Le temps défile vers la gauche, les fréquences montent (repères écrits à 1, 2, 4 et 6 kHz). '
+    +'La barre du bas donne le niveau, et le trait or dessus est <b>le seuil du moteur</b> : on voit donc en direct '
+    +'de combien on est loin de ce qu\'il faudrait pour qu\'un mot puisse sortir. Un trait vert marque les mots retenus. '
+    +'Le spectre lui-même n\'émet rien.';
+  SPEC = GBSpectre.creer({canvas:$('spectreBox'), analyser:ana,
+                          sampleRate:()=> actx? actx.sampleRate : 44100});
+  SPEC.demarrer();
 };
+/* le niveau et le seuil de la voie sonore alimentent la barre du spectre */
+setInterval(()=>{
+  if(!SPEC || !spectreOn) return;
+  const v = S.audio_rms ? S.audio_rms.val : null;
+  const w = Array.isArray(W) ? W.find(x=>x && x.code==='audio_rms') : null;
+  SPEC.niveau(v==null? -100 : v, (w && w.ready)? (w.moy + w.thr*w.sd) : null);
+}, 120);
 
 /* ── bandeau de séance : tout ce qu'on doit lire sans toucher au téléphone ── */
 function chip(k,v,cls){ return '<span class="chip'+(cls?' '+cls:'')+'"><span class="k">'+k+'</span><span class="v">'+esc(String(v))+'</span></span>'; }
@@ -1136,6 +1135,9 @@ $('murBtn').onclick=async ()=>{
 
 function emit(now, contribs){
   if(!MOTS.length) return;          // lexique pas encore chargé
+  // le spectre garde la trace verticale de l'instant : à la relecture, on
+  // retrouve à quoi ressemblait le son au moment exact où le mot est sorti
+  if(SPEC && spectreOn) SPEC.marquer('mot');
   const WW = contribs && contribs.length ? contribs : W;   // en mode indépendants : le seul capteur qui a parlé
   const posF=$('pos').value, pool = posF&&BY_POS[posF]? BY_POS[posF] : MOTS;
   const multi=WW.length>1;
@@ -1241,7 +1243,7 @@ $('camAi').onclick=async ()=>{
   if(!camActive){ $('aiState').textContent="Active d'abord la caméra."; return; }
   $('aiState').textContent='Chargement du modèle (~5 Mo, une seule fois)…';
   try{
-    if(!POSE) POSE=await import('/ghost-box/lib/pose.js?v=10');
+    if(!POSE) POSE=await import('/ghost-box/lib/pose.js?v=11');
     await POSE.load();
     aiOn=true; $('camAi').className='act';
     $('aiState').innerHTML='Détection active — un squelette n\'apparaît que si une <b>personne réelle</b> est reconnue. Dans le noir, le modèle ne voit rien : c\'est normal.';
@@ -1425,9 +1427,9 @@ addEventListener('load',function(){ try{ GBCapture.init({label:'seance-capteurs'
 })();
 </script>
 <script>if('serviceWorker' in navigator){window.addEventListener('load',function(){navigator.serviceWorker.register('/ghost-box/sw.js').catch(function(){});});}</script>
-<script src="/ghost-box/lib/wakelock.js?v=10"></script>
-<script src="/ghost-box/lib/media.js?v=10"></script>
-<script src="/ghost-box/lib/capture.js?v=10"></script>
-<script src="/ghost-box/lib/fullscreen.js?v=10"></script>
+<script src="/ghost-box/lib/wakelock.js?v=11"></script>
+<script src="/ghost-box/lib/media.js?v=11"></script>
+<script src="/ghost-box/lib/capture.js?v=11"></script>
+<script src="/ghost-box/lib/fullscreen.js?v=11"></script>
 </body>
 </html>
