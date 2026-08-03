@@ -1,0 +1,122 @@
+name: Application Android
+
+# ═══════════════════════════════════════════════════════════════════════════
+# POURQUOI cette construction existe alors qu'Android Studio suffirait :
+# pour pouvoir livrer et essayer une version SANS PC. Le travail se fait
+# souvent depuis le téléphone ; ici, un appui sur « Run workflow » suffit à
+# obtenir un APK installable, téléchargeable depuis le téléphone lui-même.
+#
+# Le site du dépôt reste la seule source de vérité : rien n'est recopié à la
+# main, scripts/preparer.js reconstruit www/ à chaque passage.
+# ═══════════════════════════════════════════════════════════════════════════
+
+on:
+  workflow_dispatch:
+    inputs:
+      bundle:
+        description: "Produire aussi le bundle signé pour Google Play (nécessite les secrets de signature)"
+        type: boolean
+        default: false
+  push:
+    branches: [main]
+    paths-ignore:
+      - 'docs/**'
+      - 'db/**'
+      - '**.md'
+
+permissions:
+  contents: read
+
+jobs:
+  construire:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: android-app
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+          cache-dependency-path: android-app/package-lock.json
+
+      # Java 21 : c'est la version qu'attend le greffon Android Gradle courant.
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+
+      - uses: gradle/actions/setup-gradle@v4
+
+      - name: Installer les dépendances
+        run: npm ci
+
+      - name: Construire www/ depuis le site du dépôt
+        run: npm run preparer
+
+      - name: Recopier dans le projet Android
+        run: npx cap sync android
+
+      # Le bit exécutable de gradlew se perd quand le dépôt transite par
+      # Windows ou OneDrive — le remettre coûte moins cher que de chercher
+      # « Permission denied » pendant vingt minutes.
+      - name: Rendre gradlew exécutable
+        run: chmod +x android/gradlew
+
+      - name: APK de test
+        run: ./gradlew assembleDebug --no-daemon
+        working-directory: android-app/android
+
+      - name: Déposer l'APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: ghost-box-apk-test
+          path: android-app/android/app/build/outputs/apk/debug/*.apk
+          if-no-files-found: error
+
+      # ═══════════════════════════════════════════════════════════════════
+      # Bundle signé pour Play. Volontairement sur demande explicite, et
+      # silencieusement sauté si les secrets ne sont pas là : produire un
+      # bundle non signé sans le dire ferait perdre du temps au dépôt.
+      #
+      # Secrets attendus dans le dépôt :
+      #   KEYSTORE_BASE64    le fichier .jks encodé en base64
+      #   KEYSTORE_PASSWORD  mot de passe du keystore
+      #   KEY_ALIAS          alias de la clé
+      #   KEY_PASSWORD       mot de passe de la clé
+      # ═══════════════════════════════════════════════════════════════════
+      - name: Reconstituer le keystore
+        if: inputs.bundle && env.KEYSTORE_BASE64 != ''
+        env:
+          KEYSTORE_BASE64: ${{ secrets.KEYSTORE_BASE64 }}
+        run: echo "$KEYSTORE_BASE64" | base64 -d > android/ghost-box.jks
+
+      - name: Bundle signé
+        if: inputs.bundle && env.KEYSTORE_BASE64 != ''
+        env:
+          KEYSTORE_BASE64: ${{ secrets.KEYSTORE_BASE64 }}
+          KEYSTORE_FILE: ${{ github.workspace }}/android-app/android/ghost-box.jks
+          KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
+          KEY_ALIAS: ${{ secrets.KEY_ALIAS }}
+          KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
+        run: ./gradlew bundleRelease --no-daemon
+        working-directory: android-app/android
+
+      - name: Déposer le bundle
+        if: inputs.bundle && env.KEYSTORE_BASE64 != ''
+        env:
+          KEYSTORE_BASE64: ${{ secrets.KEYSTORE_BASE64 }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: ghost-box-bundle-play
+          path: android-app/android/app/build/outputs/bundle/release/*.aab
+          if-no-files-found: error
+
+      # Le keystore n'a rien à faire sur le disque du runner une seconde de
+      # plus que nécessaire.
+      - name: Effacer le keystore
+        if: always()
+        run: rm -f android/ghost-box.jks

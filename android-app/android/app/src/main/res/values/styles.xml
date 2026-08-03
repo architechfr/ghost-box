@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+
+    <!-- Thème de base. Volontairement SOMBRE, et non « DayNight » : les lieux
+         d'utilisation sont des caves et des châteaux de nuit, et l'application
+         n'a qu'une palette sombre. Un thème qui suivrait le réglage du système
+         laisserait apparaître un fond clair sous la WebView le temps du premier
+         rendu — un éclair blanc ruine l'adaptation de l'œil, exactement ce que
+         le mode nuit de l'application existe pour éviter. -->
+    <style name="AppTheme" parent="Theme.AppCompat.NoActionBar">
+        <item name="android:windowBackground">@color/ic_launcher_background</item>
+    </style>
+
+    <style name="AppTheme.NoActionBar" parent="Theme.AppCompat.NoActionBar">
+        <item name="windowActionBar">false</item>
+        <item name="windowNoTitle">true</item>
+        <item name="android:windowBackground">@color/ic_launcher_background</item>
+    </style>
+
+    <!-- Écran de lancement. Les deux jeux d'attributs cohabitent volontairement :
+         android:background sert aux versions antérieures à Android 12,
+         windowSplashScreen* à Android 12 et au-delà. N'en garder qu'un laisse
+         l'autre famille d'appareils sur le fond clair par défaut. -->
+    <style name="AppTheme.NoActionBarLaunch" parent="Theme.SplashScreen">
+        <item name="android:background">@drawable/splash</item>
+        <item name="windowSplashScreenBackground">@color/ic_launcher_background</item>
+        <item name="windowSplashScreenAnimatedIcon">@mipmap/ic_launcher_foreground</item>
+        <item name="postSplashScreenTheme">@style/AppTheme.NoActionBar</item>
+    </style>
+
+</resources>

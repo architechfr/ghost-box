@@ -1,0 +1,100 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <application
+        android:allowBackup="true"
+        android:icon="@mipmap/ic_launcher"
+        android:label="@string/app_name"
+        android:roundIcon="@mipmap/ic_launcher_round"
+        android:supportsRtl="true"
+        android:theme="@style/AppTheme">
+
+        <activity
+            android:configChanges="orientation|keyboardHidden|keyboard|screenSize|locale|smallestScreenSize|screenLayout|uiMode|navigation|density"
+            android:name=".MainActivity"
+            android:label="@string/title_activity_main"
+            android:theme="@style/AppTheme.NoActionBarLaunch"
+            android:launchMode="singleTask"
+            android:exported="true">
+
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+
+        </activity>
+
+        <provider
+            android:name="androidx.core.content.FileProvider"
+            android:authorities="${applicationId}.fileprovider"
+            android:exported="false"
+            android:grantUriPermissions="true">
+            <meta-data
+                android:name="android.support.FILE_PROVIDER_PATHS"
+                android:resource="@xml/file_paths"></meta-data>
+        </provider>
+    </application>
+
+    <!-- ═══════════════════════════════════════════════════════════════════
+         PERMISSIONS
+
+         Une permission demandée est une permission qu'il faudra justifier
+         devant Google et devant l'utilisateur au premier lancement. On ne
+         demande donc que ce dont une séance a réellement besoin, et rien
+         « au cas où ».
+         ═══════════════════════════════════════════════════════════════════ -->
+
+    <!-- Réseau : deux usages seulement, tous deux facultatifs et hors séance —
+         le modèle MediaPipe de détection de personne (premier lancement) et la
+         transcription Voxtral du mode Contact via IA, qui est un choix
+         explicite de l'utilisateur. Une séance entière se tient sans réseau. -->
+    <uses-permission android:name="android.permission.INTERNET" />
+
+    <!-- Caméra : séance caméra, jusqu'à quatre vues composées en une image. -->
+    <uses-permission android:name="android.permission.CAMERA" />
+
+    <!-- Micro : Écoute, son de la box, spectre, mémoire tampon. -->
+    <uses-permission android:name="android.permission.RECORD_AUDIO" />
+
+    <!-- Sans elle, Android impose son traitement du signal : réduction de bruit,
+         contrôle de gain, annulation d'écho. Or le poste de terrain ouvre le
+         micro BRUT — ces traitements sont faits pour la voix et effaceraient
+         exactement le souffle du balayage que l'on cherche à mesurer. -->
+    <uses-permission android:name="android.permission.MODIFY_AUDIO_SETTINGS" />
+
+    <!-- Retour tactile quand un mot sort : l'appareil est souvent posé, écran
+         tourné vers la pièce, et la vibration est le seul signal perçu. -->
+    <uses-permission android:name="android.permission.VIBRATE" />
+
+    <!-- GPS — DÉSACTIVÉ, décision à trancher.
+         La précision GPS sert de voie de capteur lente dans le banc. Son apport
+         est faible, et ACCESS_FINE_LOCATION oblige à déclarer la localisation
+         dans la fiche Play et le formulaire Sécurité des données. Tant que la
+         voie GPS n'est pas retirée du code, cette ligne reste commentée : la
+         voie se dégradera proprement — « aucune position disponible », ce que
+         lib/capteurs.js sait déjà dire — au lieu de faire échouer quoi que ce soit.
+    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
+    -->
+
+    <!-- ═══════════════════════════════════════════════════════════════════
+         MATÉRIEL
+
+         Tout est déclaré non requis. Un téléphone sans magnétomètre doit
+         pouvoir installer l'application et se servir des autres voies — c'est
+         la dégradation gracieuse du banc de capteurs, où chaque voie absente
+         dit POURQUOI elle est absente. Sans ces lignes, Play retirerait
+         l'application du catalogue de ces appareils, plus sévèrement que le
+         comportement réel ne le justifie.
+         ═══════════════════════════════════════════════════════════════════ -->
+    <uses-feature android:name="android.hardware.camera" android:required="false" />
+    <uses-feature android:name="android.hardware.camera.front" android:required="false" />
+    <uses-feature android:name="android.hardware.camera.autofocus" android:required="false" />
+    <uses-feature android:name="android.hardware.microphone" android:required="false" />
+    <uses-feature android:name="android.hardware.sensor.accelerometer" android:required="false" />
+    <uses-feature android:name="android.hardware.sensor.gyroscope" android:required="false" />
+    <uses-feature android:name="android.hardware.sensor.compass" android:required="false" />
+    <uses-feature android:name="android.hardware.sensor.light" android:required="false" />
+    <uses-feature android:name="android.hardware.location" android:required="false" />
+    <uses-feature android:name="android.hardware.location.gps" android:required="false" />
+
+</manifest>

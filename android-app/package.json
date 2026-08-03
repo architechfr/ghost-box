@@ -1,0 +1,22 @@
+{
+  "name": "ghost-box-android",
+  "version": "14.0.0",
+  "private": true,
+  "description": "Empaquetage Android de Ghost Box — poste de terrain. Le site du depot est la seule source de verite : rien n'est duplique ici, tout est recopie a la demande par scripts/preparer.js.",
+  "scripts": {
+    "preparer": "node scripts/preparer.js",
+    "verifier": "node scripts/verifier.js",
+    "icones": "python3 scripts/icones.py",
+    "sync": "npm run preparer && cap sync android",
+    "ouvrir": "cap open android",
+    "apk": "npm run sync && cd android && ./gradlew assembleDebug",
+    "bundle": "npm run sync && cd android && ./gradlew bundleRelease"
+  },
+  "dependencies": {
+    "@capacitor/android": "^8.5.0",
+    "@capacitor/core": "^8.5.0"
+  },
+  "devDependencies": {
+    "@capacitor/cli": "^8.5.0"
+  }
+}

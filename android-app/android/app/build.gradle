@@ -1,0 +1,121 @@
+apply plugin: 'com.android.application'
+
+// ═══════════════════════════════════════════════════════════════════════════
+// La version vient de sw.js, pas d'ici.
+//
+// POURQUOI : le projet a déjà une discipline de version — VERSION dans sw.js
+// est incrémenté à chaque livraison en même temps que tous les ?v=N des pages.
+// Un numéro saisi à la main dans ce fichier serait une deuxième vérité, et il
+// finirait par dire « 3 » pendant que l'application affiche « v14 ».
+//
+// versionCode doit être un entier qui ne recule jamais et qui change à CHAQUE
+// dépôt sur Play. On compose donc VERSION × 1000 + numéro de construction, ce
+// qui laisse 999 dépôts possibles par version du site — largement de quoi
+// enchaîner les corrections pendant les tests fermés sans toucher au site.
+// ═══════════════════════════════════════════════════════════════════════════
+def swFile = file("$rootDir/../../sw.js")
+def swMatcher = java.util.regex.Pattern
+        .compile(/const VERSION\s*=\s*'v(\d+)'/)
+        .matcher(swFile.getText('UTF-8'))
+if (!swMatcher.find()) {
+    throw new GradleException("VERSION introuvable dans ${swFile} — le site est la source de vérité de la version, la construction s'arrête plutôt que d'inventer un numéro.")
+}
+def siteVersion = swMatcher.group(1) as int
+def numeroConstruction = (System.getenv('GITHUB_RUN_NUMBER') ?: '0') as int
+
+android {
+    namespace = "fr.architech.ghostbox"
+    compileSdk = rootProject.ext.compileSdkVersion
+    defaultConfig {
+        applicationId "fr.architech.ghostbox"
+        minSdkVersion rootProject.ext.minSdkVersion
+        targetSdkVersion rootProject.ext.targetSdkVersion
+        versionCode siteVersion * 1000 + numeroConstruction
+        versionName "${siteVersion}.${numeroConstruction}"
+        testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
+        aaptOptions {
+             // Files and dirs to omit from the packaged assets dir, modified to accommodate modern web apps.
+             // Default: https://android.googlesource.com/platform/frameworks/base/+/282e181b58cf72b6ca770dc7ca5f91f135444502/tools/aapt/AaptAssets.cpp#61
+            ignoreAssetsPattern = '!.svn:!.git:!.ds_store:!*.scc:.*:!CVS:!thumbs.db:!picasa.ini:!*~'
+        }
+    }
+    // ═══════════════════════════════════════════════════════════════════════
+    // SIGNATURE
+    //
+    // Le keystore ne doit JAMAIS entrer dans le dépôt : il est public. Perdre
+    // ce fichier ou son mot de passe interdit définitivement toute mise à jour
+    // de l'application sur Play — c'est la seule panne de ce projet qui ne se
+    // répare pas.
+    //
+    // Deux sources, dans cet ordre : android/keystore.properties (poste de
+    // travail, ignoré par git) puis les variables d'environnement (CI). Si
+    // aucune n'est là, la configuration n'est pas créée du tout et seule la
+    // construction de test reste possible : mieux vaut ne pas pouvoir signer
+    // que produire un bundle signé avec on ne sait quoi.
+    // ═══════════════════════════════════════════════════════════════════════
+    def proprietesKeystore = new Properties()
+    def fichierKeystore = rootProject.file('keystore.properties')
+    if (fichierKeystore.exists()) {
+        fichierKeystore.withInputStream { proprietesKeystore.load(it) }
+    }
+    def cheminKeystore = proprietesKeystore['storeFile'] ?: System.getenv('KEYSTORE_FILE')
+    def mdpKeystore   = proprietesKeystore['storePassword'] ?: System.getenv('KEYSTORE_PASSWORD')
+    def aliasCle      = proprietesKeystore['keyAlias'] ?: System.getenv('KEY_ALIAS')
+    def mdpCle        = proprietesKeystore['keyPassword'] ?: System.getenv('KEY_PASSWORD')
+    def peutSigner    = cheminKeystore && mdpKeystore && aliasCle && mdpCle
+
+    signingConfigs {
+        if (peutSigner) {
+            release {
+                storeFile file(cheminKeystore)
+                storePassword mdpKeystore
+                keyAlias aliasCle
+                keyPassword mdpCle
+            }
+        }
+    }
+
+    buildTypes {
+        release {
+            // minify désactivé : il n'y a aucun code Java propre à ce projet à
+            // réduire, et R8 sur les classes du pont Capacitor n'apporte rien
+            // qu'un risque de casse silencieuse.
+            minifyEnabled false
+            proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
+            if (peutSigner) {
+                signingConfig signingConfigs.release
+            } else {
+                logger.lifecycle("Pas de keystore : le bundle release ne sera PAS signé.")
+            }
+        }
+    }
+}
+
+repositories {
+    flatDir{
+        dirs '../capacitor-cordova-android-plugins/src/main/libs', 'libs'
+    }
+}
+
+dependencies {
+    implementation fileTree(include: ['*.jar'], dir: 'libs')
+    implementation "androidx.appcompat:appcompat:$androidxAppCompatVersion"
+    implementation "androidx.coordinatorlayout:coordinatorlayout:$androidxCoordinatorLayoutVersion"
+    implementation "androidx.core:core-splashscreen:$coreSplashScreenVersion"
+    implementation project(':capacitor-android')
+    testImplementation "junit:junit:$junitVersion"
+    androidTestImplementation "androidx.test.ext:junit:$androidxJunitVersion"
+    androidTestImplementation "androidx.test.espresso:espresso-core:$androidxEspressoCoreVersion"
+    implementation project(':capacitor-cordova-android-plugins')
+}
+
+apply from: 'capacitor.build.gradle'
+
+try {
+    def servicesJSON = file('google-services.json')
+    if (servicesJSON.text) {
+        apply plugin: 'com.google.gms.google-services'
+    }
+} catch(Exception e) {
+    logger.info("google-services.json not found, google-services plugin not applied. Push Notifications won't work")
+}

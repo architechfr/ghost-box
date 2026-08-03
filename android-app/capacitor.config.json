@@ -1,0 +1,13 @@
+{
+  "appId": "fr.architech.ghostbox",
+  "appName": "Ghost Box",
+  "webDir": "www",
+  "server": {
+    "androidScheme": "https"
+  },
+  "android": {
+    "allowMixedContent": false,
+    "webContentsDebuggingEnabled": true,
+    "backgroundColor": "#0A0F12"
+  }
+}

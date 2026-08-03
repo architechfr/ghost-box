@@ -1,0 +1,19 @@
+# Reconstruit par npm install
+node_modules/
+
+# Reconstruit par scripts/preparer.js a chaque construction.
+# Versionner www/ creerait une deuxieme copie du site : elle deriverait, et la
+# discipline VERSION + ?v=N de sw.js ne pardonne pas les copies qui derivent.
+www/
+
+# LE KEYSTORE NE DOIT JAMAIS ENTRER DANS LE DEPOT.
+# Il est public. Le perdre interdit definitivement toute mise a jour de
+# l'application sur Play : garder une copie hors du depot, sauvegardee.
+android/keystore.properties
+*.jks
+*.keystore
+
+# Sortie de construction
+android/local.properties
+*.apk
+*.aab
