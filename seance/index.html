@@ -12,7 +12,7 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="Ghost Box">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<link rel="stylesheet" href="/ghost-box/lib/fonts.css?v=12">
+<link rel="stylesheet" href="/ghost-box/lib/fonts.css?v=14">
 <style>
 :root{
   --bench:#0A0F12;--panel:#1D262B;--sunk:#0A0F12;--line:#2C383F;--hair:#212B31;
@@ -134,7 +134,7 @@ body.filming #quitFix{display:block;position:fixed;z-index:61;right:10px;
   top:calc(var(--hud) + 8px);padding:8px 11px;font-size:11px;
   background:rgba(4,8,11,.9);border-color:rgba(95,211,166,.45);color:var(--signal)}
 </style>
-<link rel="stylesheet" href="/ghost-box/lib/ambiance.css?v=12">
+<link rel="stylesheet" href="/ghost-box/lib/ambiance.css?v=14">
 </head>
 <body>
 
@@ -156,7 +156,7 @@ body.filming #quitFix{display:block;position:fixed;z-index:61;right:10px;
   </div>
   <p id="twoState" class="ex"></p>
   <p id="prepState" class="ex">La caméra et le micro sont nécessaires. L'appareil apprendra 45 s le bruit du lieu avant de pouvoir émettre quoi que ce soit.</p>
-  <p id="sonState" class="ex">Le micro est ouvert <b>sans réduction de bruit ni gain automatique</b> : le balayage de la box radio est enregistré tel qu'il sonne, sans traitement. <button id="micBtn" style="margin-left:6px;padding:6px 9px;font-size:11px">Micro</button></p>
+  <p id="sonState" class="ex">Le micro est ouvert <b>sans réduction de bruit ni gain automatique</b> : le balayage de la box radio est enregistré tel qu'il sonne, sans traitement. <button id="micBtn" style="margin-left:6px;padding:11px 12px;font-size:11px;min-height:40px">Micro</button></p>
 
   <div class="lg" style="margin-top:16px">mémoire tampon — revenir en arrière</div>
   <p class="ex">L'appareil encode en permanence mais <b>ne garde rien</b> : à chaque instant, seules les dernières secondes existent, en mémoire, et tout ce qui est plus vieux est effacé au fur et à mesure. Rien n'est écrit sur le téléphone tant que tu n'appuies pas. <b>Si tu appuies sur Enregistrer, ces secondes-là sont déjà dedans</b> — celles d'avant ton geste. C'est fait pour ce qui arrive avant qu'on ait le temps de réagir.</p>
@@ -207,16 +207,19 @@ body.filming #quitFix{display:block;position:fixed;z-index:61;right:10px;
 <video id="vid3" playsinline muted></video>
 <video id="vid4" playsinline muted></video>
 
-<script src="/ghost-box/lib/moteur.js?v=12"></script>
-<script src="/ghost-box/lib/retour.js?v=12"></script>
-<script src="/ghost-box/lib/aide.js?v=12"></script>
-<script src="/ghost-box/lib/action.js?v=12"></script>
+<script src="/ghost-box/lib/nuit.js?v=14"></script>
+<script src="/ghost-box/lib/voix.js?v=14"></script>
+<script src="/ghost-box/lib/historique.js?v=14"></script>
+<script src="/ghost-box/lib/moteur.js?v=14"></script>
+<script src="/ghost-box/lib/retour.js?v=14"></script>
+<script src="/ghost-box/lib/aide.js?v=14"></script>
+<script src="/ghost-box/lib/action.js?v=14"></script>
 <script>addEventListener('load',function(){ try{ GBAction.init(['#recBtn','#prep']); }catch(e){} });</script>
-<script src="/ghost-box/lib/secours.js?v=12"></script>
-<script src="/ghost-box/lib/tampon.js?v=12"></script>
-<script src="/ghost-box/lib/mur.js?v=12"></script>
-<script src="/ghost-box/lib/media.js?v=12"></script>
-<script src="/ghost-box/lib/wakelock.js?v=12"></script>
+<script src="/ghost-box/lib/secours.js?v=14"></script>
+<script src="/ghost-box/lib/tampon.js?v=14"></script>
+<script src="/ghost-box/lib/mur.js?v=14"></script>
+<script src="/ghost-box/lib/media.js?v=14"></script>
+<script src="/ghost-box/lib/wakelock.js?v=14"></script>
 <script>
 (() => {
 "use strict";
@@ -286,13 +289,13 @@ function sonOK(){
     +(micBrut? 'micro brut (aucune réduction de bruit, aucun gain automatique) : le balayage radio est enregistré tel quel'
              : 'micro ordinaire : le téléphone a refusé le mode brut, un traitement de voix peut atténuer le souffle')
     +'. Il part dans le même fichier que l\'image.'
-    +' <button id="micBtn" style="margin-left:6px;padding:6px 9px;font-size:11px">Rouvrir le micro</button>';
+    +' <button id="micBtn" style="margin-left:6px;padding:11px 12px;font-size:11px;min-height:40px">Rouvrir le micro</button>';
   bindMic();
 }
 function sonKO(e){
   $('sonState').innerHTML='<b style="color:var(--flag)">Pas de son</b> — la vidéo serait muette, '
     +'la box radio ne serait pas enregistrée. '+(window.GBMedia?GBMedia.explain(e):'Accès micro impossible.')
-    +' <button id="micBtn" style="margin-left:6px;padding:6px 9px;font-size:11px">Réessayer le micro</button>';
+    +' <button id="micBtn" style="margin-left:6px;padding:11px 12px;font-size:11px;min-height:40px">Réessayer le micro</button>';
   bindMic();
 }
 function bindMic(){
@@ -660,7 +663,7 @@ $('aiBtn').onclick=async ()=>{
   if(!vstream){ $('aiState').textContent="Prépare d'abord le tournage."; return; }
   $('aiState').textContent='Chargement du modèle (~5 Mo, une seule fois)…';
   try{
-    if(!POSE) POSE=await import('/ghost-box/lib/pose.js?v=12');
+    if(!POSE) POSE=await import('/ghost-box/lib/pose.js?v=14');
     await POSE.load();
     aiOn=true; $('aiBtn').className='act';
     $('aiState').innerHTML='Détection active — jusqu\'à <b>4 personnes suivies en même temps</b>, chacune avec sa couleur et son numéro. Les squelettes s\'incrustent dans la vidéo enregistrée, et seulement si une personne réelle est reconnue.';
@@ -690,7 +693,7 @@ $('aiBtn').onclick=async ()=>{
 let WA=mkW('audio','Niveau sonore'), WM=mkW('mouvement','Mouvement');
 let learning=false, tLearn=0, LEARN_MS=45000, tReady=0;
 const cv=$('stage'), g=cv.getContext('2d');
-let lastWord=null, lastWordT=-1e9, lastWordTest=false, lastEmit=-1e9, recentIdx=[], journal=[];
+let lastWord=null, lastWordT=-1e9, lastWordTest=false, lastEmit=-1e9, recentIdx=[], journal=[], H=null;
 let mHits=0, cHits=0, mOn=false, cOn=false, tStart=0, box=null, lastPresence=-1e9;
 
 $('prep').onclick=async ()=>{
@@ -701,6 +704,7 @@ $('prep').onclick=async ()=>{
   catch(e){ sonKO(e); }
   sizeStage();
   WA=mkW('audio','Niveau sonore'); WM=mkW('mouvement','Mouvement');
+  try{ H=GBHistorique.ouvrir({ mode:'séance caméra', lieu:($('lieu').value||'') }); }catch(e){ H=null; }
   learning=true; tLearn=performance.now(); tStart=tLearn; bg=null; mHits=0; cHits=0;
   $('prep').className='act'; $('prep').textContent='Caméra active';
   try{GBWake.on();}catch(e){}
@@ -836,6 +840,9 @@ $('selftest').onclick=()=>{
 };
 function addJ(now,type,detail){
   journal.unshift({t_ms:Math.round(now-tStart), heure:hhmm(new Date()), type, detail});
+  if(H) try{ H.noter(type, detail); }catch(e){}
+  // le mot réel est prononcé (option voix) — jamais les essais forcés
+  if(type==='mot' && window.GBVoix) GBVoix.dire(String(detail).split(' · ')[0]);
   renderJ();
 
 /* ── au retour : une prise interrompue attend-elle ? ── */
@@ -1174,14 +1181,16 @@ async function reprise(){
 }
 /* libère la caméra en quittant la page : sinon elle reste prise et les autres
    modes affichent « déjà utilisée » (cause racine du problème constaté) */
-addEventListener('pagehide',()=>{ try{ if(tampon) tampon.arreter(); }catch(e){} try{if(vstream)vstream.getTracks().forEach(t=>t.stop());}catch(e){} try{fermerVues();}catch(e){} try{if(micStream)micStream.getTracks().forEach(t=>t.stop());}catch(e){} });
+addEventListener('pagehide',()=>{ try{ if(H){ H.fermer({ mots:journal.filter(j=>j.type==='mot').length,
+  captures_auto:journal.filter(j=>j.type==='auto').length, phrase:(MUR&&MUR.phrase? MUR.phrase(): []) }); H=null; } }catch(e){}
+  try{ if(tampon) tampon.arreter(); }catch(e){} try{if(vstream)vstream.getTracks().forEach(t=>t.stop());}catch(e){} try{fermerVues();}catch(e){} try{if(micStream)micStream.getTracks().forEach(t=>t.stop());}catch(e){} });
 
 /* bouton de capture flottant, disponible à tout instant */
 addEventListener('load',function(){ try{ GBCapture.init({label:($('lieu').value||'tournage'), rec:'#recBtn', frame:function(){ return cv; }}); }catch(e){} });
 })();
 </script>
 <script>if('serviceWorker' in navigator){window.addEventListener('load',function(){navigator.serviceWorker.register('/ghost-box/sw.js').catch(function(){});});}</script>
-<script src="/ghost-box/lib/capture.js?v=12"></script>
-<script src="/ghost-box/lib/fullscreen.js?v=12"></script>
+<script src="/ghost-box/lib/capture.js?v=14"></script>
+<script src="/ghost-box/lib/fullscreen.js?v=14"></script>
 </body>
 </html>

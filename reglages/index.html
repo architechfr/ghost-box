@@ -10,7 +10,7 @@
 <link rel="manifest" href="/ghost-box/manifest.json">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
-<link rel="stylesheet" href="/ghost-box/lib/fonts.css?v=12">
+<link rel="stylesheet" href="/ghost-box/lib/fonts.css?v=14">
 <style>
 :root{
   --bench:#0A0F12;--panel:#1D262B;--line:#2C383F;--hair:#212B31;
@@ -45,7 +45,7 @@ table{width:100%;border-collapse:collapse;margin-top:8px}
 td{padding:7px 6px 7px 0;border-bottom:1px solid var(--hair);font-family:var(--mono);font-size:12px}
 td:first-child{color:var(--dim);width:46%}
 </style>
-<link rel="stylesheet" href="/ghost-box/lib/ambiance.css?v=12">
+<link rel="stylesheet" href="/ghost-box/lib/ambiance.css?v=14">
 </head>
 <body>
 
@@ -84,6 +84,12 @@ td:first-child{color:var(--dim);width:46%}
 </div>
 
 <div class="step">
+  <div class="lg">Mode nuit</div>
+  <p class="ex">L'écran passe en <b>rouge sombre</b> : la vision nocturne met vingt minutes à s'installer et un seul coup d'œil à un écran clair la ruine — le rouge sombre, lui, la préserve. Le réglage suit toutes les pages, images des caméras comprises.</p>
+  <div class="row"><button id="nuit">Activer le mode nuit</button></div>
+</div>
+
+<div class="step">
   <div class="lg">Préférences</div>
   <p class="ex">Les réglages de séance (lieu, tampon, vitesse du mur, incrustation, capture auto, aide) sont mémorisés sur cet appareil au fil de l'usage — rien à configurer ici. Ce bouton les remet à neuf.</p>
   <div class="row"><button id="raz">Réinitialiser les préférences</button></div>
@@ -92,15 +98,26 @@ td:first-child{color:var(--dim);width:46%}
 
 </div>
 
-<script src="/ghost-box/lib/qr.js?v=12"></script>
-<script src="/ghost-box/lib/retour.js?v=12"></script>
-<script src="/ghost-box/lib/aide.js?v=12"></script>
+<script src="/ghost-box/lib/nuit.js?v=14"></script>
+<script src="/ghost-box/lib/qr.js?v=14"></script>
+<script src="/ghost-box/lib/retour.js?v=14"></script>
+<script src="/ghost-box/lib/aide.js?v=14"></script>
 <script>
 (() => {
 "use strict";
 const $=id=>document.getElementById(id);
 const URL_APP='https://architechfr.github.io/ghost-box/';
 $('manuel').onclick=()=>{ location.href='../manuel/'; };
+
+/* ── mode nuit ── */
+function majNuit(){
+  const on=window.GBNuit && GBNuit.actif();
+  $('nuit').textContent = on? 'Repasser en couleurs' : 'Activer le mode nuit';
+  $('nuit').style.borderColor = on? 'var(--flag)':'';
+  $('nuit').style.color = on? 'var(--flag)':'';
+}
+$('nuit').onclick=()=>{ if(window.GBNuit) GBNuit.basculer(); majNuit(); };
+majNuit();
 
 /* ═══════ le QR ═══════ */
 try{
@@ -136,6 +153,11 @@ async function diag(){
   try{ const e=await navigator.storage.estimate();
     if(e.quota) rows.push(['Espace disponible', ((e.quota-(e.usage||0))/1048576).toFixed(0)+' Mo']); }catch(e){}
   try{ const r=indexedDB.open('ghostbox-vision',1);
+    // CRÉER le magasin si la base naît ici : cette page était la seule à ouvrir
+    // la base sans le faire — si Réglages était la PREMIÈRE page jamais visitée,
+    // la base naissait vide et tous les enregistrements suivants échouaient en
+    // silence. Une ouverture de base n'est jamais purement « en lecture ».
+    r.onupgradeneeded=()=>{ if(!r.result.objectStoreNames.contains('clips')) r.result.createObjectStore('clips',{keyPath:'id'}); };
     r.onsuccess=()=>{ try{ const t=r.result.transaction('clips','readonly').objectStore('clips').count();
       t.onsuccess=()=>{ const tr=document.createElement('tr');
         tr.innerHTML='<td>Fichiers en bibliothèque</td><td>'+t.result+'</td>';

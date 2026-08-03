@@ -12,7 +12,7 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="Ghost Box">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<link rel="stylesheet" href="/ghost-box/lib/fonts.css?v=12">
+<link rel="stylesheet" href="/ghost-box/lib/fonts.css?v=14">
 <style>
 :root{
   --bench:#0A0F12;--panel:#1D262B;--sunk:#0A0F12;--line:#2C383F;--hair:#212B31;
@@ -106,6 +106,10 @@ body.filming #phraseBox .ph{margin:0;padding:6px 8px;min-height:0;border:0;backg
 #hud .chip .v{color:var(--text)}
 #hud .chip.on .v{color:var(--signal)}
 #hud .chip.al .v{color:var(--gold)}
+#hud .fxb button{font-family:var(--mono);font-size:9px;letter-spacing:.08em;
+  padding:4px 7px;border:1px solid var(--line);border-radius:3px;
+  background:rgba(10,15,18,.7);color:var(--dim);cursor:pointer;text-transform:uppercase}
+#hud .fxb button.on{border-color:var(--signal);color:var(--signal)}
 #quitFix{display:none}
 /* le bouton plein écran flottant recouvrait « Quitter » et interceptait
    les appuis : en écran fixe il disparaît, « Quitter » fait le même travail */
@@ -114,7 +118,7 @@ body.filming #quitFix{display:block;position:fixed;z-index:61;right:10px;
   top:calc(10px + env(safe-area-inset-top, 0px));padding:6px 9px;font-size:11px;
   background:rgba(20,26,30,.85)}
 </style>
-<link rel="stylesheet" href="/ghost-box/lib/ambiance.css?v=12">
+<link rel="stylesheet" href="/ghost-box/lib/ambiance.css?v=14">
 </head>
 <body>
 
@@ -202,17 +206,20 @@ body.filming #quitFix{display:block;position:fixed;z-index:61;right:10px;
 
 </div>
 
-<script src="/ghost-box/lib/wakelock.js?v=12"></script>
-<script src="/ghost-box/lib/retour.js?v=12"></script>
-<script src="/ghost-box/lib/aide.js?v=12"></script>
-<script src="/ghost-box/lib/action.js?v=12"></script>
+<script src="/ghost-box/lib/nuit.js?v=14"></script>
+<script src="/ghost-box/lib/voix.js?v=14"></script>
+<script src="/ghost-box/lib/historique.js?v=14"></script>
+<script src="/ghost-box/lib/wakelock.js?v=14"></script>
+<script src="/ghost-box/lib/retour.js?v=14"></script>
+<script src="/ghost-box/lib/aide.js?v=14"></script>
+<script src="/ghost-box/lib/action.js?v=14"></script>
 <script>addEventListener('load',function(){ try{ GBAction.init(['#prep']); }catch(e){} });</script>
-<script src="/ghost-box/lib/media.js?v=12"></script>
-<script src="/ghost-box/lib/moteur.js?v=12"></script>
-<script src="/ghost-box/lib/capteurs.js?v=12"></script>
-<script src="/ghost-box/lib/spectre.js?v=12"></script>
-<script src="/ghost-box/lib/mur.js?v=12"></script>
-<script src="/ghost-box/lib/fullscreen.js?v=12"></script>
+<script src="/ghost-box/lib/media.js?v=14"></script>
+<script src="/ghost-box/lib/moteur.js?v=14"></script>
+<script src="/ghost-box/lib/capteurs.js?v=14"></script>
+<script src="/ghost-box/lib/spectre.js?v=14"></script>
+<script src="/ghost-box/lib/mur.js?v=14"></script>
+<script src="/ghost-box/lib/fullscreen.js?v=14"></script>
 <script>
 (() => {
 "use strict";
@@ -323,7 +330,7 @@ function majVoies(){
 const W = {};                    /* un témoin de moteur par voie */
 const ATTAQUE = {};              /* instant du DÉBUT de chaque excursion */
 let filming=false;               /* déclaré AVANT la boucle de mesure : elle le lit dès son premier tour */
-let apprend=false, tApprend=0, tPret=0, tStart=0, armees=0;
+let apprend=false, tApprend=0, tPret=0, tStart=0, armees=0, H=null;
 const APPREND_MS=45000, SETTLE=60000, ANTI_RAFALE=60000, ANTI_PAS=8000;
 let lastMot=-1e9, lastPas=-1e9, journal=[], nMots=0, nPas=0;
 
@@ -341,6 +348,8 @@ $('prep').onclick=async ()=>{
   }
   for(const k in W) delete W[k];
   B.voies().forEach(v=>{ if(v.vivante) W[v.code]=M.mk(v.code, v.label); });
+  try{ H=GBHistorique.ouvrir({ mode:'le mur ('+MODE+')' }); }catch(e){ H=null; }
+  if(H) H.noter('veille', Object.keys(W).length+' voie(s) en apprentissage');
   apprend=true; tApprend=performance.now(); tStart=tApprend;
   $('prep').className='act'; $('prep').textContent='Mur ouvert';
   $('essai').disabled=false;
@@ -441,8 +450,21 @@ function majEtat(now){
   if(!majVoies.tick || now-majVoies.tick>500){ majVoies.tick=now; majVoies(); }
 }
 
+$('hud').addEventListener('click', e=>{
+  const b=e.target.closest('[data-fx]'); if(!b) return;
+  if(b.dataset.fx==='voix' && window.GBVoix) GBVoix.basculer();
+  if(b.dataset.fx==='nuit' && window.GBNuit) GBNuit.basculer();
+  majHud(performance.now());
+});
+
 /* ═══════════ ce qui sort ═══════════ */
-function motRetenu(d){ nMots++; majPhrase(); }
+function motRetenu(d){
+  nMots++; majPhrase();
+  // prononcé au moment où il sort : su sans regarder l'écran, et posé sur
+  // la bande son de la séance
+  if(window.GBVoix) GBVoix.dire(d.mot);
+  if(H) H.noter('mot', d.mot+' · '+(d.mode==='escalier'? 'escalier : '+(d.parcours||[]).map(x=>x.valeur).join(' → ') : d.colonne));
+}
 function etapeFranchie(e){
   if(e.type==='abandon'){
     addJ('abandon','—','séquence abandonnée ('+e.pourquoi+')'
@@ -533,6 +555,9 @@ function majHud(now){
     const zmax = Object.keys(W).reduce((m,k)=> W[k].ready? Math.max(m, W[k].z) : m, 0);
     h += chip('écart', zmax.toFixed(1)+' σ');
   }
+  h += '<span class="fxb" style="display:inline-flex;gap:5px;margin-left:auto">'
+    + '<button data-fx="voix" class="'+(window.GBVoix&&GBVoix.actif()?'on':'')+'">Voix</button>'
+    + '<button data-fx="nuit" class="'+(window.GBNuit&&GBNuit.actif()?'on':'')+'">Nuit</button></span>';
   $('hud').innerHTML = h;
   const hh = $('hud').getBoundingClientRect().height;
   if(Math.abs(hh - (majHud.h||0)) > 1){ majHud.h=hh; document.body.style.setProperty('--hud', Math.round(hh)+'px');
@@ -570,7 +595,8 @@ $('fsBtn').onclick=()=>{
   }
 };
 /* les capteurs sont rendus quand on quitte : sinon ils restent pris pour les autres modes */
-addEventListener('pagehide',()=>{ try{ B.couperTout(); }catch(e){} });
+addEventListener('pagehide',()=>{ try{ B.couperTout(); }catch(e){}
+  try{ if(H){ H.fermer({ mots:nMots, maniere:MODE, phrase:(MUR? MUR.phrase(): []) }); H=null; } }catch(e){} });
 majVoies(); majMode(); majPhrase();
 })();
 </script>

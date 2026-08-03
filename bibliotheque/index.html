@@ -12,7 +12,7 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="Ghost Box">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<link rel="stylesheet" href="/ghost-box/lib/fonts.css?v=12">
+<link rel="stylesheet" href="/ghost-box/lib/fonts.css?v=14">
 <style>
 :root{
   --bench:#0A0F12;--panel:#1D262B;--sunk:#0A0F12;--line:#2C383F;--hair:#212B31;
@@ -52,12 +52,12 @@ button.on{background:var(--gold);color:#191204;border-color:var(--gold)}
 .empty{color:var(--dim);font-size:13.5px;padding:14px 0;line-height:1.55}
 video.player{width:100%;margin-top:8px;border:1px solid var(--line);border-radius:3px;background:#000}
 </style>
-<link rel="stylesheet" href="/ghost-box/lib/ambiance.css?v=12">
+<link rel="stylesheet" href="/ghost-box/lib/ambiance.css?v=14">
 </head>
 <body>
 
 <div class="top"><div class="topin">
-  <a href="../">←</a><h1>Bibliothèque <span style="font-size:10px;color:var(--signal)">v1</span></h1>
+  <a href="../">←</a><h1>Bibliothèque <span style="font-size:10px;color:var(--signal)">v2</span></h1>
   <span class="lg" id="cnt"></span>
 </div></div>
 
@@ -71,6 +71,7 @@ video.player{width:100%;margin-top:8px;border:1px solid var(--line);border-radiu
     <button id="fVid">Vidéos</button>
     <button id="fPho">Photos</button>
     <button id="fAud">Audio</button>
+    <button id="fSea">Séances</button>
   </div>
   <div id="secours"></div>
   <div class="row"><button id="dlAll">Tout envoyer vers le téléphone</button></div>
@@ -81,9 +82,10 @@ video.player{width:100%;margin-top:8px;border:1px solid var(--line);border-radiu
 
 </div>
 
-<script src="/ghost-box/lib/secours.js?v=12"></script>
-<script src="/ghost-box/lib/retour.js?v=12"></script>
-<script src="/ghost-box/lib/aide.js?v=12"></script>
+<script src="/ghost-box/lib/nuit.js?v=14"></script>
+<script src="/ghost-box/lib/secours.js?v=14"></script>
+<script src="/ghost-box/lib/retour.js?v=14"></script>
+<script src="/ghost-box/lib/aide.js?v=14"></script>
 <script>
 (() => {
 "use strict";
@@ -96,7 +98,21 @@ const mo=b=>b<1048576?(b/1024).toFixed(0)+' Ko':(b/1048576).toFixed(1)+' Mo';
 const DBN='ghostbox-vision', ST='clips';
 function db(){ return new Promise((res,rej)=>{ const r=indexedDB.open(DBN,1);
   r.onupgradeneeded=()=>{ if(!r.result.objectStoreNames.contains(ST)) r.result.createObjectStore(ST,{keyPath:'id'}); };
-  r.onsuccess=()=>res(r.result); r.onerror=()=>rej(r.error); }); }
+  r.onsuccess=()=>{
+    const d=r.result;
+    // auto-réparation : une base née sans magasin (donc vide) se supprime et
+    // se recrée en v1 — même raison et même geste que dans lib/historique.js
+    if(!d.objectStoreNames.contains(ST)){
+      d.close();
+      const sup=indexedDB.deleteDatabase(DBN);
+      sup.onsuccess=sup.onerror=()=>{ const r2=indexedDB.open(DBN,1);
+        r2.onupgradeneeded=()=>r2.result.createObjectStore(ST,{keyPath:'id'});
+        r2.onsuccess=()=>res(r2.result); r2.onerror=()=>rej(r2.error); };
+      return;
+    }
+    res(d);
+  };
+  r.onerror=()=>rej(r.error); }); }
 async function dbAll(){ const d=await db(); return new Promise((res,rej)=>{
   const t=d.transaction(ST,'readonly'), q=t.objectStore(ST).getAll();
   q.onsuccess=()=>res(q.result||[]); q.onerror=()=>rej(q.error); }); }
@@ -110,12 +126,16 @@ function dl(blob,name){ const u=URL.createObjectURL(blob),a=document.createEleme
   a.href=u;a.download=name;a.click(); setTimeout(()=>URL.revokeObjectURL(u),6000); }
 
 let filtre='tout';
-[['fTout','tout'],['fVid','video'],['fPho','photo'],['fAud','audio']].forEach(([id,f])=>{
-  $(id).onclick=()=>{ filtre=f; ['fTout','fVid','fPho','fAud'].forEach(x=>$(x).classList.remove('on'));
+[['fTout','tout'],['fVid','video'],['fPho','photo'],['fAud','audio'],['fSea','seance']].forEach(([id,f])=>{
+  $(id).onclick=()=>{ filtre=f; ['fTout','fVid','fPho','fAud','fSea'].forEach(x=>$(x).classList.remove('on'));
     $(id).classList.add('on'); render(); };
 });
 const estAudio=c=>c.type==='audio'||/^audio\//.test(c.mime||'');
 const estPhoto=c=>c.type==='photo';
+const estSeance=c=>c.type==='seance';
+const dureeL=s=>{ s=Math.max(0,Math.round(s||0));
+  const h=Math.floor(s/3600), m=Math.floor((s%3600)/60);
+  return h? h+' h '+String(m).padStart(2,'0') : (m? m+' min' : s+' s'); };
 
 async function render(){
   let all=[]; try{ all=await dbAll(); }catch(e){}
@@ -125,7 +145,8 @@ async function render(){
     filtre==='tout' ? true :
     filtre==='photo' ? estPhoto(c) :
     filtre==='audio' ? estAudio(c) :
-    (!estPhoto(c) && !estAudio(c)));
+    filtre==='seance' ? estSeance(c) :
+    (!estPhoto(c) && !estAudio(c) && !estSeance(c)));
   $('cnt').textContent = all.length? all.length+' fichier'+(all.length>1?'s':'') : '';
   const box=$('lib');
   // rien à supprimer ni à envoyer : ces boutons n'ont pas à exister
@@ -134,6 +155,45 @@ async function render(){
   if(!vus.length){ box.innerHTML='<p class="empty">Rien ici pour l\'instant.</p>'; $('libStat').textContent=''; return; }
   box.innerHTML=''; let total=0;
   vus.forEach(c=>{
+    /* ── fiche de séance : pas un fichier, un compte-rendu ──
+       Une veille de trois heures sans un seul mot est un RÉSULTAT : sa fiche
+       dit le mode, la durée, ce qui est sorti (souvent : rien), et chaque
+       événement horodaté. Aucun blob : Lire/Télécharger n'ont pas de sens,
+       la fiche s'ouvre sur place et s'exporte en JSON. */
+    if(estSeance(c)){
+      const d=document.createElement('div'); d.className='clip';
+      const nb=(c.evenements||[]).filter(e=>e.type==='mot').length;
+      // fiche restée « ouverte » : la page s'est fermée sans bouton d'arrêt et
+      // l'écriture finale n'est pas garantie pendant un déchargement — la durée
+      // se calcule alors jusqu'au dernier événement noté, et on le dit
+      const evs=c.evenements||[];
+      const dOuv=((evs.length? evs[evs.length-1].t : c.debut)-(c.debut||c.id))/1000;
+      const bits=[ esc(c.mode||'séance'),
+        (c.ouverte? dureeL(dOuv)+' au moins · fin non enregistrée' : dureeL(c.duree)),
+        nb? nb+' mot'+(nb>1?'s':'') : 'aucun mot — résultat normal',
+        new Date(c.debut||c.id).toLocaleString('fr-FR') ];
+      d.innerHTML='<img alt="" style="object-fit:contain;padding:8px;opacity:.6" src="data:image/svg+xml;utf8,'
+        +encodeURIComponent('<svg xmlns=\'http://www.w3.org/2000/svg\' viewBox=\'0 0 24 24\' fill=\'none\' stroke=\'%23E9B44C\' stroke-width=\'1.5\'><rect x=\'4\' y=\'3\' width=\'16\' height=\'18\' rx=\'2\'/><path d=\'M8 8h8M8 12h8M8 16h5\'/></svg>')+'">'
+        +'<div class="meta"><div class="nm">'+esc(c.nom)+'</div>'
+        +'<div class="sub">'+bits.join(' · ')+'</div><div class="acts"></div></div>';
+      const acts=d.querySelector('.acts');
+      const bo=document.createElement('button'); bo.textContent='Détail';
+      bo.onclick=()=>{ const ex=d.querySelector('.jr'); if(ex){ ex.remove(); return; }
+        const pj=document.createElement('div'); pj.className='jr';
+        pj.style.cssText='margin-top:8px;font-family:var(--mono);font-size:11px;color:var(--dim);line-height:1.6';
+        const lignes=(c.evenements||[]).map(e=>esc(new Date(e.t).toLocaleTimeString('fr-FR')+' · '+e.type+' · '+e.detail));
+        if(c.resume && c.resume.phrase && c.resume.phrase.length)
+          lignes.push('<b style="color:var(--gold)">phrase : '+esc(c.resume.phrase.join(' '))+'</b>');
+        pj.innerHTML = lignes.length? lignes.join('<br>') : 'Aucun événement — la séance a veillé, rien n\'est sorti.';
+        d.querySelector('.meta').appendChild(pj); };
+      const bj=document.createElement('button'); bj.textContent='Export JSON';
+      bj.onclick=()=>dl(new Blob([JSON.stringify(c,null,1)],{type:'application/json'}), c.nom+'.json');
+      const bx=document.createElement('button'); bx.textContent='Supprimer'; bx.className='ko';
+      bx.onclick=async ()=>{ if(!confirm('Supprimer cette fiche de séance ?')) return; await dbDel(c.id); render(); };
+      acts.appendChild(bo); acts.appendChild(bj); acts.appendChild(bx);
+      box.appendChild(d);
+      return;
+    }
     total+=c.taille||0;
     const photo = estPhoto(c), audio = estAudio(c);
     const d=document.createElement('div'); d.className='clip';
@@ -191,6 +251,7 @@ $('dlAll').onclick=async ()=>{
   if(!confirm('Envoyer '+all.length+' fichier(s) vers le téléphone ?')) return;
   all.sort((a,b)=>a.id-b.id);
   for(let i=0;i<all.length;i++){
+    if(!all[i].blob) continue;              // une fiche de séance n'est pas un fichier
     dl(all[i].blob, all[i].nom);
     $('libStat').textContent='Envoi '+(i+1)+' / '+all.length+'…';
     await new Promise(r=>setTimeout(r,700));   // le navigateur refuse les rafales
@@ -232,6 +293,6 @@ secours(); render();
 })();
 </script>
 <script>if('serviceWorker' in navigator){window.addEventListener('load',function(){navigator.serviceWorker.register('/ghost-box/sw.js').catch(function(){});});}</script>
-<script src="/ghost-box/lib/fullscreen.js?v=12"></script>
+<script src="/ghost-box/lib/fullscreen.js?v=14"></script>
 </body>
 </html>

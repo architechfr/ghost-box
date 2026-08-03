@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="theme-color" content="#141A1E">
-<title>Banc d'essai — capteurs et lexique</title>
+<title>Séance capteurs — l'appareil en veille</title>
 <link rel="icon" type="image/png" href="/ghost-box/favicon.png">
 <link rel="apple-touch-icon" href="/ghost-box/apple-touch-icon.png">
 <link rel="manifest" href="/ghost-box/manifest.json">
@@ -12,7 +12,7 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="Ghost Box">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<link rel="stylesheet" href="/ghost-box/lib/fonts.css?v=12">
+<link rel="stylesheet" href="/ghost-box/lib/fonts.css?v=14">
 <style>
 :root{
   --bench:#141A1E;--panel:#1D262B;--sunk:#0A0F12;--line:#2C383F;--hair:#212B31;
@@ -243,7 +243,7 @@ video{display:none}
   font-family:var(--mono);font-size:9px;color:var(--signal);
   background:rgba(10,15,18,.75);padding:1px 4px;border-radius:2px;pointer-events:none}
 </style>
-<link rel="stylesheet" href="/ghost-box/lib/ambiance.css?v=12">
+<link rel="stylesheet" href="/ghost-box/lib/ambiance.css?v=14">
 </head>
 <body>
 <div class="wrap">
@@ -379,13 +379,16 @@ video{display:none}
 <video id="vid2" playsinline muted></video>
 </div>
 
-<script src="/ghost-box/lib/moteur.js?v=12"></script>
-<script src="/ghost-box/lib/spectre.js?v=12"></script>
-<script src="/ghost-box/lib/retour.js?v=12"></script>
-<script src="/ghost-box/lib/aide.js?v=12"></script>
-<script src="/ghost-box/lib/action.js?v=12"></script>
+<script src="/ghost-box/lib/nuit.js?v=14"></script>
+<script src="/ghost-box/lib/voix.js?v=14"></script>
+<script src="/ghost-box/lib/historique.js?v=14"></script>
+<script src="/ghost-box/lib/moteur.js?v=14"></script>
+<script src="/ghost-box/lib/spectre.js?v=14"></script>
+<script src="/ghost-box/lib/retour.js?v=14"></script>
+<script src="/ghost-box/lib/aide.js?v=14"></script>
+<script src="/ghost-box/lib/action.js?v=14"></script>
 <script>addEventListener('load',function(){ try{ GBAction.init(['#run']); }catch(e){} });</script>
-<script src="/ghost-box/lib/mur.js?v=12"></script>
+<script src="/ghost-box/lib/mur.js?v=14"></script>
 <script>
 (() => {
 "use strict";
@@ -883,7 +886,7 @@ function updateCoinc(){
 
 /* ═══════ moteur ═══════ */
 let running=false, phase='idle', realMode=true, timer=null, t0=0, tPhase=0, tWatch=0;
-let W=[], lastEmit=-1e9, trace=[], seed=0, lastZ=0, revealed=false, recentIdx=[];
+let W=[], lastEmit=-1e9, trace=[], seed=0, lastZ=0, revealed=false, recentIdx=[], H=null;
 /* hachage FNV-1a d'une chaîne → [0,1) : réparti sur tout le lexique, reproductible depuis la trace */
 function hash01(str){ let h=2166136261>>>0;
   for(let i=0;i<str.length;i++){ h^=str.charCodeAt(i); h=Math.imul(h,16777619)>>>0; }
@@ -925,6 +928,10 @@ function start(){
   realMode = blind ? Math.random()<.5 : true;
   seed=(Date.now()^0x9E3779B9)>>>0; rnd=mulberry(seed);
   W = list.map(mkW);
+  // chaque veille laisse sa fiche dans la bibliothèque — même quand rien ne
+  // sort : « j'ai veillé, rien n'est sorti » est un résultat qui se garde
+  try{ H=GBHistorique.ouvrir({ mode:'séance capteurs ('+(indep?'indépendants':coinc?'coïncidence':'simple')+(blind?' · à l\'aveugle':'')+')' }); }catch(e){ H=null; }
+  if(H) H.noter('veille','capteurs : '+list.join(' + '));
   running=true; phase='learn'; lastEmit=-1e9; recentIdx=[];
   t0=performance.now(); tPhase=t0; tWatch=0;
   $('run').textContent='Arrêter'; $('run').classList.add('on'); $('run').disabled=false;
@@ -935,6 +942,9 @@ function start(){
   timer=setInterval(tick,100);
 }
 function stop(){
+  if(H){ const nm=trace.filter(x=>!x.est_temoin).length;
+    H.fermer({ mots:nm, seuils:W.map(w=>({code:w.code, seuil:+(w.thr||0).toFixed(2), relevages:w.raises||0})),
+               phrase:(MUR? MUR.phrase(): []) }); H=null; }
   running=false; phase='idle'; clearInterval(timer);
   $('run').textContent='Lancer la veille'; $('run').classList.remove('on');
   $('state').textContent="à l'arrêt"; $('upt').textContent='';
@@ -1140,6 +1150,8 @@ function majHud(now,maxz){
     + '<button data-fx="spectre" class="'+(spectreOn?'on':'')+'">Spectre</button>'
     + '<button data-fx="mur" class="'+(MUR?'on':'')+'">Mur</button>'
     + '<button data-fx="caps" class="'+(capsOn?'on':'')+'">Capteurs</button>'
+    + '<button data-fx="voix" class="'+(window.GBVoix&&GBVoix.actif()?'on':'')+'">Voix</button>'
+    + '<button data-fx="nuit" class="'+(window.GBNuit&&GBNuit.actif()?'on':'')+'">Nuit</button>'
     + '</span>';
   $('hud').innerHTML=h;
   const hh=$('hud').offsetHeight;
@@ -1172,6 +1184,8 @@ $('hud').addEventListener('click', e=>{
   else if(fx==='mur'){ $('murBtn').click(); }
   else if(fx==='caps'){ capsOn=!capsOn; try{ localStorage.setItem('gb-banc-fixe-caps', capsOn?'1':'0'); }catch(e2){}
     document.body.classList.toggle('aveccaps', filming&&capsOn); }
+  else if(fx==='voix'){ if(window.GBVoix) GBVoix.basculer(); }
+  else if(fx==='nuit'){ if(window.GBNuit) GBNuit.basculer(); }
   setTimeout(()=>{ if(MUR) MUR.placer(); majHud(performance.now(), lastZ||0); },500);
 });
 /* la phrase : la suite exacte des mots retenus */
@@ -1243,6 +1257,7 @@ $('fixBtn').onclick=()=>setFilming(!filming);
 $('quitFix').onclick=()=>setFilming(false);
 addEventListener('fullscreenchange',()=>{ if(!document.fullscreenElement && filming) setFilming(false); });
 addEventListener('touchmove',e=>{ if(filming) e.preventDefault(); },{passive:false});
+addEventListener('pagehide',()=>{ try{ if(H){ H.fermer({ mots:trace.filter(x=>!x.est_temoin).length, interrompue:true }); H=null; } }catch(e){} });
 
 let MUR=null;
 $('murBtn').onclick=async ()=>{
@@ -1292,6 +1307,11 @@ function emit(now, contribs){
     if(r){ mot=r.mot; viaMur=r; }
   }
   $('word').className=''; $('word').textContent=mot;
+  // le mot est PRONONCÉ (option voix) : on le sait sans regarder l'écran, et
+  // il est sur la bande son de la séance — jamais en mode témoin à l'aveugle,
+  // qui perdrait tout son sens si l'appareil annonçait ses propres essais
+  if(realMode && window.GBVoix) GBVoix.dire(mot);
+  if(H) H.noter('mot', mot+' · '+(realMode? (multi?('coïncidence '+codes):WW[0].code)+' · écart '+zc.toFixed(1)+' σ · seuil '+WW[0].thr.toFixed(1)+' σ' : 'témoin à l\'aveugle'));
   $('stage').classList.add('alert');
   $('deriv').innerHTML = blind
     ? 'écart <b>'+zc.toFixed(2).replace('.',',')+' σ</b> → index <b>'+idx+'</b> / '+pool.length
@@ -1369,7 +1389,7 @@ $('camAi').onclick=async ()=>{
   if(!camActive){ $('aiState').textContent="Active d'abord la caméra."; return; }
   $('aiState').textContent='Chargement du modèle (~5 Mo, une seule fois)…';
   try{
-    if(!POSE) POSE=await import('/ghost-box/lib/pose.js?v=12');
+    if(!POSE) POSE=await import('/ghost-box/lib/pose.js?v=14');
     await POSE.load();
     aiOn=true; $('camAi').className='act';
     $('aiState').innerHTML='Détection active — un squelette n\'apparaît que si une <b>personne réelle</b> est reconnue. Dans le noir, le modèle ne voit rien : c\'est normal.';
@@ -1565,9 +1585,9 @@ addEventListener('load',function(){ try{ GBCapture.init({label:'seance-capteurs'
 })();
 </script>
 <script>if('serviceWorker' in navigator){window.addEventListener('load',function(){navigator.serviceWorker.register('/ghost-box/sw.js').catch(function(){});});}</script>
-<script src="/ghost-box/lib/wakelock.js?v=12"></script>
-<script src="/ghost-box/lib/media.js?v=12"></script>
-<script src="/ghost-box/lib/capture.js?v=12"></script>
-<script src="/ghost-box/lib/fullscreen.js?v=12"></script>
+<script src="/ghost-box/lib/wakelock.js?v=14"></script>
+<script src="/ghost-box/lib/media.js?v=14"></script>
+<script src="/ghost-box/lib/capture.js?v=14"></script>
+<script src="/ghost-box/lib/fullscreen.js?v=14"></script>
 </body>
 </html>
