@@ -12,7 +12,7 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="Ghost Box">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<link rel="stylesheet" href="/ghost-box/lib/fonts.css?v=20">
+<link rel="stylesheet" href="/ghost-box/lib/fonts.css?v=21">
 <style>
 :root{
   --bench:#0A0F12;--panel:#141B20;--line:#2C383F;--hair:#1E262B;
@@ -151,7 +151,7 @@ body{margin:0;background:#000;color:var(--text);font-family:var(--body);
   #bottom{padding:10px 22px 4px}#seg{padding:4px 0 10px}
 }
 </style>
-<link rel="stylesheet" href="/ghost-box/lib/ambiance.css?v=20">
+<link rel="stylesheet" href="/ghost-box/lib/ambiance.css?v=21">
 </head>
 <body>
 <div id="app">
@@ -204,6 +204,7 @@ body{margin:0;background:#000;color:var(--text);font-family:var(--body);
   <div class="poignee" id="fermer">⌄</div>
   <div class="tt">Objectif</div>
   <div class="opts" id="lentilles"><span class="vide">démarre la séance pour voir les objectifs</span></div>
+  <p class="aide">L'objectif choisi est <b>mémorisé</b> et repris à la séance suivante. Par défaut, l'appareil ouvre la caméra <b>arrière</b>.</p>
   <div class="tt">Comment un mot est désigné</div>
   <div class="opts">
     <button id="oInstant" class="on" type="button">Instant simple</button>
@@ -223,9 +224,10 @@ body{margin:0;background:#000;color:var(--text);font-family:var(--body);
 
   <div class="tt">Détection</div>
   <div class="opts">
-    <button id="oSilhouette" type="button">Silhouette humaine</button>
+    <button id="oSilhouette" type="button">Silhouette</button>
+    <button id="oVisage" type="button">Visage</button>
   </div>
-  <p class="aide" id="silAide">Reconnaît une <b>personne entière</b> — tête, épaules, bras, jambes — et trace son squelette sur l'image. Le modèle pèse environ 5 Mo et se télécharge une seule fois ; ensuite il fonctionne sans réseau. Les critères sont sévères : un reflet ou une ombre ne passent pas.</p>
+  <p class="aide" id="silAide">Les deux se complètent. La <b>silhouette</b> reconnaît un corps entier — tête, épaules, bras, jambes — et trace son squelette. Le <b>visage</b> se voit à partir de quelques dizaines de pixels, sans le reste du corps : dans un miroir, à une fenêtre, dans l'entrebâillement d'une porte. Les critères sont sévères des deux côtés, et un visage n'est affiché qu'après cinq images consécutives au même endroit — la paréidolie est le piège le plus courant de ce loisir. Modèles téléchargés une seule fois, ensuite ils fonctionnent sans réseau.</p>
 
   <div class="tt">Confort</div>
   <div class="opts">
@@ -248,17 +250,17 @@ body{margin:0;background:#000;color:var(--text);font-family:var(--body);
 <div id="voile"></div>
 </div><!-- #app -->
 
-<script src="/ghost-box/lib/nuit.js?v=20"></script>
-<script src="/ghost-box/lib/wakelock.js?v=20"></script>
-<script src="/ghost-box/lib/media.js?v=20"></script>
-<script src="/ghost-box/lib/moteur.js?v=20"></script>
-<script src="/ghost-box/lib/capteurs.js?v=20"></script>
-<script src="/ghost-box/lib/mur.js?v=20"></script>
-<script src="/ghost-box/lib/voix.js?v=20"></script>
-<script src="/ghost-box/lib/historique.js?v=20"></script>
-<script src="/ghost-box/lib/tampon.js?v=20"></script>
-<script src="/ghost-box/lib/secours.js?v=20"></script>
-<script src="/ghost-box/lib/capture.js?v=20"></script>
+<script src="/ghost-box/lib/nuit.js?v=21"></script>
+<script src="/ghost-box/lib/wakelock.js?v=21"></script>
+<script src="/ghost-box/lib/media.js?v=21"></script>
+<script src="/ghost-box/lib/moteur.js?v=21"></script>
+<script src="/ghost-box/lib/capteurs.js?v=21"></script>
+<script src="/ghost-box/lib/mur.js?v=21"></script>
+<script src="/ghost-box/lib/voix.js?v=21"></script>
+<script src="/ghost-box/lib/historique.js?v=21"></script>
+<script src="/ghost-box/lib/tampon.js?v=21"></script>
+<script src="/ghost-box/lib/secours.js?v=21"></script>
+<script src="/ghost-box/lib/capture.js?v=21"></script>
 <script>
 /* ═══════════════════════════════════════════════════════════════════════
    Séance simple — un écran, un bouton.
@@ -327,6 +329,11 @@ async function demarrer(){
   }
   if(vue==='video') poserVideo();
   listerObjectifs();
+  // détection allumée d'office : c'est le mode où l'on ne règle rien
+  if(B.fluxCamera()){
+    if(silVoulu) allumerDetection('sil', true);
+    if(visVoulu) allumerDetection('vis', true);
+  }
 
   W={}; ATT={};
   vivantes.forEach(v=>{ W[v.code]=M.mk(v.code, v.label); });
@@ -345,7 +352,8 @@ async function arreter(){
   try{ B.couperTout(); }catch(e){}
   try{ GBWake.off(); }catch(e){}
   phase='arret'; armees=0; W={};
-  silOn=false; $('squelette').classList.remove('on'); $('nbPers').classList.remove('on');
+  silOn=false; visOn=false;
+  $('squelette').classList.remove('on'); $('nbPers').classList.remove('on');
   $('go').className='';
   $('legend').textContent='séance terminée — appuie pour recommencer';
   poserMur();
@@ -509,6 +517,7 @@ function majTiroir(){
   $('oAuto').className = autoOn ? 'on' : '';
   $('oTampon').textContent = 'Mémoire '+tamponSec+' s';
   $('oSilhouette').className = silOn ? 'or' : '';
+  $('oVisage').className = visOn ? 'or' : '';
   $('oVoix').className = (window.GBVoix && GBVoix.actif()) ? 'on' : '';
   $('oNuit').className = (window.GBNuit && GBNuit.actif()) ? 'on' : '';
   listerObjectifs();
@@ -693,32 +702,60 @@ function autoTic(now, quelquun){
    Même module et mêmes critères sévères que la séance caméra : le tracé est
    dessiné PAR-DESSUS l'image, jamais dedans, et il n'entre dans aucune mesure.
    Le modèle vient d'un CDN — sans réseau la première fois, on le dit. */
-let POSE=null, silOn=false, lastVT=-1;
-$('oSilhouette').onclick=async ()=>{
-  if(silOn){
-    silOn=false; $('squelette').classList.remove('on'); $('nbPers').classList.remove('on');
-    majTiroir(); return;
-  }
+let POSE=null, VIS=null, silOn=false, visOn=false, lastVT=-1;
+/* Détection allumée PAR DÉFAUT : c'est la raison d'être d'un mode qui doit
+   marcher sans rien régler. Le réglage reste mémorisé si l'utilisateur coupe. */
+try{ silOn = localStorage.getItem('gb-simple-sil') !== '0'; }catch(e){}
+try{ visOn = localStorage.getItem('gb-simple-vis') !== '0'; }catch(e){}
+let silVoulu = silOn, visVoulu = visOn;   // ce que l'utilisateur veut, même caméra fermée
+silOn = visOn = false;                    // rien n'est actif tant que le modèle n'est pas là
+async function allumerDetection(quoi, silencieux){
   if(!B.fluxCamera()){
-    $('silAide').innerHTML='<b style="color:var(--flag)">La caméra n\'est pas ouverte</b> — démarre la séance d\'abord.';
-    return;
+    if(!silencieux) $('silAide').innerHTML='<b style="color:var(--flag)">La caméra n\'est pas ouverte</b> — démarre la séance d\'abord.';
+    return false;
   }
-  $('silAide').textContent='Chargement du modèle (~5 Mo, une seule fois)…';
+  if(!silencieux) $('silAide').textContent='Chargement du modèle (une seule fois)…';
   try{
-    if(!POSE) POSE = await import('/ghost-box/lib/pose.js?v=20');
-    await POSE.load();
-    silOn=true; $('squelette').classList.add('on'); $('nbPers').classList.add('on');
-    if(vue!=='video'){ poserVideo(); tiroir(false); }
-    $('silAide').innerHTML='Détection active. Le squelette apparaît sur l\'image quand une personne est <b>confirmée</b> — les critères sont sévères, un reflet ne passe pas.';
+    if(quoi==='sil'){
+      if(!POSE) POSE = await import('/ghost-box/lib/pose.js?v=21');
+      await POSE.load(); silOn=true; silVoulu=true;
+    } else {
+      if(!VIS) VIS = await import('/ghost-box/lib/visage.js?v=21');
+      await VIS.load(); visOn=true; visVoulu=true;
+    }
+    $('squelette').classList.add('on'); $('nbPers').classList.add('on');
+    if(vue!=='video' && !silencieux){ poserVideo(); tiroir(false); }
+    else if(vue!=='video') poserVideo();
+    if(!silencieux) $('silAide').innerHTML='Détection active. Un cadre ou un squelette n\'apparaît que si la forme est <b>confirmée</b> — les critères sont sévères.';
     majTiroir(); boucleSil();
+    return true;
   }catch(e){
-    silOn=false;
-    $('silAide').innerHTML='<b style="color:var(--flag)">Modèle indisponible</b> — il faut du réseau la première fois. Tout le reste fonctionne.';
+    if(quoi==='sil') silOn=false; else visOn=false;
+    if(!silencieux) $('silAide').innerHTML='<b style="color:var(--flag)">Modèle indisponible</b> — il faut du réseau la première fois. Tout le reste fonctionne.';
+    return false;
   }
+}
+$('oSilhouette').onclick=async ()=>{
+  if(silOn){ silOn=false; silVoulu=false;
+    try{ localStorage.setItem('gb-simple-sil','0'); }catch(e){}
+    if(!visOn){ $('squelette').classList.remove('on'); $('nbPers').classList.remove('on'); }
+    majTiroir(); return; }
+  try{ localStorage.setItem('gb-simple-sil','1'); }catch(e){}
+  await allumerDetection('sil');
+};
+$('oVisage').onclick=async ()=>{
+  if(visOn){ visOn=false; visVoulu=false;
+    try{ localStorage.setItem('gb-simple-vis','0'); }catch(e){}
+    if(!silOn){ $('squelette').classList.remove('on'); $('nbPers').classList.remove('on'); }
+    majTiroir(); return; }
+  try{ localStorage.setItem('gb-simple-vis','1'); }catch(e){}
+  await allumerDetection('vis');
 };
 
+let boucleActive=false;
 function boucleSil(){
-  if(!silOn) return;
+  if(!silOn && !visOn){ boucleActive=false; return; }
+  if(!boucleActive){ boucleActive=true; }
   requestAnimationFrame(boucleSil);
   const v=B.videoEl();
   const cv=$('squelette');
@@ -737,23 +774,28 @@ function boucleSil(){
   g.clearRect(0,0,box.width,box.height);
   if(v.currentTime!==lastVT){
     lastVT=v.currentTime;
-    try{ const r=POSE.detect(v); if(r) boucleSil.vu={people:r.people, t:performance.now()}; }catch(e){}
+    const now2=performance.now();
+    if(silOn && POSE){ try{ const r=POSE.detect(v); if(r) boucleSil.vu={people:r.people, t:now2}; }catch(e){} }
+    if(visOn && VIS){ try{ const r=VIS.detect(v); if(r) boucleSil.vv={faces:r.faces, t:now2}; }catch(e){} }
   }
-  const vu=boucleSil.vu;
-  const frais = vu && (performance.now()-vu.t) < 900;
-  autoTic(performance.now(), !!(frais && vu.people.length));
-  if(frais && vu.people.length){
-    g.save();
-    g.translate((box.width-dw)/2, (box.height-dh)/2);
-    try{ POSE.drawAll(g, vu.people, dw, dh, dw/640); }catch(e){}
-    g.restore();
-    $('nbPers').textContent = vu.people.length>1
-      ? vu.people.length+' personnes' : '1 personne';
-    $('nbPers').style.color='var(--gold)';
-  } else {
-    $('nbPers').textContent='personne';
-    $('nbPers').style.color='var(--dim)';
-  }
+  const vu=boucleSil.vu, vv=boucleSil.vv;
+  const fraisP = silOn && vu && (performance.now()-vu.t) < 900 && vu.people.length;
+  const fraisV = visOn && vv && (performance.now()-vv.t) < 900 && vv.faces.length;
+  // le déclencheur d'enregistrement : une silhouette OU un visage confirmé
+  autoTic(performance.now(), !!(fraisP || fraisV));
+
+  g.save();
+  g.translate((box.width-dw)/2, (box.height-dh)/2);
+  if(fraisP){ try{ POSE.drawAll(g, vu.people, dw, dh, dw/640); }catch(e){} }
+  if(fraisV){ try{ VIS.drawAll(g, vv.faces, dw, dh); }catch(e){} }
+  g.restore();
+
+  const parts=[];
+  if(fraisP) parts.push(vu.people.length>1 ? vu.people.length+' personnes' : '1 personne');
+  if(fraisV) parts.push(vv.faces.length>1 ? vv.faces.length+' visages' : '1 visage');
+  $('nbPers').textContent = parts.length ? parts.join(' · ')
+    : (silOn||visOn ? 'rien de confirmé' : '');
+  $('nbPers').style.color = parts.length ? 'var(--gold)' : 'var(--dim)';
 }
 $('oNuit').onclick=()=>{ if(window.GBNuit) GBNuit.basculer(); majTiroir(); };
 
@@ -767,6 +809,12 @@ async function listerObjectifs(){
   if(!lentilles.length){
     box.innerHTML='<span class="vide">démarre la séance pour voir les objectifs</span>'; return;
   }
+  // repérer l'objectif RÉELLEMENT en cours, pas celui qu'on croit
+  try{
+    const st=B.fluxCamera();
+    const id = st && st.getVideoTracks()[0] && st.getVideoTracks()[0].getSettings().deviceId;
+    if(id){ const k=lentilles.findIndex(l=>l.id===id); if(k>=0) iLentille=k; }
+  }catch(e){}
   box.innerHTML='';
   lentilles.forEach((l,i)=>{
     const b=document.createElement('button');
@@ -784,7 +832,8 @@ async function choisirObjectif(i){
   const ok = await B.changerCamera({video:{deviceId:{exact:lentilles[i].id}}, audio:false});
   if(ok){
     iLentille=i;
-    try{ localStorage.setItem('gb-simple-objectif', lentilles[i].id); }catch(e){}
+    // clé partagée avec lib/capteurs.js : l'objectif est repris à l'ouverture
+    try{ localStorage.setItem('gb-objectif', lentilles[i].id); }catch(e){}
     if(vue==='video') poserVideo();
   }
   majTiroir();
@@ -838,7 +887,7 @@ function vignette(){
 }
 
 addEventListener('pagehide',()=>{
-  silOn=false;
+  silOn=false; visOn=false;
   try{ if(TAMP) TAMP.arreter(); }catch(e){}
   try{ if(H){ H.fermer({mots:nMots, interrompue:true}); H=null; } }catch(e){}
   try{ B.couperTout(); }catch(e){}
