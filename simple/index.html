@@ -12,7 +12,7 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="Ghost Box">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<link rel="stylesheet" href="/ghost-box/lib/fonts.css?v=17">
+<link rel="stylesheet" href="/ghost-box/lib/fonts.css?v=20">
 <style>
 :root{
   --bench:#0A0F12;--panel:#141B20;--line:#2C383F;--hair:#1E262B;
@@ -35,11 +35,11 @@ body{margin:0;background:#000;color:var(--text);font-family:var(--body);
    la scène tombait à 396 px au lieu de 546, et 150 px restaient vides sous le
    sélecteur. Avec ambiance désactivée, la même page donnait 546 px. */
 #app{position:fixed;inset:0;display:grid;
-  grid-template-rows:auto minmax(0,1fr) auto auto auto auto;
+  grid-template-rows:auto minmax(0,1fr) auto auto auto auto auto;
   padding:env(safe-area-inset-top, 0px) 0 env(safe-area-inset-bottom, 0px)}
 
 /* ── barre du haut : la marque, et un seul accès aux réglages ── */
-#top{display:flex;align-items:center;justify-content:space-between;padding:14px 18px 10px}
+#top{display:flex;align-items:center;gap:10px;padding:14px 14px 10px}
 #top img{height:26px;width:auto;display:block}
 #top .rd{width:42px;height:42px;border-radius:11px;background:var(--panel);border:1px solid var(--line);
   display:flex;align-items:center;justify-content:center;cursor:pointer;color:var(--dim);font-size:17px;padding:0}
@@ -50,6 +50,17 @@ body{margin:0;background:#000;color:var(--text);font-family:var(--body);
 #vue{flex:1;min-height:0;border-radius:9px;overflow:hidden;background:#05090C;position:relative}
 #vue video{width:100%;height:100%;object-fit:contain;background:#05090C;display:block}
 #mur{position:absolute;inset:0}
+/* le squelette se dessine PAR-DESSUS la vidéo, jamais dedans : l'image reste
+   l'image brute de la caméra, et le tracé n'altère aucune mesure */
+#squelette{position:absolute;inset:0;pointer-events:none;display:none;z-index:2}
+#squelette.on{display:block}
+#recPt{position:absolute;right:8px;top:8px;z-index:3;width:11px;height:11px;border-radius:50%;
+  background:var(--flag);display:none;box-shadow:0 0 12px rgba(226,87,76,.9)}
+#recPt.on{display:block;animation:bat 1.4s infinite}
+@keyframes bat{0%,100%{opacity:1}50%{opacity:.25}}
+#nbPers{position:absolute;left:8px;top:8px;z-index:3;font-family:var(--mono);font-size:11px;
+  color:var(--gold);background:rgba(5,9,12,.8);border-radius:4px;padding:4px 8px;display:none}
+#nbPers.on{display:block}
 #legend{flex:none;text-align:center;font-family:var(--mono);font-size:11.5px;color:#5A686F;
   padding:9px 4px 3px;letter-spacing:.04em}
 
@@ -96,6 +107,35 @@ body{margin:0;background:#000;color:var(--text);font-family:var(--body);
   padding:9px 26px;background:none;color:var(--dim);cursor:pointer;min-height:40px}
 #seg button.on{background:#E8EDEF;color:#0A0F12}
 
+/* ── le chevron, et le tiroir qu'il ouvre ── */
+/* 44 px de haut : le chevron est un vrai bouton, pas une décoration —
+   26 px se manquait au pouce, comme le bouton Aide avant lui */
+#chev{background:none;border:0;color:#4E5C64;font-size:22px;line-height:1;cursor:pointer;
+  padding:0;justify-self:center;min-height:44px;width:96px}
+#tiroir{position:fixed;left:0;right:0;bottom:0;z-index:80;max-height:82vh;overflow-y:auto;
+  background:#0D141A;border-top:1px solid var(--line);border-radius:18px 18px 0 0;
+  padding:6px 18px calc(env(safe-area-inset-bottom, 0px) + 24px);
+  transform:translateY(101%);transition:transform .22s ease-out;
+  box-shadow:0 -18px 44px -14px rgba(0,0,0,.8)}
+#tiroir.on{transform:translateY(0)}
+#tiroir .poignee{text-align:center;color:#4E5C64;font-size:22px;line-height:1;padding:8px 0 10px;cursor:pointer}
+#tiroir .tt{font-family:var(--legend);text-transform:uppercase;letter-spacing:.16em;font-size:10.5px;
+  color:var(--dim);font-weight:600;margin:16px 0 8px}
+#tiroir .opts{display:flex;gap:8px;flex-wrap:wrap}
+#tiroir .opts button{flex:1;min-width:130px;font-family:var(--body);font-size:13px;font-weight:500;
+  border:1px solid var(--line);background:var(--panel);color:var(--text);border-radius:10px;
+  padding:12px 10px;min-height:46px;cursor:pointer;text-transform:none;letter-spacing:0}
+#tiroir .opts button.on{border-color:var(--signal);color:var(--signal)}
+#tiroir .opts button.or{border-color:var(--gold);color:var(--gold)}
+#tiroir .opts .vide{font-family:var(--mono);font-size:11.5px;color:#5A686F;padding:6px 0}
+#tiroir .opts.liens{display:grid;grid-template-columns:1fr 1fr}
+#tiroir .opts.liens a{display:block;text-decoration:none;font-size:13px;color:var(--text);
+  border:1px solid var(--line);background:var(--panel);border-radius:10px;padding:13px 12px;min-height:46px}
+#tiroir .aide{font-size:12px;line-height:1.55;color:var(--dim);margin:9px 0 0}
+#tiroir .aide a{color:var(--signal)}
+#voile{position:fixed;inset:0;z-index:79;background:rgba(0,0,0,.55);display:none}
+#voile.on{display:block}
+
 /* ── message plein cadre : autorisation refusée, capteur absent… ── */
 #msg{position:absolute;inset:8px;border-radius:9px;background:rgba(5,9,12,.94);display:none;
   flex-direction:column;align-items:center;justify-content:center;gap:14px;padding:26px;text-align:center}
@@ -111,18 +151,22 @@ body{margin:0;background:#000;color:var(--text);font-family:var(--body);
   #bottom{padding:10px 22px 4px}#seg{padding:4px 0 10px}
 }
 </style>
-<link rel="stylesheet" href="/ghost-box/lib/ambiance.css?v=17">
+<link rel="stylesheet" href="/ghost-box/lib/ambiance.css?v=20">
 </head>
 <body>
 <div id="app">
 
 <div id="top">
-  <img src="/ghost-box/assets/marque.png" alt="Ghost Box" style="height:30px">
+  <!-- Sortie vers le menu : elle manquait, et sans elle on ne pouvait plus
+       jamais revenir aux autres modes une fois entré ici. -->
+  <button class="rd" id="menu" type="button" aria-label="Menu principal">←</button>
+  <img src="/ghost-box/assets/marque.png" alt="Ghost Box" style="height:30px;flex:1;object-fit:contain;object-position:left">
+  <button class="rd" id="objectif" type="button" aria-label="Changer d'objectif">⟳</button>
   <button class="rd" id="reglages" type="button" aria-label="Réglages">⚙</button>
 </div>
 
 <div id="scene">
-  <div id="vue"><div id="mur"></div></div>
+  <div id="vue"><div id="mur"></div><canvas id="squelette"></canvas><span id="nbPers"></span><span id="recPt"></span></div>
   <div id="legend">appuie sur le bouton pour commencer</div>
   <div id="msg"><p></p></div>
 </div>
@@ -148,21 +192,73 @@ body{margin:0;background:#000;color:var(--text);font-family:var(--body);
   <button id="grid" type="button" aria-label="Bibliothèque"><i></i><i></i><i></i><i></i></button>
 </div>
 
+<button id="chev" type="button" aria-label="Plus d'options">⌃</button>
+
 <div id="seg"><div class="sw">
   <button id="mMots" class="on" type="button">Mots</button>
   <button id="mVideo" type="button">Vidéo</button>
 </div></div>
 
+<!-- Tiroir : rien n'est retiré du produit, tout est simplement rangé. -->
+<div id="tiroir">
+  <div class="poignee" id="fermer">⌄</div>
+  <div class="tt">Objectif</div>
+  <div class="opts" id="lentilles"><span class="vide">démarre la séance pour voir les objectifs</span></div>
+  <div class="tt">Comment un mot est désigné</div>
+  <div class="opts">
+    <button id="oInstant" class="on" type="button">Instant simple</button>
+    <button id="oEsc" type="button">Escalier</button>
+  </div>
+  <p class="aide">Instant simple : un événement, un mot — le mot n'est pas visable. Escalier : trois événements, cible large, le mot peut être visé. <a href="../manuel/viser/">Essayer soi-même</a></p>
+  <div class="tt">Garder ce qui compte</div>
+  <div class="opts">
+    <button id="oAuto" class="on" type="button">Enregistrement auto</button>
+    <button id="oTampon" type="button">Mémoire 10 s</button>
+  </div>
+  <div class="opts" style="margin-top:8px">
+    <button id="oEssai" type="button">Essai — vérifier la chaîne</button>
+  </div>
+  <p class="aide" id="essaiAide">L'essai déclenche la chaîne <b>à la main</b> : photo, prise vidéo, écriture en bibliothèque. Le résultat est marqué « essai » — <b>aucune mesure n'est derrière</b>, il ne se fera jamais passer pour un contact. C'est là pour vérifier que tout fonctionne avant de partir.</p>
+<p class="aide" id="autoAide">L'appareil encode en permanence mais <b>ne garde rien</b> : seules les dernières secondes existent, en mémoire. Quand quelque chose arrive — un mot retenu, une silhouette confirmée — il garde <b>les secondes d'avant</b> et une photo, sans que tu aies rien à faire. Tout part dans la bibliothèque.</p>
+
+  <div class="tt">Détection</div>
+  <div class="opts">
+    <button id="oSilhouette" type="button">Silhouette humaine</button>
+  </div>
+  <p class="aide" id="silAide">Reconnaît une <b>personne entière</b> — tête, épaules, bras, jambes — et trace son squelette sur l'image. Le modèle pèse environ 5 Mo et se télécharge une seule fois ; ensuite il fonctionne sans réseau. Les critères sont sévères : un reflet ou une ombre ne passent pas.</p>
+
+  <div class="tt">Confort</div>
+  <div class="opts">
+    <button id="oVoix" type="button">Voix</button>
+    <button id="oNuit" type="button">Mode nuit</button>
+  </div>
+  <div class="tt">Les autres modes</div>
+  <div class="opts liens">
+    <a href="../seance/">Séance caméra</a>
+    <a href="../banc/">Séance capteurs</a>
+    <a href="../mur/">Le mur</a>
+    <a href="../enregistreur/">Écoute</a>
+    <a href="../bibliotheque/">Bibliothèque</a>
+    <a href="../manuel/">Mode d'emploi</a>
+    <a href="../contact-ia/">Contact via IA</a>
+    <a href="../reglages/">Réglages</a>
+  </div>
+</div>
+
+<div id="voile"></div>
 </div><!-- #app -->
 
-<script src="/ghost-box/lib/nuit.js?v=17"></script>
-<script src="/ghost-box/lib/wakelock.js?v=17"></script>
-<script src="/ghost-box/lib/media.js?v=17"></script>
-<script src="/ghost-box/lib/moteur.js?v=17"></script>
-<script src="/ghost-box/lib/capteurs.js?v=17"></script>
-<script src="/ghost-box/lib/mur.js?v=17"></script>
-<script src="/ghost-box/lib/voix.js?v=17"></script>
-<script src="/ghost-box/lib/historique.js?v=17"></script>
+<script src="/ghost-box/lib/nuit.js?v=20"></script>
+<script src="/ghost-box/lib/wakelock.js?v=20"></script>
+<script src="/ghost-box/lib/media.js?v=20"></script>
+<script src="/ghost-box/lib/moteur.js?v=20"></script>
+<script src="/ghost-box/lib/capteurs.js?v=20"></script>
+<script src="/ghost-box/lib/mur.js?v=20"></script>
+<script src="/ghost-box/lib/voix.js?v=20"></script>
+<script src="/ghost-box/lib/historique.js?v=20"></script>
+<script src="/ghost-box/lib/tampon.js?v=20"></script>
+<script src="/ghost-box/lib/secours.js?v=20"></script>
+<script src="/ghost-box/lib/capture.js?v=20"></script>
 <script>
 /* ═══════════════════════════════════════════════════════════════════════
    Séance simple — un écran, un bouton.
@@ -191,10 +287,11 @@ const B=GBCapteurs.creer();
 let MUR=null, W={}, ATT={}, H=null;
 let phase='arret', tPhase=0, tPret=0, armees=0, nMots=0, lastMot=-1e9;
 let vue='mots';
+let murMode = (()=>{ try{ return localStorage.getItem('gb-simple-mode')==='escalier'?'escalier':'instant'; }catch(e){ return 'instant'; } })();
 
 /* ═══ le mur, monté tout de suite : l'écran n'est jamais vide ═══ */
 GBMur.lexique('../data/lexique.json').then(mots=>{
-  MUR=GBMur.creer({hote:$('mur'), mots:mots, vitesse:300, mode:'instant', onMot:motSorti});
+  MUR=GBMur.creer({hote:$('mur'), mots:mots, vitesse:300, mode:murMode, onMot:motSorti});
   if(MUR) MUR.demarrer();
 }).catch(()=>{ dire('<b class="ko">Vocabulaire introuvable.</b><p>L\'application n\'a pas pu charger sa liste de mots. Rouvre-la une fois avec du réseau.</p>'); });
 
@@ -229,6 +326,7 @@ async function demarrer(){
     return;
   }
   if(vue==='video') poserVideo();
+  listerObjectifs();
 
   W={}; ATT={};
   vivantes.forEach(v=>{ W[v.code]=M.mk(v.code, v.label); });
@@ -239,11 +337,15 @@ async function demarrer(){
   $('legend').textContent='apprentissage du lieu — ne touche à rien';
 }
 
-function arreter(){
+async function arreter(){
+  if(videoEnCours) await stopVideoAuto('séance terminée');
+  if(TAMP){ TAMP.arreter(); TAMP=null; }
+  $('recPt').classList.remove('on');
   if(H){ H.fermer({mots:nMots, phrase:(MUR? MUR.phrase():[])}); H=null; }
   try{ B.couperTout(); }catch(e){}
   try{ GBWake.off(); }catch(e){}
   phase='arret'; armees=0; W={};
+  silOn=false; $('squelette').classList.remove('on'); $('nbPers').classList.remove('on');
   $('go').className='';
   $('legend').textContent='séance terminée — appuie pour recommencer';
   poserMur();
@@ -265,7 +367,10 @@ function mesure(){
           +'ou pris par une autre application. Ce n\'est pas une panne de l\'appareil.</p>');
       } else {
         phase='veille'; tPret=now; $('go').className='on';
-        $('legend').textContent='en veille — pose le téléphone, écran vers la pièce';
+        monterTampon();
+        $('legend').textContent = autoOn
+          ? 'en veille — ce qui compte sera gardé tout seul'
+          : 'en veille — pose le téléphone, écran vers la pièce';
       }
     }
   } else if(phase==='veille'){
@@ -296,6 +401,11 @@ function motSorti(d){
   if(window.GBVoix) GBVoix.dire(d.mot);
   if(H) H.noter('mot', d.mot+' · '+d.colonne);
   if(navigator.vibrate) navigator.vibrate(90);
+  // un mot retenu EST l'événement important de cette application : on garde
+  // la photo et les secondes qui l'ont précédé, sans rien demander
+  photoAuto('mot retenu : '+d.mot);
+  if(!videoEnCours){ videoAuto('mot retenu : '+d.mot);
+    setTimeout(()=>stopVideoAuto('fin de séquence'), 8000); }
 }
 
 function majInfos(now){
@@ -340,39 +450,358 @@ function majInfos(now){
 }
 
 /* ═══ ce qu'on regarde : les mots, ou l'image ═══ */
+/* vider la scène SANS emporter le calque de dessin : `innerHTML=''` détruisait
+   le canvas du squelette et le compteur, et la détection tombait en morceaux
+   dès qu'on changeait de vue. On ne retire que le contenu, jamais le calque. */
+function viderVue(){
+  const v=$('vue');
+  [...v.children].forEach(e=>{ if(e.id!=='squelette' && e.id!=='nbPers') e.remove(); });
+  return v;
+}
 function poserMur(){
   vue='mots'; $('mMots').className='on'; $('mVideo').className='';
-  const v=$('vue'); v.innerHTML=''; const d=document.createElement('div'); d.id='mur';
-  v.appendChild(d);
+  const v=viderVue(); const d=document.createElement('div'); d.id='mur';
+  v.insertBefore(d, v.firstChild);
   if(MUR){ MUR.arreter(); }
   GBMur.lexique('../data/lexique.json').then(mots=>{
-    MUR=GBMur.creer({hote:d, mots:mots, vitesse:300, mode:'instant', onMot:motSorti});
+    MUR=GBMur.creer({hote:d, mots:mots, vitesse:300, mode:murMode, onMot:motSorti});
     if(MUR) MUR.demarrer();
   });
 }
 function poserVideo(){
   vue='video'; $('mVideo').className='on'; $('mMots').className='';
   const el=B.videoEl();
-  const v=$('vue'); v.innerHTML='';
-  if(el){ v.appendChild(el); }
+  const v=viderVue();
+  if(el){ v.insertBefore(el, v.firstChild); }
   else {
     const p=document.createElement('div');
     p.style.cssText='display:flex;align-items:center;justify-content:center;height:100%;'
       +'font-family:var(--mono);font-size:12px;color:#5A686F;text-align:center;padding:20px';
     p.textContent='La caméra n\'est pas ouverte — démarre la séance.';
-    v.appendChild(p);
+    v.insertBefore(p, v.firstChild);
   }
   // le mur continue de tourner en fond : il reste le désignateur, même invisible
 }
 $('mMots').onclick=()=>{ if(vue!=='mots') poserMur(); };
 $('mVideo').onclick=()=>{ if(vue!=='video') poserVideo(); };
 
-/* ═══ galerie et réglages ═══ */
+/* ═══ sorties ═══
+   Le retour au menu manquait : une fois entré dans ce mode, on n'avait plus
+   aucun moyen de revoir les autres. C'est le premier devoir d'un écran. */
+$('menu').onclick=()=>{ location.href='../'; };
 $('grid').onclick=()=>{ location.href='../bibliotheque/'; };
 $('reglages').onclick=()=>{ location.href='../reglages/'; };
 $('vign').onclick=()=>{ location.href='../bibliotheque/'; };
 
-/* la vignette montre le dernier fichier gardé — sans l'ouvrir */
+/* ═══ le tiroir : rien n'est retiré, tout est rangé ═══ */
+function tiroir(on){
+  $('tiroir').classList.toggle('on', on);
+  $('voile').classList.toggle('on', on);
+  if(on) majTiroir();
+}
+$('chev').onclick=()=>tiroir(true);
+$('fermer').onclick=()=>tiroir(false);
+$('voile').onclick=()=>tiroir(false);
+
+function majTiroir(){
+  $('oInstant').className = murMode==='instant' ? 'on' : '';
+  $('oEsc').className     = murMode==='escalier' ? 'or' : '';
+  $('oAuto').className = autoOn ? 'on' : '';
+  $('oTampon').textContent = 'Mémoire '+tamponSec+' s';
+  $('oSilhouette').className = silOn ? 'or' : '';
+  $('oVoix').className = (window.GBVoix && GBVoix.actif()) ? 'on' : '';
+  $('oNuit').className = (window.GBNuit && GBNuit.actif()) ? 'on' : '';
+  listerObjectifs();
+}
+$('oInstant').onclick=()=>{ murMode='instant'; if(MUR) MUR.mode('instant');
+  try{ localStorage.setItem('gb-simple-mode','instant'); }catch(e){} majTiroir(); };
+$('oEsc').onclick=()=>{ murMode='escalier'; if(MUR) MUR.mode('escalier');
+  try{ localStorage.setItem('gb-simple-mode','escalier'); }catch(e){} majTiroir(); };
+$('oVoix').onclick=()=>{ if(window.GBVoix) GBVoix.basculer(); majTiroir(); };
+
+/* ═══════════════════════════════════════════════════════════════════════
+   Garder ce qui compte — sans que l'utilisateur ait rien à faire.
+
+   Le principe de toute l'application : l'appareil encode en PERMANENCE mais
+   ne garde rien. À chaque instant, seules les dernières secondes existent en
+   mémoire, et le reste est effacé au fur et à mesure. Quand un événement
+   arrive — un mot retenu, une silhouette confirmée — ces secondes-là sont
+   DÉJÀ dedans. C'est fait pour ce qui se produit avant qu'on ait le temps de
+   réagir : le geste humain arrive toujours trop tard.
+
+   Ce qui déclenche, et rien d'autre :
+   — un mot retenu par le mur (donc un vrai dépassement de seuil) ;
+   — une silhouette confirmée, si la détection est allumée.
+   Aucun quota, aucune capture « de temps en temps » : sans événement, la
+   séance ne laisse aucun fichier, et c'est le résultat normal.
+   ═══════════════════════════════════════════════════════════════════════ */
+let TAMP=null, SEC=null, autoOn=true, tamponSec=10;
+let lastPhoto=-1e9, videoEnCours=false, tVideoDebut=0, personneDepuis=0;
+/* le motif qui a DÉCLENCHÉ la prise, gardé jusqu'à l'écriture du fichier :
+   l'arrêt a son propre motif (« fin de séquence »), et c'est le départ qui
+   dit si c'était un essai ou une vraie mesure */
+let motifPrise='';
+const PHOTO_GAP=12000;      // deux photos automatiques ne se suivent pas de trop près
+const VIDEO_APRES=4000;     // une silhouette qui RESTE mérite une vidéo, pas une photo
+const VIDEO_STOP=5000;      // et on arrête peu après sa disparition
+
+try{ autoOn = localStorage.getItem('gb-simple-auto') !== '0'; }catch(e){}
+try{ tamponSec = +localStorage.getItem('gb-simple-tampon') || 10; }catch(e){}
+
+$('oAuto').onclick=()=>{
+  autoOn=!autoOn;
+  try{ localStorage.setItem('gb-simple-auto', autoOn?'1':'0'); }catch(e){}
+  if(!autoOn && TAMP){ TAMP.arreter(); TAMP=null; $('recPt').classList.remove('on'); }
+  else if(autoOn && phase==='veille') monterTampon();
+  majTiroir();
+};
+/* Essai : la chaîne entière, déclenchée à la main, et MARQUÉE comme telle.
+   Même principe que dans les autres modes — montrer le mécanisme sans jamais
+   se faire passer pour une mesure. */
+$('oEssai').onclick=async ()=>{
+  if(phase!=='veille'){ $('essaiAide').innerHTML='<b style="color:var(--flag)">Démarre la séance d\'abord</b> — l\'essai vérifie la chaîne réelle, il lui faut les capteurs ouverts.'; return; }
+  $('essaiAide').textContent='Essai en cours…';
+  lastPhoto=-1e9;                      // un essai n'est pas soumis à l'anti-rafale
+  photoAuto('ESSAI — aucune mesure derrière');
+  await videoAuto('ESSAI — aucune mesure derrière');
+  setTimeout(async ()=>{
+    await stopVideoAuto('fin de l\'essai');
+    $('essaiAide').innerHTML='Essai terminé — regarde dans la <a href="../bibliotheque/">bibliothèque</a>, les fichiers sont marqués « essai ».';
+  }, 3000);
+};
+$('oTampon').onclick=()=>{
+  tamponSec = tamponSec===10 ? 20 : (tamponSec===20 ? 5 : 10);
+  try{ localStorage.setItem('gb-simple-tampon', String(tamponSec)); }catch(e){}
+  if(TAMP){ TAMP.arreter(); TAMP=null; monterTampon(); }
+  majTiroir();
+};
+
+/* le flux gardé : l'image de la caméra ET le son du micro, comme la séance
+   caméra. Sans caméra, on garde quand même le son — une voix sur la bande
+   vaut mieux que rien. */
+function fluxAGarder(){
+  const v=B.fluxCamera(), a=B.fluxMicro();
+  const pistes=[];
+  if(v) v.getVideoTracks().forEach(t=>pistes.push(t));
+  if(a) a.getAudioTracks().forEach(t=>pistes.push(t));
+  return pistes.length ? new MediaStream(pistes) : null;
+}
+
+function monterTampon(){
+  if(!autoOn || TAMP) return;
+  if(!window.GBTampon || !GBTampon.supporte()) return;
+  const flux=fluxAGarder(); if(!flux) return;
+  TAMP=GBTampon.creer({ secondes: tamponSec,
+    // filet anti-perte : chaque morceau est écrit au fil de l'eau dès qu'une
+    // prise est en cours, donc une application tuée ne fait pas tout perdre
+    onGarde: parts => { try{ if(SEC) parts.forEach(b=>SEC.ajouter(b)); }catch(e){} },
+    onMorceau: blob => { try{ if(SEC) SEC.ajouter(blob); }catch(e){} } });
+  if(!TAMP.demarrer(flux)) TAMP=null;
+}
+
+/* les conditions de la mesure voyagent AVEC le fichier : un enregistrement
+   sans ses conditions ne prouve rien */
+function conditions(extra){
+  const voies={};
+  Object.keys(W).forEach(k=>{ const w=W[k];
+    voies[k]={label:w.label, arme:!!w.ready, seuil_sigma:+(w.thr||0).toFixed(2),
+              relevages_temoin:w.raises||0}; });
+  return Object.assign({
+    mode:'séance simple', lieu:'—',
+    veille_s: phase==='veille' ? Math.round((performance.now()-tPret)/1000) : 0,
+    voies_armees: armees, capteurs: voies,
+    silhouette: silOn, maniere: murMode,
+    phrase: MUR? MUR.phrase() : []
+  }, extra||{});
+}
+
+/* une photo, tout de suite : une apparition ne laisse pas le temps d'appuyer */
+function photoAuto(pourquoi){
+  if(!autoOn) return;
+  const now=performance.now();
+  if(now-lastPhoto < PHOTO_GAP) return;
+  const v=B.videoEl();
+  if(!v || !v.videoWidth) return;
+  lastPhoto=now;
+  try{
+    const c=document.createElement('canvas');
+    c.width=v.videoWidth; c.height=v.videoHeight;
+    c.getContext('2d').drawImage(v,0,0,c.width,c.height);
+    const estEssai = pourquoi.indexOf('ESSAI')===0;
+    GBCapture.photoCanvas(c, {cam:'séance simple'+(estEssai?' · essai':''), auto:true,
+      essai:estEssai, pourquoi:pourquoi, capteurs:conditions({declencheur:pourquoi})});
+    if(H) H.noter('photo', 'capture automatique — '+pourquoi);
+    $('legend').textContent='photo gardée — '+pourquoi;
+    majVignette();
+  }catch(e){}
+}
+
+/* une prise vidéo, avec les secondes d'AVANT le déclenchement */
+async function videoAuto(pourquoi){
+  if(!autoOn || !TAMP || videoEnCours) return;
+  videoEnCours=true; tVideoDebut=performance.now(); motifPrise=pourquoi;
+  $('recPt').classList.add('on');
+  try{ SEC = GBSecours.ouvrir({nom:'simple-'+Date.now(), mode:'séance simple'}); }catch(e){ SEC=null; }
+  const preroll = TAMP.garder();
+  if(H) H.noter('video', 'enregistrement automatique — '+pourquoi+' (dont '+Math.round(preroll)+' s d\'avant)');
+  $('legend').textContent='enregistrement — '+pourquoi;
+}
+
+async function stopVideoAuto(pourquoi){
+  if(!videoEnCours || !TAMP) return;
+  videoEnCours=false; $('recPt').classList.remove('on');
+  const estEssai = motifPrise.indexOf('ESSAI')===0;
+  let r=null;
+  try{ r = await TAMP.terminer(); }catch(e){}
+  TAMP=null;
+  try{ if(SEC){ SEC.jeter(); SEC=null; } }catch(e){}
+  if(r && r.blob && r.blob.size>1000){
+    const nom='simple-'+new Date().toISOString().slice(0,19).replace(/[:T]/g,'-')+'.webm';
+    sauver({ id:Date.now(), nom:nom, mime:r.type, taille:r.blob.size, duree:r.duree,
+             vignette:'', cam:'séance simple'+(estEssai?' · essai':''),
+             blob:r.blob, type:'video', essai:estEssai,
+             avant_s:r.preroll, auto:true, pourquoi:motifPrise,
+             capteurs:conditions({declencheur:motifPrise, arret:pourquoi}) });
+    if(H) H.noter('video', 'prise gardée — '+r.duree+' s dont '+r.preroll+' s d\'avant');
+    $('legend').textContent='prise gardée ('+r.duree+' s)';
+    majVignette();
+  }
+  monterTampon();          // on repart aussitôt en mémoire glissante
+}
+
+function sauver(o){
+  try{
+    const r=indexedDB.open('ghostbox-vision',1);
+    r.onupgradeneeded=()=>{ if(!r.result.objectStoreNames.contains('clips')) r.result.createObjectStore('clips',{keyPath:'id'}); };
+    r.onsuccess=()=>{ try{ r.result.transaction('clips','readwrite').objectStore('clips').put(o); }catch(e){} };
+  }catch(e){}
+}
+
+/* la silhouette qui PASSE donne une photo, celle qui RESTE donne une vidéo */
+function autoTic(now, quelquun){
+  if(!autoOn) return;
+  if(quelquun){
+    if(!personneDepuis){ personneDepuis=now; photoAuto('silhouette confirmée'); }
+    else if(now-personneDepuis > VIDEO_APRES && !videoEnCours) videoAuto('silhouette qui reste');
+  } else {
+    personneDepuis=0;
+    if(videoEnCours && now-tVideoDebut > VIDEO_STOP) stopVideoAuto('silhouette disparue');
+  }
+}
+
+/* ═══ détection de silhouette ═══
+   Même module et mêmes critères sévères que la séance caméra : le tracé est
+   dessiné PAR-DESSUS l'image, jamais dedans, et il n'entre dans aucune mesure.
+   Le modèle vient d'un CDN — sans réseau la première fois, on le dit. */
+let POSE=null, silOn=false, lastVT=-1;
+$('oSilhouette').onclick=async ()=>{
+  if(silOn){
+    silOn=false; $('squelette').classList.remove('on'); $('nbPers').classList.remove('on');
+    majTiroir(); return;
+  }
+  if(!B.fluxCamera()){
+    $('silAide').innerHTML='<b style="color:var(--flag)">La caméra n\'est pas ouverte</b> — démarre la séance d\'abord.';
+    return;
+  }
+  $('silAide').textContent='Chargement du modèle (~5 Mo, une seule fois)…';
+  try{
+    if(!POSE) POSE = await import('/ghost-box/lib/pose.js?v=20');
+    await POSE.load();
+    silOn=true; $('squelette').classList.add('on'); $('nbPers').classList.add('on');
+    if(vue!=='video'){ poserVideo(); tiroir(false); }
+    $('silAide').innerHTML='Détection active. Le squelette apparaît sur l\'image quand une personne est <b>confirmée</b> — les critères sont sévères, un reflet ne passe pas.';
+    majTiroir(); boucleSil();
+  }catch(e){
+    silOn=false;
+    $('silAide').innerHTML='<b style="color:var(--flag)">Modèle indisponible</b> — il faut du réseau la première fois. Tout le reste fonctionne.';
+  }
+};
+
+function boucleSil(){
+  if(!silOn) return;
+  requestAnimationFrame(boucleSil);
+  const v=B.videoEl();
+  const cv=$('squelette');
+  if(!v || !v.videoWidth) return;
+  // le canvas épouse la boîte réellement occupée par l'image : `object-fit:contain`
+  // laisse des bandes, et un squelette dessiné sur toute la surface serait décalé
+  const box=$('vue').getBoundingClientRect();
+  const k=Math.min(box.width/v.videoWidth, box.height/v.videoHeight);
+  const dw=v.videoWidth*k, dh=v.videoHeight*k;
+  const d=Math.min(devicePixelRatio||1,2);
+  if(cv.width!==Math.round(box.width*d) || cv.height!==Math.round(box.height*d)){
+    cv.width=Math.round(box.width*d); cv.height=Math.round(box.height*d);
+  }
+  const g=cv.getContext('2d');
+  g.setTransform(d,0,0,d,0,0);
+  g.clearRect(0,0,box.width,box.height);
+  if(v.currentTime!==lastVT){
+    lastVT=v.currentTime;
+    try{ const r=POSE.detect(v); if(r) boucleSil.vu={people:r.people, t:performance.now()}; }catch(e){}
+  }
+  const vu=boucleSil.vu;
+  const frais = vu && (performance.now()-vu.t) < 900;
+  autoTic(performance.now(), !!(frais && vu.people.length));
+  if(frais && vu.people.length){
+    g.save();
+    g.translate((box.width-dw)/2, (box.height-dh)/2);
+    try{ POSE.drawAll(g, vu.people, dw, dh, dw/640); }catch(e){}
+    g.restore();
+    $('nbPers').textContent = vu.people.length>1
+      ? vu.people.length+' personnes' : '1 personne';
+    $('nbPers').style.color='var(--gold)';
+  } else {
+    $('nbPers').textContent='personne';
+    $('nbPers').style.color='var(--dim)';
+  }
+}
+$('oNuit').onclick=()=>{ if(window.GBNuit) GBNuit.basculer(); majTiroir(); };
+
+/* ═══ les objectifs ═══
+   Le navigateur ne donne le NOM des caméras qu'après une première
+   autorisation : avant la séance, la liste est anonyme — on le dit. */
+let lentilles=[], iLentille=0;
+async function listerObjectifs(){
+  const box=$('lentilles');
+  lentilles = await B.objectifs();
+  if(!lentilles.length){
+    box.innerHTML='<span class="vide">démarre la séance pour voir les objectifs</span>'; return;
+  }
+  box.innerHTML='';
+  lentilles.forEach((l,i)=>{
+    const b=document.createElement('button');
+    b.textContent = l.nom.length>26 ? l.nom.slice(0,26)+'…' : l.nom;
+    b.className = (i===iLentille) ? 'on' : '';
+    b.onclick=()=>choisirObjectif(i);
+    box.appendChild(b);
+  });
+}
+async function choisirObjectif(i){
+  if(!B.fluxCamera()){
+    $('lentilles').insertAdjacentHTML('beforeend',
+      '<span class="vide">la caméra n\'est pas ouverte — démarre la séance</span>'); return;
+  }
+  const ok = await B.changerCamera({video:{deviceId:{exact:lentilles[i].id}}, audio:false});
+  if(ok){
+    iLentille=i;
+    try{ localStorage.setItem('gb-simple-objectif', lentilles[i].id); }catch(e){}
+    if(vue==='video') poserVideo();
+  }
+  majTiroir();
+}
+/* le bouton ⟳ de la barre du haut : passer à l'objectif suivant, sans ouvrir
+   le tiroir — le geste le plus courant doit être le plus court */
+$('objectif').onclick=async ()=>{
+  if(!lentilles.length) lentilles = await B.objectifs();
+  if(lentilles.length<2){ $('legend').textContent='un seul objectif sur cet appareil'; return; }
+  await choisirObjectif((iLentille+1) % lentilles.length);
+  $('legend').textContent='objectif : '+lentilles[iLentille].nom.slice(0,30);
+};
+
+/* la vignette montre le dernier fichier gardé — sans l'ouvrir.
+   Rafraîchie après chaque capture : figée au chargement, elle aurait menti
+   pendant toute la séance. */
+function majVignette(){ vignette(); }
 (function vignette(){
   try{
     const r=indexedDB.open('ghostbox-vision',1);
@@ -390,8 +819,27 @@ $('vign').onclick=()=>{ location.href='../bibliotheque/'; };
     }catch(e){} };
   }catch(e){}
 })();
+function vignette(){
+  try{
+    const r=indexedDB.open('ghostbox-vision',1);
+    r.onupgradeneeded=()=>{ if(!r.result.objectStoreNames.contains('clips')) r.result.createObjectStore('clips',{keyPath:'id'}); };
+    r.onsuccess=()=>{ try{
+      const d=r.result;
+      if(!d.objectStoreNames.contains('clips')) return;
+      const q=d.transaction('clips','readonly').objectStore('clips').getAll();
+      q.onsuccess=()=>{
+        const tout=(q.result||[]).filter(c=>c.type!=='seance');
+        const av=tout.filter(c=>c.vignette).sort((a,b)=>b.id-a.id);
+        if(av.length) $('vign').innerHTML='<img src="'+av[0].vignette+'" alt="">';
+        else $('vign').innerHTML='<span>'+(tout.length? tout.length+' FICH.' : 'VIDE')+'</span>';
+      };
+    }catch(e){} };
+  }catch(e){}
+}
 
 addEventListener('pagehide',()=>{
+  silOn=false;
+  try{ if(TAMP) TAMP.arreter(); }catch(e){}
   try{ if(H){ H.fermer({mots:nMots, interrompue:true}); H=null; } }catch(e){}
   try{ B.couperTout(); }catch(e){}
 });
