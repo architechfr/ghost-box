@@ -12,7 +12,7 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="Ghost Box">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<link rel="stylesheet" href="/ghost-box/lib/fonts.css?v=14">
+<link rel="stylesheet" href="/ghost-box/lib/fonts.css?v=17">
 <style>
 :root{
   --bench:#0A0F12;--panel:#1D262B;--sunk:#0A0F12;--line:#2C383F;--hair:#212B31;
@@ -118,7 +118,7 @@ body.filming #quitFix{display:block;position:fixed;z-index:61;right:10px;
   top:calc(10px + env(safe-area-inset-top, 0px));padding:6px 9px;font-size:11px;
   background:rgba(20,26,30,.85)}
 </style>
-<link rel="stylesheet" href="/ghost-box/lib/ambiance.css?v=14">
+<link rel="stylesheet" href="/ghost-box/lib/ambiance.css?v=17">
 </head>
 <body>
 
@@ -206,20 +206,21 @@ body.filming #quitFix{display:block;position:fixed;z-index:61;right:10px;
 
 </div>
 
-<script src="/ghost-box/lib/nuit.js?v=14"></script>
-<script src="/ghost-box/lib/voix.js?v=14"></script>
-<script src="/ghost-box/lib/historique.js?v=14"></script>
-<script src="/ghost-box/lib/wakelock.js?v=14"></script>
-<script src="/ghost-box/lib/retour.js?v=14"></script>
-<script src="/ghost-box/lib/aide.js?v=14"></script>
-<script src="/ghost-box/lib/action.js?v=14"></script>
+<script src="/ghost-box/lib/nuit.js?v=17"></script>
+<script src="/ghost-box/lib/demarrage.js?v=17"></script>
+<script src="/ghost-box/lib/voix.js?v=17"></script>
+<script src="/ghost-box/lib/historique.js?v=17"></script>
+<script src="/ghost-box/lib/wakelock.js?v=17"></script>
+<script src="/ghost-box/lib/retour.js?v=17"></script>
+<script src="/ghost-box/lib/aide.js?v=17"></script>
+<script src="/ghost-box/lib/action.js?v=17"></script>
 <script>addEventListener('load',function(){ try{ GBAction.init(['#prep']); }catch(e){} });</script>
-<script src="/ghost-box/lib/media.js?v=14"></script>
-<script src="/ghost-box/lib/moteur.js?v=14"></script>
-<script src="/ghost-box/lib/capteurs.js?v=14"></script>
-<script src="/ghost-box/lib/spectre.js?v=14"></script>
-<script src="/ghost-box/lib/mur.js?v=14"></script>
-<script src="/ghost-box/lib/fullscreen.js?v=14"></script>
+<script src="/ghost-box/lib/media.js?v=17"></script>
+<script src="/ghost-box/lib/moteur.js?v=17"></script>
+<script src="/ghost-box/lib/capteurs.js?v=17"></script>
+<script src="/ghost-box/lib/spectre.js?v=17"></script>
+<script src="/ghost-box/lib/mur.js?v=17"></script>
+<script src="/ghost-box/lib/fullscreen.js?v=17"></script>
 <script>
 (() => {
 "use strict";
@@ -582,6 +583,25 @@ function setFilming(on){
   setTimeout(()=>{ if(MUR) MUR.placer(); if(SP) SP.placer(); },80);
 }
 $('fixBtn').onclick=()=>setFilming(!filming);
+
+/* ═══════ démarrage direct ═══════ */
+addEventListener('load',()=>{
+  const C=GBDemarrage.clic, Q=GBDemarrage.clicQuandPret;
+  GBDemarrage.installer({
+    mode:'mur', titre:'Le mur',
+    resume:'Tous les capteurs de l\'appareil en écoute, le vocabulaire entier montré à l\'écran. '
+      +'Pose le téléphone <b>écran tourné vers la pièce</b>. L\'appareil apprendra d\'abord le bruit du lieu — '
+      +'<b>ne le touche pas</b> pendant ce temps.',
+    etapes:[
+      {texte:'Micro',            faire:()=>C('#bMic')},
+      {texte:'Mouvement',        faire:()=>C('#bMvt')},
+      {texte:'Champ magnétique', faire:()=>C('#bMag')},
+      {texte:'Caméra',           faire:()=>C('#bCam'), attendre:900},
+      {texte:'Apprentissage du lieu', faire:()=>Q('#prep',7000), attendre:700}
+    ],
+    fixe:()=>setFilming(true)
+  });
+});
 $('quitFix').onclick=()=>setFilming(false);
 addEventListener('fullscreenchange',()=>{ if(!document.fullscreenElement&&filming) setFilming(false); });
 addEventListener('touchmove',e=>{ if(filming) e.preventDefault(); },{passive:false});

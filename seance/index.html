@@ -12,7 +12,7 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="Ghost Box">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<link rel="stylesheet" href="/ghost-box/lib/fonts.css?v=14">
+<link rel="stylesheet" href="/ghost-box/lib/fonts.css?v=17">
 <style>
 :root{
   --bench:#0A0F12;--panel:#1D262B;--sunk:#0A0F12;--line:#2C383F;--hair:#212B31;
@@ -134,7 +134,7 @@ body.filming #quitFix{display:block;position:fixed;z-index:61;right:10px;
   top:calc(var(--hud) + 8px);padding:8px 11px;font-size:11px;
   background:rgba(4,8,11,.9);border-color:rgba(95,211,166,.45);color:var(--signal)}
 </style>
-<link rel="stylesheet" href="/ghost-box/lib/ambiance.css?v=14">
+<link rel="stylesheet" href="/ghost-box/lib/ambiance.css?v=17">
 </head>
 <body>
 
@@ -207,19 +207,20 @@ body.filming #quitFix{display:block;position:fixed;z-index:61;right:10px;
 <video id="vid3" playsinline muted></video>
 <video id="vid4" playsinline muted></video>
 
-<script src="/ghost-box/lib/nuit.js?v=14"></script>
-<script src="/ghost-box/lib/voix.js?v=14"></script>
-<script src="/ghost-box/lib/historique.js?v=14"></script>
-<script src="/ghost-box/lib/moteur.js?v=14"></script>
-<script src="/ghost-box/lib/retour.js?v=14"></script>
-<script src="/ghost-box/lib/aide.js?v=14"></script>
-<script src="/ghost-box/lib/action.js?v=14"></script>
+<script src="/ghost-box/lib/nuit.js?v=17"></script>
+<script src="/ghost-box/lib/demarrage.js?v=17"></script>
+<script src="/ghost-box/lib/voix.js?v=17"></script>
+<script src="/ghost-box/lib/historique.js?v=17"></script>
+<script src="/ghost-box/lib/moteur.js?v=17"></script>
+<script src="/ghost-box/lib/retour.js?v=17"></script>
+<script src="/ghost-box/lib/aide.js?v=17"></script>
+<script src="/ghost-box/lib/action.js?v=17"></script>
 <script>addEventListener('load',function(){ try{ GBAction.init(['#recBtn','#prep']); }catch(e){} });</script>
-<script src="/ghost-box/lib/secours.js?v=14"></script>
-<script src="/ghost-box/lib/tampon.js?v=14"></script>
-<script src="/ghost-box/lib/mur.js?v=14"></script>
-<script src="/ghost-box/lib/media.js?v=14"></script>
-<script src="/ghost-box/lib/wakelock.js?v=14"></script>
+<script src="/ghost-box/lib/secours.js?v=17"></script>
+<script src="/ghost-box/lib/tampon.js?v=17"></script>
+<script src="/ghost-box/lib/mur.js?v=17"></script>
+<script src="/ghost-box/lib/media.js?v=17"></script>
+<script src="/ghost-box/lib/wakelock.js?v=17"></script>
 <script>
 (() => {
 "use strict";
@@ -538,6 +539,27 @@ function setFilming(on){
   setTimeout(()=>{ try{ sizeStage(); }catch(e){} },80);
 }
 $('fixBtn').onclick=()=>setFilming(!filming);
+
+/* ═══════ démarrage direct ═══════
+   Réglages par défaut d'une séance caméra : caméra et micro ouverts, détection
+   de personne, capture automatique, mur de mots, mémoire tampon armée — de
+   sorte que si quelque chose arrive dans la première minute, c'est déjà pris. */
+addEventListener('load',()=>{
+  const C=GBDemarrage.clic, Q=GBDemarrage.clicQuandPret;
+  GBDemarrage.installer({
+    mode:'seance', titre:'Séance caméra',
+    resume:'Caméra et micro ouverts, détection de personne, <b>capture automatique</b> et mur de mots. '
+      +'La mémoire tampon garde en permanence les dernières secondes : si quelque chose arrive, '
+      +'<b>c\'est déjà dedans</b> avant même que tu appuies.',
+    etapes:[
+      {texte:'Caméra et micro', faire:()=>C('#prep'), attendre:1400},
+      {texte:'Mémoire tampon',  faire:()=>C('#tampBtn')},
+      {texte:'Détection de personne', faire:()=>Q('#aiBtn',6000), attendre:800},
+      {texte:'Mur de mots',     faire:()=>C('#murBtn'), attendre:600}
+    ],
+    fixe:()=>setFilming(true)
+  });
+});
 $('quitFix').onclick=()=>setFilming(false);
 addEventListener('fullscreenchange',()=>{ if(!document.fullscreenElement && filming) setFilming(false); });
 addEventListener('webkitfullscreenchange',()=>{ if(!document.webkitFullscreenElement && filming) setFilming(false); });
@@ -663,7 +685,7 @@ $('aiBtn').onclick=async ()=>{
   if(!vstream){ $('aiState').textContent="Prépare d'abord le tournage."; return; }
   $('aiState').textContent='Chargement du modèle (~5 Mo, une seule fois)…';
   try{
-    if(!POSE) POSE=await import('/ghost-box/lib/pose.js?v=14');
+    if(!POSE) POSE=await import('/ghost-box/lib/pose.js?v=17');
     await POSE.load();
     aiOn=true; $('aiBtn').className='act';
     $('aiState').innerHTML='Détection active — jusqu\'à <b>4 personnes suivies en même temps</b>, chacune avec sa couleur et son numéro. Les squelettes s\'incrustent dans la vidéo enregistrée, et seulement si une personne réelle est reconnue.';
@@ -1190,7 +1212,7 @@ addEventListener('load',function(){ try{ GBCapture.init({label:($('lieu').value|
 })();
 </script>
 <script>if('serviceWorker' in navigator){window.addEventListener('load',function(){navigator.serviceWorker.register('/ghost-box/sw.js').catch(function(){});});}</script>
-<script src="/ghost-box/lib/capture.js?v=14"></script>
-<script src="/ghost-box/lib/fullscreen.js?v=14"></script>
+<script src="/ghost-box/lib/capture.js?v=17"></script>
+<script src="/ghost-box/lib/fullscreen.js?v=17"></script>
 </body>
 </html>

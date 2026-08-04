@@ -1,0 +1,402 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#0A0F12">
+<title>Séance simple — Ghost Box</title>
+<link rel="icon" type="image/png" href="/ghost-box/favicon.png">
+<link rel="apple-touch-icon" href="/ghost-box/apple-touch-icon.png">
+<link rel="manifest" href="/ghost-box/manifest.json">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Ghost Box">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<link rel="stylesheet" href="/ghost-box/lib/fonts.css?v=17">
+<style>
+:root{
+  --bench:#0A0F12;--panel:#141B20;--line:#2C383F;--hair:#1E262B;
+  --signal:#5FD3A6;--gold:#E9B44C;--flag:#E2574C;--paper:#CFC6B4;--dim:#78868E;--text:#DDE6EA;
+  --legend:"Barlow Condensed","Arial Narrow",sans-serif;
+  --body:"IBM Plex Sans",system-ui,sans-serif;--mono:"IBM Plex Mono",ui-monospace,monospace;
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html{height:100%}
+/* Grille et non flex : avec flex, 150 px restaient non distribués sous le
+   sélecteur (mesuré au navigateur) — une grille dit exactement quelle rangée
+   absorbe l'espace, et la scène occupe tout ce qui reste, toujours. */
+body{margin:0;background:#000;color:var(--text);font-family:var(--body);
+  -webkit-font-smoothing:antialiased;overflow:hidden;overscroll-behavior:none}
+/* ── PIÈGE PAYÉ ICI ──
+   La grille est posée sur un conteneur interne, JAMAIS sur <body>.
+   `lib/ambiance.css` ajoute deux pseudo-éléments décoratifs (`body::before` et
+   `body::after`, le grain et le vignettage) : dans un body en grille, ils
+   deviennent des ITEMS et décalent tout le placement — mesuré au navigateur,
+   la scène tombait à 396 px au lieu de 546, et 150 px restaient vides sous le
+   sélecteur. Avec ambiance désactivée, la même page donnait 546 px. */
+#app{position:fixed;inset:0;display:grid;
+  grid-template-rows:auto minmax(0,1fr) auto auto auto auto;
+  padding:env(safe-area-inset-top, 0px) 0 env(safe-area-inset-bottom, 0px)}
+
+/* ── barre du haut : la marque, et un seul accès aux réglages ── */
+#top{display:flex;align-items:center;justify-content:space-between;padding:14px 18px 10px}
+#top img{height:26px;width:auto;display:block}
+#top .rd{width:42px;height:42px;border-radius:11px;background:var(--panel);border:1px solid var(--line);
+  display:flex;align-items:center;justify-content:center;cursor:pointer;color:var(--dim);font-size:17px;padding:0}
+
+/* ── la scène : cadre unique, ce qu'il y a à regarder ── */
+#scene{margin:0 14px;min-height:0;border-radius:16px;background:var(--panel);
+  border:1px solid var(--line);padding:8px;display:flex;flex-direction:column;gap:0;position:relative}
+#vue{flex:1;min-height:0;border-radius:9px;overflow:hidden;background:#05090C;position:relative}
+#vue video{width:100%;height:100%;object-fit:contain;background:#05090C;display:block}
+#mur{position:absolute;inset:0}
+#legend{flex:none;text-align:center;font-family:var(--mono);font-size:11.5px;color:#5A686F;
+  padding:9px 4px 3px;letter-spacing:.04em}
+
+/* ── deux colonnes de chiffres : tout ce qu'il faut savoir, rien de plus ── */
+#infos{margin:12px 14px 0;border-radius:16px;background:var(--panel);border:1px solid var(--line);
+  padding:16px 18px;display:flex;gap:0}
+#infos .col{flex:1;min-width:0}
+#infos .col+.col{border-left:1px solid var(--hair);padding-left:18px}
+#infos .ln{font-family:var(--mono);font-size:12.5px;color:#6E7C84;line-height:2;white-space:nowrap;
+  overflow:hidden;text-overflow:ellipsis}
+#infos .ln b{color:var(--text);font-weight:400}
+#infos .ln.on b{color:var(--signal)}
+#infos .ln.al b{color:var(--gold)}
+
+/* ── la phrase, quand il y en a une ── */
+#phrase{margin:10px 16px 0;font-family:var(--legend);text-transform:uppercase;
+  letter-spacing:.05em;font-size:clamp(16px,5vw,24px);line-height:1.2;color:var(--gold);
+  text-align:center;min-height:0;max-height:56px;overflow:hidden;
+  text-shadow:0 0 26px rgba(233,180,76,.35)}
+#phrase:empty{display:none}
+
+/* ── barre du bas : galerie, déclencheur, bascule ── */
+#bottom{display:flex;align-items:center;justify-content:space-between;
+  padding:16px 26px 6px;gap:16px}
+#vign{width:62px;height:62px;border-radius:14px;background:var(--panel);border:1px solid var(--line);
+  overflow:hidden;cursor:pointer;flex:none;padding:0;display:flex;align-items:center;justify-content:center}
+#vign img{width:100%;height:100%;object-fit:cover;display:block}
+#vign span{font-family:var(--mono);font-size:9px;color:var(--dim);letter-spacing:.08em}
+/* le déclencheur : gros, rond, au centre — impossible à manquer dans le noir */
+#go{width:88px;height:88px;border-radius:50%;background:#FFF;border:5px solid rgba(255,255,255,.28);
+  cursor:pointer;flex:none;padding:0;transition:background .18s,border-color .18s}
+#go:active{transform:scale(.95)}
+#go.on{background:var(--flag);border-color:rgba(226,87,76,.32)}
+#go.wait{background:var(--gold);border-color:rgba(233,180,76,.32)}
+#grid{width:62px;height:62px;border-radius:14px;background:var(--panel);border:1px solid var(--line);
+  cursor:pointer;flex:none;padding:0;display:grid;grid-template:1fr 1fr/1fr 1fr;gap:4px;place-content:center}
+#grid i{width:17px;height:17px;border-radius:4px;background:#39464D;display:block}
+#grid i:nth-child(2),#grid i:nth-child(3){background:#5B6B73}
+
+/* ── bascule Mots / Vidéo ── */
+#seg{display:flex;justify-content:center;padding:8px 0 14px}
+#seg .sw{display:flex;background:var(--panel);border:1px solid var(--line);border-radius:22px;padding:4px}
+#seg button{font-family:var(--body);font-size:13.5px;font-weight:500;border:0;border-radius:18px;
+  padding:9px 26px;background:none;color:var(--dim);cursor:pointer;min-height:40px}
+#seg button.on{background:#E8EDEF;color:#0A0F12}
+
+/* ── message plein cadre : autorisation refusée, capteur absent… ── */
+#msg{position:absolute;inset:8px;border-radius:9px;background:rgba(5,9,12,.94);display:none;
+  flex-direction:column;align-items:center;justify-content:center;gap:14px;padding:26px;text-align:center}
+#msg.on{display:flex}
+#msg p{font-size:13.5px;line-height:1.6;color:#AEBBC2;margin:0;max-width:340px}
+#msg p b{color:var(--paper)}
+#msg .ko{color:var(--flag)}
+
+/* écran étroit : on resserre sans jamais rogner le déclencheur */
+@media (max-height:700px){
+  #infos{padding:11px 14px}#infos .ln{line-height:1.75;font-size:12px}
+  #go{width:76px;height:76px}#vign,#grid{width:54px;height:54px}
+  #bottom{padding:10px 22px 4px}#seg{padding:4px 0 10px}
+}
+</style>
+<link rel="stylesheet" href="/ghost-box/lib/ambiance.css?v=17">
+</head>
+<body>
+<div id="app">
+
+<div id="top">
+  <img src="/ghost-box/assets/marque.png" alt="Ghost Box" style="height:30px">
+  <button class="rd" id="reglages" type="button" aria-label="Réglages">⚙</button>
+</div>
+
+<div id="scene">
+  <div id="vue"><div id="mur"></div></div>
+  <div id="legend">appuie sur le bouton pour commencer</div>
+  <div id="msg"><p></p></div>
+</div>
+
+<div id="infos">
+  <div class="col">
+    <div class="ln" id="i1">État : <b>à l'arrêt</b></div>
+    <div class="ln" id="i2">Durée : <b>—</b></div>
+    <div class="ln" id="i3">Capteurs : <b>—</b></div>
+  </div>
+  <div class="col">
+    <div class="ln" id="i4">Mots : <b>0</b></div>
+    <div class="ln" id="i5">Activité : <b>—</b></div>
+    <div class="ln" id="i6">Seuil : <b>—</b></div>
+  </div>
+</div>
+
+<div id="phrase"></div>
+
+<div id="bottom">
+  <button id="vign" type="button" aria-label="Dernier enregistrement"><span>VIDE</span></button>
+  <button id="go" type="button" aria-label="Démarrer la séance"></button>
+  <button id="grid" type="button" aria-label="Bibliothèque"><i></i><i></i><i></i><i></i></button>
+</div>
+
+<div id="seg"><div class="sw">
+  <button id="mMots" class="on" type="button">Mots</button>
+  <button id="mVideo" type="button">Vidéo</button>
+</div></div>
+
+</div><!-- #app -->
+
+<script src="/ghost-box/lib/nuit.js?v=17"></script>
+<script src="/ghost-box/lib/wakelock.js?v=17"></script>
+<script src="/ghost-box/lib/media.js?v=17"></script>
+<script src="/ghost-box/lib/moteur.js?v=17"></script>
+<script src="/ghost-box/lib/capteurs.js?v=17"></script>
+<script src="/ghost-box/lib/mur.js?v=17"></script>
+<script src="/ghost-box/lib/voix.js?v=17"></script>
+<script src="/ghost-box/lib/historique.js?v=17"></script>
+<script>
+/* ═══════════════════════════════════════════════════════════════════════
+   Séance simple — un écran, un bouton.
+
+   Pourquoi cette page existe : les autres modes montrent tout ce que
+   l'appareil sait faire, et c'est précieux — mais ça suppose de comprendre
+   ce qu'est un seuil, une voie, un témoin de bruit. Quelqu'un qui découvre
+   veut juste appuyer et voir. Cette page ne propose donc AUCUN réglage :
+   elle allume tout ce que le téléphone possède, apprend le lieu, et attend.
+
+   Ce qu'elle ne fait pas : baisser un seuil, raccourcir un apprentissage,
+   inventer un mot pour meubler. Le moteur est exactement le même que dans
+   les modes complets — c'est l'interface qui est simple, pas la mesure.
+   ═══════════════════════════════════════════════════════════════════════ */
+(() => {
+"use strict";
+const $=id=>document.getElementById(id);
+const esc=s=>String(s).replace(/[&<>]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;'}[c]));
+const duree=s=>{ s=Math.max(0,Math.round(s));
+  const h=Math.floor(s/3600), m=Math.floor((s%3600)/60), r=s%60;
+  return h? h+' h '+String(m).padStart(2,'0') : (m? m+' min '+String(r).padStart(2,'0') : r+' s'); };
+const M=window.GBMoteur;
+
+const APPREND=45000, SETTLE=60000, RAFALE=60000;
+const B=GBCapteurs.creer();
+let MUR=null, W={}, ATT={}, H=null;
+let phase='arret', tPhase=0, tPret=0, armees=0, nMots=0, lastMot=-1e9;
+let vue='mots';
+
+/* ═══ le mur, monté tout de suite : l'écran n'est jamais vide ═══ */
+GBMur.lexique('../data/lexique.json').then(mots=>{
+  MUR=GBMur.creer({hote:$('mur'), mots:mots, vitesse:300, mode:'instant', onMot:motSorti});
+  if(MUR) MUR.demarrer();
+}).catch(()=>{ dire('<b class="ko">Vocabulaire introuvable.</b><p>L\'application n\'a pas pu charger sa liste de mots. Rouvre-la une fois avec du réseau.</p>'); });
+
+function dire(html){
+  const m=$('msg');
+  if(!html){ m.classList.remove('on'); return; }
+  m.querySelector('p').innerHTML=html; m.classList.add('on');
+}
+
+/* ═══ le bouton : démarrer, puis arrêter ═══ */
+$('go').onclick=async ()=>{
+  if(phase==='arret'){ await demarrer(); }
+  else { arreter(); }
+};
+
+async function demarrer(){
+  phase='ouverture'; $('go').className='wait'; dire('');
+  $('legend').textContent='ouverture des capteurs…';
+  try{ GBWake.on(); }catch(e){}
+
+  // on allume TOUT ce que l'appareil possède : l'utilisateur n'a rien à choisir
+  const familles=['micro','mouvement','magnetique','camera'];
+  const absentes=[];
+  for(const f of familles){
+    try{ await B.activer(f); }catch(e){ absentes.push(f); }
+  }
+  const vivantes=B.voies().filter(v=>v.vivante);
+  if(!vivantes.length){
+    phase='arret'; $('go').className='';
+    dire('<b class="ko">Aucun capteur ne répond.</b><p>Le micro est le minimum nécessaire. '
+      +'Vérifie que tu as autorisé l\'accès, et qu\'aucune autre application ne l\'utilise.</p>');
+    return;
+  }
+  if(vue==='video') poserVideo();
+
+  W={}; ATT={};
+  vivantes.forEach(v=>{ W[v.code]=M.mk(v.code, v.label); });
+  try{ H=GBHistorique.ouvrir({mode:'séance simple'}); }catch(e){ H=null; }
+  if(H) H.noter('veille', vivantes.length+' voie(s)');
+  phase='apprentissage'; tPhase=performance.now();
+  $('go').className='wait';
+  $('legend').textContent='apprentissage du lieu — ne touche à rien';
+}
+
+function arreter(){
+  if(H){ H.fermer({mots:nMots, phrase:(MUR? MUR.phrase():[])}); H=null; }
+  try{ B.couperTout(); }catch(e){}
+  try{ GBWake.off(); }catch(e){}
+  phase='arret'; armees=0; W={};
+  $('go').className='';
+  $('legend').textContent='séance terminée — appuie pour recommencer';
+  poserMur();
+}
+
+/* ═══ la mesure, cent fois par seconde comme partout ailleurs ═══ */
+function mesure(){
+  const now=performance.now();
+
+  if(phase==='apprentissage'){
+    B.voies().forEach(v=>{ const w=W[v.code]; if(w && v.vivante && v.val!=null) M.feed(w, v.val, true); });
+    if(now-tPhase>=APPREND){
+      armees=0;
+      Object.keys(W).forEach(k=>{ if(M.seal(W[k])) armees++; });
+      if(!armees){
+        phase='arret'; $('go').className='';
+        dire('<b class="ko">Aucun capteur n\'a pu être réglé.</b>'
+          +'<p>Les capteurs n\'ont rien mesuré du tout pendant l\'apprentissage — micro couvert, '
+          +'ou pris par une autre application. Ce n\'est pas une panne de l\'appareil.</p>');
+      } else {
+        phase='veille'; tPret=now; $('go').className='on';
+        $('legend').textContent='en veille — pose le téléphone, écran vers la pièce';
+      }
+    }
+  } else if(phase==='veille'){
+    let tireur=null, tAtt=now;
+    B.voies().forEach(v=>{
+      const w=W[v.code];
+      if(!w || !w.ready || !v.vivante || v.val==null) return;
+      const p0=w.persist;
+      const feu=M.feed(w, v.val, false);
+      if(w.persist===1 && p0===0) ATT[v.code]=now;
+      if(feu && !tireur){ tireur=v; tAtt=ATT[v.code] ?? now; }
+    });
+    if(tireur && (now-tPret)>=SETTLE && (now-lastMot)>=RAFALE && MUR && !MUR.estFige()){
+      lastMot=now;
+      const w=W[tireur.code];
+      MUR.figer(tireur.label+' · écart '+w.z.toFixed(1)+' σ', false, tAtt);
+    }
+  }
+
+  majInfos(now);
+  setTimeout(mesure,100);
+}
+mesure();
+
+function motSorti(d){
+  nMots++;
+  $('phrase').textContent = MUR? MUR.phrase().join(' ') : '';
+  if(window.GBVoix) GBVoix.dire(d.mot);
+  if(H) H.noter('mot', d.mot+' · '+d.colonne);
+  if(navigator.vibrate) navigator.vibrate(90);
+}
+
+function majInfos(now){
+  const etat = phase==='arret' ? 'à l\'arrêt'
+             : phase==='ouverture' ? 'ouverture…'
+             : phase==='apprentissage' ? 'apprentissage'
+             : 'en veille';
+  $('i1').innerHTML='État : <b>'+etat+'</b>';
+  $('i1').className='ln'+(phase==='veille'?' on':(phase==='apprentissage'?' al':''));
+
+  if(phase==='apprentissage'){
+    const reste=Math.ceil((APPREND-(now-tPhase))/1000);
+    $('i2').innerHTML='Reste : <b>'+reste+' s</b>'; $('i2').className='ln al';
+    $('legend').textContent='apprentissage du lieu — ne touche à rien ('+reste+' s)';
+  } else if(phase==='veille'){
+    $('i2').innerHTML='Durée : <b>'+duree((now-tPret)/1000)+'</b>'; $('i2').className='ln on';
+  } else {
+    $('i2').innerHTML='Durée : <b>—</b>'; $('i2').className='ln';
+  }
+
+  const n=Object.keys(W).length;
+  $('i3').innerHTML='Capteurs : <b>'+(n? (armees||n)+' voie'+((armees||n)>1?'s':'') : '—')+'</b>';
+  $('i3').className='ln'+(armees?' on':'');
+
+  $('i4').innerHTML='Mots : <b>'+nMots+'</b>';
+  $('i4').className='ln'+(nMots?' al':'');
+
+  // « activité » plutôt que « écart en σ » : c'est le même chiffre, dit autrement.
+  // 100 % = le seuil est atteint. Personne n'a besoin de connaître les sigmas ici.
+  let pc=0;
+  Object.keys(W).forEach(k=>{ const w=W[k];
+    if(w.ready && w.thr) pc=Math.max(pc, Math.min(999, w.z/w.thr*100)); });
+  $('i5').innerHTML='Activité : <b>'+(armees? pc.toFixed(0)+' %' : '—')+'</b>';
+  $('i5').className='ln'+(pc>=60?' al':'');
+
+  const seuils=Object.values(W).filter(w=>w.ready).map(w=>w.thr);
+  $('i6').innerHTML='Sensibilité : <b>'+(seuils.length? 'réglée sur le lieu' : '—')+'</b>';
+  $('i6').className='ln'+(seuils.length?' on':'');
+
+  if(phase==='veille' && (now-tPret)<SETTLE)
+    $('legend').textContent='stabilisation — '+Math.ceil((SETTLE-(now-tPret))/1000)+' s avant qu\'un mot puisse sortir';
+}
+
+/* ═══ ce qu'on regarde : les mots, ou l'image ═══ */
+function poserMur(){
+  vue='mots'; $('mMots').className='on'; $('mVideo').className='';
+  const v=$('vue'); v.innerHTML=''; const d=document.createElement('div'); d.id='mur';
+  v.appendChild(d);
+  if(MUR){ MUR.arreter(); }
+  GBMur.lexique('../data/lexique.json').then(mots=>{
+    MUR=GBMur.creer({hote:d, mots:mots, vitesse:300, mode:'instant', onMot:motSorti});
+    if(MUR) MUR.demarrer();
+  });
+}
+function poserVideo(){
+  vue='video'; $('mVideo').className='on'; $('mMots').className='';
+  const el=B.videoEl();
+  const v=$('vue'); v.innerHTML='';
+  if(el){ v.appendChild(el); }
+  else {
+    const p=document.createElement('div');
+    p.style.cssText='display:flex;align-items:center;justify-content:center;height:100%;'
+      +'font-family:var(--mono);font-size:12px;color:#5A686F;text-align:center;padding:20px';
+    p.textContent='La caméra n\'est pas ouverte — démarre la séance.';
+    v.appendChild(p);
+  }
+  // le mur continue de tourner en fond : il reste le désignateur, même invisible
+}
+$('mMots').onclick=()=>{ if(vue!=='mots') poserMur(); };
+$('mVideo').onclick=()=>{ if(vue!=='video') poserVideo(); };
+
+/* ═══ galerie et réglages ═══ */
+$('grid').onclick=()=>{ location.href='../bibliotheque/'; };
+$('reglages').onclick=()=>{ location.href='../reglages/'; };
+$('vign').onclick=()=>{ location.href='../bibliotheque/'; };
+
+/* la vignette montre le dernier fichier gardé — sans l'ouvrir */
+(function vignette(){
+  try{
+    const r=indexedDB.open('ghostbox-vision',1);
+    r.onupgradeneeded=()=>{ if(!r.result.objectStoreNames.contains('clips')) r.result.createObjectStore('clips',{keyPath:'id'}); };
+    r.onsuccess=()=>{ try{
+      const d=r.result;
+      if(!d.objectStoreNames.contains('clips')) return;
+      const q=d.transaction('clips','readonly').objectStore('clips').getAll();
+      q.onsuccess=()=>{
+        const av=(q.result||[]).filter(c=>c.vignette).sort((a,b)=>b.id-a.id);
+        if(av.length){ $('vign').innerHTML='<img src="'+av[0].vignette+'" alt="">'; }
+        else { const n=(q.result||[]).length;
+          $('vign').innerHTML='<span>'+(n? n+' FICH.' : 'VIDE')+'</span>'; }
+      };
+    }catch(e){} };
+  }catch(e){}
+})();
+
+addEventListener('pagehide',()=>{
+  try{ if(H){ H.fermer({mots:nMots, interrompue:true}); H=null; } }catch(e){}
+  try{ B.couperTout(); }catch(e){}
+});
+})();
+</script>
+<script>if('serviceWorker' in navigator){window.addEventListener('load',function(){navigator.serviceWorker.register('/ghost-box/sw.js').catch(function(){});});}</script>
+</body>
+</html>

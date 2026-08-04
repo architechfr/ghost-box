@@ -11,7 +11,7 @@
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="Ghost Box">
-<link rel="stylesheet" href="/ghost-box/lib/fonts.css?v=14">
+<link rel="stylesheet" href="/ghost-box/lib/fonts.css?v=17">
 <style>
 :root{
   --bench:#0A0F12;--panel:#1D262B;--line:#2C383F;--hair:#212B31;
@@ -57,7 +57,7 @@ code{font-family:var(--mono);font-size:12.5px;color:var(--paper);background:#141
   text-decoration:none;margin-top:14px}
 footer{margin-top:36px;padding-top:16px;border-top:1px solid var(--line);font-size:12px;color:#55636B;line-height:1.7}
 </style>
-<link rel="stylesheet" href="/ghost-box/lib/ambiance.css?v=14">
+<link rel="stylesheet" href="/ghost-box/lib/ambiance.css?v=17">
 </head>
 <body>
 
@@ -75,6 +75,7 @@ footer{margin-top:36px;padding-top:16px;border-top:1px solid var(--line);font-si
   <a href="#p3"><span class="n">03</span>Comment un seuil est appris</a>
   <a href="#p4"><span class="n">04</span>Les capteurs, un par un</a>
   <a href="#p5"><span class="n">05</span>Le mur de mots : deux manières de désigner</a>
+  <a href="viser/" style="color:var(--gold)"><span class="n">↳</span>Peut-on viser un mot ? — à essayer soi-même</a>
   <a href="#p6"><span class="n">06</span>Les six modes du menu</a>
   <a href="#p7"><span class="n">07</span>Conduire une séance</a>
   <a href="#p8"><span class="n">08</span>Lire un résultat sans se raconter d'histoires</a>
@@ -140,6 +141,9 @@ footer{margin-top:36px;padding-top:16px;border-top:1px solid var(--line);font-si
 <p>Si une marche reste sans événement pendant deux minutes, la séquence est abandonnée et <b>rien n'est écrit</b> — pas de demi-mot, pas de trace ambiguë. L'abandon, lui, est noté : il fait partie de ce qui s'est passé.</p>
 <h3>L'horodatage à l'attaque</h3>
 <p>Le moteur ne confirme un franchissement qu'après quatre relevés, soit environ 400 millisecondes après le début réel de l'excursion — trois à six mots de défilement plus loin. Le mur remonte donc le défilement jusqu'à <b>l'instant d'attaque</b>, pas jusqu'à celui de la confirmation. Sans cela, même une intention parfaitement synchronisée manquerait sa cible.</p>
+<div class="enc"><span class="lg">à essayer plutôt qu'à croire</span>
+<p>Une page te fait <b>tenter toi-même</b> de viser un mot, d'abord en instant simple puis en escalier, et compte tes réussites. Toi tu vois l'écran et tu as un doigt — si toi tu n'y arrives pas, personne n'y arrive. <a class="lien" href="viser/">Ouvrir le banc d'essai</a></p></div>
+
 <h3>La phrase</h3>
 <p>Les mots retenus s'accumulent dans l'ordre exact où ils sont sortis. Rien n'est ajouté, rien n'est réordonné, rien n'est conjugué. Ce n'est pas une phrase fabriquée : c'est la suite de ce qui a été mesuré, mise bout à bout. <b>Le sens, s'il y en a un, ne vient pas de l'appareil.</b> Une minute au minimum sépare deux mots, donc une phrase se construit sur la durée d'une séance, pas en trente secondes.</p>
 <a class="haut" href="#haut">↑ sommaire</a>
@@ -203,8 +207,8 @@ Les réglages du moteur cités ici (plancher 6,5 σ, témoin éprouvé 16 fois p
 
 </div>
 
-<script src="/ghost-box/lib/nuit.js?v=14"></script>
-<script src="/ghost-box/lib/retour.js?v=14"></script>
+<script src="/ghost-box/lib/nuit.js?v=17"></script>
+<script src="/ghost-box/lib/retour.js?v=17"></script>
 <script>if('serviceWorker' in navigator){window.addEventListener('load',function(){navigator.serviceWorker.register('/ghost-box/sw.js').catch(function(){});});}</script>
 </body>
 </html>

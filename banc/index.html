@@ -12,7 +12,7 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="Ghost Box">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<link rel="stylesheet" href="/ghost-box/lib/fonts.css?v=14">
+<link rel="stylesheet" href="/ghost-box/lib/fonts.css?v=17">
 <style>
 :root{
   --bench:#141A1E;--panel:#1D262B;--sunk:#0A0F12;--line:#2C383F;--hair:#212B31;
@@ -243,7 +243,7 @@ video{display:none}
   font-family:var(--mono);font-size:9px;color:var(--signal);
   background:rgba(10,15,18,.75);padding:1px 4px;border-radius:2px;pointer-events:none}
 </style>
-<link rel="stylesheet" href="/ghost-box/lib/ambiance.css?v=14">
+<link rel="stylesheet" href="/ghost-box/lib/ambiance.css?v=17">
 </head>
 <body>
 <div class="wrap">
@@ -379,16 +379,17 @@ video{display:none}
 <video id="vid2" playsinline muted></video>
 </div>
 
-<script src="/ghost-box/lib/nuit.js?v=14"></script>
-<script src="/ghost-box/lib/voix.js?v=14"></script>
-<script src="/ghost-box/lib/historique.js?v=14"></script>
-<script src="/ghost-box/lib/moteur.js?v=14"></script>
-<script src="/ghost-box/lib/spectre.js?v=14"></script>
-<script src="/ghost-box/lib/retour.js?v=14"></script>
-<script src="/ghost-box/lib/aide.js?v=14"></script>
-<script src="/ghost-box/lib/action.js?v=14"></script>
+<script src="/ghost-box/lib/nuit.js?v=17"></script>
+<script src="/ghost-box/lib/demarrage.js?v=17"></script>
+<script src="/ghost-box/lib/voix.js?v=17"></script>
+<script src="/ghost-box/lib/historique.js?v=17"></script>
+<script src="/ghost-box/lib/moteur.js?v=17"></script>
+<script src="/ghost-box/lib/spectre.js?v=17"></script>
+<script src="/ghost-box/lib/retour.js?v=17"></script>
+<script src="/ghost-box/lib/aide.js?v=17"></script>
+<script src="/ghost-box/lib/action.js?v=17"></script>
 <script>addEventListener('load',function(){ try{ GBAction.init(['#run']); }catch(e){} });</script>
-<script src="/ghost-box/lib/mur.js?v=14"></script>
+<script src="/ghost-box/lib/mur.js?v=17"></script>
 <script>
 (() => {
 "use strict";
@@ -1134,11 +1135,19 @@ function majHud(now,maxz){
   document.body.classList.toggle('avecspectre', spectreOn);
   document.body.classList.toggle('aveccaps', capsOn);
   const nMots=trace.filter(t=>!t.est_temoin).length;
+  // Le bandeau reste sur UNE ou deux lignes : c'est un résumé, pas un tableau.
+  // Le détail par voie vit dans la bande capteurs juste en dessous — le répéter
+  // ici mangeait un tiers de l'écran (209 px mesurés) au détriment du mur.
+  const thrMin = W.length? Math.min(...W.map(w=>w.thr)) : 0;
+  const thrMax = W.length? Math.max(...W.map(w=>w.thr)) : 0;
   let h = chip('veille', running? dureeLisible((now-t0)/1000) : 'à l\'arrêt', running?'on':'')
     + chip('écart', maxz.toFixed(1).replace('.',',')+' σ', maxz>=(W[0]?W[0].thr*0.6:99)?'alerte':'')
-    + chip('seuil', W.map(w=>w.thr.toFixed(1)).join(' · ')+' σ','')
+    + chip('seuil', W.length? (thrMax-thrMin<0.05? thrMax.toFixed(1)
+        : thrMin.toFixed(1)+'–'+thrMax.toFixed(1))+' σ' : '—','')
+    + chip('voies', W.length, W.length?'on':'')
     + chip('mots', nMots, nMots?'alerte':'');
-  W.forEach(w=> h += chip(w.label.slice(0,14), (w.v!=null? (+w.v).toFixed(2):'—')+(w.unit?' '+w.unit:''), ''));
+  // sans la bande capteurs, on remet le détail : il faut bien le lire quelque part
+  if(!capsOn) W.forEach(w=> h += chip(w.label.slice(0,14), (w.v!=null? (+w.v).toFixed(2):'—')+(w.unit?' '+w.unit:''), ''));
   if(phase==='learn') h += chip('apprentissage','en cours','alerte');
   if(blind) h += chip('à l\'aveugle','oui','alerte');
   // ── composer son poste sans quitter l'écran fixe ──
@@ -1254,6 +1263,39 @@ function setFilming(on){
 }
 let fixeTick=0;
 $('fixBtn').onclick=()=>setFilming(!filming);
+
+/* ═══════ démarrage direct ═══════
+   Réglages par défaut d'une séance capteurs : tout ce que l'appareil possède
+   écoute, chaque voie peut parler seule, et l'écran de travail est monté.
+   Un seul appui — le navigateur n'en autorise pas moins (voir lib/demarrage.js). */
+addEventListener('load',()=>{
+  const C=GBDemarrage.clic, Q=GBDemarrage.clicQuandPret;
+  GBDemarrage.installer({
+    mode:'banc', titre:'Séance capteurs',
+    resume:'Micro, caméra, mouvement et champ magnétique en écoute — <b>chaque voie peut parler seule</b>. '
+      +'Spectre audio et mur de mots à l\'écran. L\'appareil apprendra d\'abord le bruit du lieu : '
+      +'<b>laisse la pièce telle qu\'elle est</b> pendant ce temps.',
+    etapes:[
+      {texte:'Micro',            faire:()=>C('#pMic')},
+      {texte:'Mouvement',        faire:()=>C('#pMotion')},
+      {texte:'Champ magnétique', faire:()=>C('#pMag')},
+      {texte:'Caméra',           faire:()=>C('#pCam'), attendre:900},
+      {texte:'Voies indépendantes', faire:()=>{
+        if(!indep) C('#tIndep');
+        // cocher TOUTES les voies actives : en mode indépendants, chacune peut
+        // parler seule, et l'utilisateur n'a aucune raison d'en écarter une
+        // à l'aveugle avant d'avoir commencé. Sans ce geste, « Lancer la
+        // veille » reste désactivé et le démarrage direct s'arrête là.
+        Object.values(S).filter(s=>s.ok && LENT.indexOf(s.code)<0).forEach(s=>coincSel.add(s.code));
+        updateCoinc(); checkReady();
+      }},
+      {texte:'Spectre audio',    faire:()=>{ if(!spectreOn) C('#spectreBtn'); }},
+      {texte:'Mur de mots',      faire:()=>{ if(!MUR) C('#murBtn'); }, attendre:700},
+      {texte:'Apprentissage du lieu', faire:()=> running? true : Q('#run',7000), attendre:600}
+    ],
+    fixe:()=>setFilming(true)
+  });
+});
 $('quitFix').onclick=()=>setFilming(false);
 addEventListener('fullscreenchange',()=>{ if(!document.fullscreenElement && filming) setFilming(false); });
 addEventListener('touchmove',e=>{ if(filming) e.preventDefault(); },{passive:false});
@@ -1389,7 +1431,7 @@ $('camAi').onclick=async ()=>{
   if(!camActive){ $('aiState').textContent="Active d'abord la caméra."; return; }
   $('aiState').textContent='Chargement du modèle (~5 Mo, une seule fois)…';
   try{
-    if(!POSE) POSE=await import('/ghost-box/lib/pose.js?v=14');
+    if(!POSE) POSE=await import('/ghost-box/lib/pose.js?v=17');
     await POSE.load();
     aiOn=true; $('camAi').className='act';
     $('aiState').innerHTML='Détection active — un squelette n\'apparaît que si une <b>personne réelle</b> est reconnue. Dans le noir, le modèle ne voit rien : c\'est normal.';
@@ -1585,9 +1627,9 @@ addEventListener('load',function(){ try{ GBCapture.init({label:'seance-capteurs'
 })();
 </script>
 <script>if('serviceWorker' in navigator){window.addEventListener('load',function(){navigator.serviceWorker.register('/ghost-box/sw.js').catch(function(){});});}</script>
-<script src="/ghost-box/lib/wakelock.js?v=14"></script>
-<script src="/ghost-box/lib/media.js?v=14"></script>
-<script src="/ghost-box/lib/capture.js?v=14"></script>
-<script src="/ghost-box/lib/fullscreen.js?v=14"></script>
+<script src="/ghost-box/lib/wakelock.js?v=17"></script>
+<script src="/ghost-box/lib/media.js?v=17"></script>
+<script src="/ghost-box/lib/capture.js?v=17"></script>
+<script src="/ghost-box/lib/fullscreen.js?v=17"></script>
 </body>
 </html>

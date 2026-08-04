@@ -1,0 +1,229 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#0A0F12">
+<title>Peut-on viser un mot ? — Ghost Box</title>
+<link rel="icon" type="image/png" href="/ghost-box/favicon.png">
+<link rel="manifest" href="/ghost-box/manifest.json">
+<meta name="mobile-web-app-capable" content="yes">
+<link rel="stylesheet" href="/ghost-box/lib/fonts.css?v=17">
+<style>
+:root{
+  --bench:#0A0F12;--panel:#1D262B;--line:#2C383F;--hair:#212B31;
+  --signal:#5FD3A6;--gold:#E9B44C;--flag:#E2574C;--paper:#CFC6B4;--dim:#78868E;--text:#DDE6EA;
+  --legend:"Barlow Condensed","Arial Narrow",sans-serif;
+  --body:"IBM Plex Sans",system-ui,sans-serif;--mono:"IBM Plex Mono",ui-monospace,monospace;
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;background:var(--bench);color:var(--text);font-family:var(--body);-webkit-font-smoothing:antialiased}
+body{padding:0 0 calc(env(safe-area-inset-bottom, 0px) + 40px)}
+.wrap{max-width:680px;margin:0 auto;padding:0 16px}
+.top{position:sticky;top:0;z-index:20;background:rgba(10,15,18,.96);backdrop-filter:blur(8px);
+  border-bottom:1px solid var(--line);padding:env(safe-area-inset-top, 0px) 0 0}
+.topin{max-width:680px;margin:0 auto;padding:10px 16px;display:flex;align-items:center;gap:10px}
+.topin a{color:var(--dim);text-decoration:none;font-family:var(--mono);font-size:16px}
+.topin h1{font-family:var(--legend);text-transform:uppercase;letter-spacing:.18em;font-size:15px;font-weight:600;margin:0;flex:1}
+h2{font-family:var(--legend);text-transform:uppercase;letter-spacing:.16em;font-size:17px;font-weight:600;
+  margin:32px 0 2px;color:var(--text)}
+p{font-size:14.5px;line-height:1.72;color:#AEBBC2;margin:9px 0 0}
+p b{color:var(--paper);font-weight:600}
+.enc{margin:16px 0 0;padding:13px 15px;border-left:2px solid var(--gold);background:#171410;border-radius:0 3px 3px 0}
+.enc p{margin:0;color:#E0D3B4}
+.enc.vert{border-left-color:var(--signal);background:#101A16}.enc.vert p{color:#BFE3D3}
+.enc.rouge{border-left-color:var(--flag);background:#1B1211}.enc.rouge p{color:#E8C4C0}
+.enc .lg{display:block;font-family:var(--legend);text-transform:uppercase;letter-spacing:.16em;
+  font-size:10.5px;color:var(--gold);margin-bottom:5px;font-weight:600}
+.enc.vert .lg{color:var(--signal)}.enc.rouge .lg{color:var(--flag)}
+button{font-family:var(--legend);text-transform:uppercase;letter-spacing:.13em;font-weight:600;
+  border:1px solid var(--line);background:var(--panel);color:var(--text);border-radius:3px;
+  padding:13px 14px;font-size:13px;cursor:pointer;min-height:46px}
+button:active{transform:translateY(1px)}
+button.act{border-color:var(--signal);color:var(--signal)}
+button.or{border-color:var(--gold);color:var(--gold)}
+.row{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}.row>button{flex:1;min-width:130px}
+/* ── le banc d'essai ── */
+.essai{margin-top:16px;border:1px solid var(--line);border-radius:6px;background:#0B1216;padding:14px}
+.cible{font-family:var(--legend);text-transform:uppercase;letter-spacing:.14em;font-size:clamp(20px,7vw,30px);
+  color:var(--gold);text-align:center;padding:6px 0 12px;text-shadow:0 0 26px rgba(233,180,76,.4)}
+.cible span{display:block;font-family:var(--mono);font-size:11px;letter-spacing:.1em;color:var(--dim);
+  text-transform:none;text-shadow:none;margin-top:5px}
+#banc{height:44vh;min-height:250px;border:1px solid var(--hair);border-radius:4px;position:relative}
+#gros{width:100%;margin-top:12px;padding:20px 0;font-size:17px;letter-spacing:.2em;
+  background:var(--signal);color:#06110C;border-color:var(--signal)}
+.score{margin-top:12px;font-family:var(--mono);font-size:12.5px;color:var(--dim);line-height:1.9}
+.score b{color:var(--text)}
+.score .ok{color:var(--signal)}.score .no{color:var(--flag)}
+table{width:100%;border-collapse:collapse;margin-top:10px;font-family:var(--mono);font-size:12.5px}
+td{padding:8px 6px 8px 0;border-bottom:1px solid var(--hair);color:#8C9AA2}
+td:first-child{color:var(--dim);width:52%}
+td b{color:var(--text);font-weight:400}
+footer{margin-top:36px;padding-top:16px;border-top:1px solid var(--line);font-size:12px;color:#55636B;line-height:1.7}
+a.lien{color:var(--signal);text-decoration:none;border-bottom:1px solid rgba(95,211,166,.35)}
+</style>
+<link rel="stylesheet" href="/ghost-box/lib/ambiance.css?v=17">
+</head>
+<body>
+
+<div class="top"><div class="topin">
+  <a href="../">←</a><h1>Peut-on viser un mot ?</h1>
+</div></div>
+
+<div class="wrap">
+
+<p style="margin-top:18px;color:var(--text)">C'est la question la plus importante de toute l'application, et elle mérite une réponse mesurable plutôt qu'une promesse. <b>Une présence, si elle existe et si elle peut agir sur un capteur, peut-elle faire sortir le mot qu'elle veut plutôt qu'un autre ?</b></p>
+<p>Cette page ne l'explique pas seulement : elle te le fait <b>essayer toi-même</b>. Toi, tu vois l'écran, tu sais où sont les mots, tu as des yeux et des doigts. Si toi tu n'y arrives pas, personne n'y arrive.</p>
+
+<h2>Le mécanisme, en une phrase</h2>
+<p>Le mur montre les 567 mots en cinq colonnes qui défilent. Quand un capteur dépasse son seuil, le mur se fige, et <b>le mot qui se trouvait dans la case de lecture à cet instant</b> est retenu. L'appareil ne choisit rien : il note ce qui passait là. Le seul levier possible est donc <b>l'instant</b>.</p>
+
+<h2>Essaie : instant simple</h2>
+<p>Le mot à viser est affiché en or. Appuie sur le gros bouton quand il traverse la case de lecture. Prends ton temps, recommence autant que tu veux.</p>
+
+<div class="essai">
+  <div class="cible" id="cible">—<span>mot à viser</span></div>
+  <div id="banc"></div>
+  <button id="gros" type="button">Figer maintenant</button>
+  <div class="score" id="score">Aucun essai pour l'instant.</div>
+  <div class="row">
+    <button id="mInstant" class="act">Instant simple</button>
+    <button id="mEsc">Escalier</button>
+    <button id="raz">Remettre à zéro</button>
+  </div>
+</div>
+
+<div class="enc rouge" id="verdictInstant" style="display:none"><span class="lg">ce que ton essai vient de montrer</span>
+<p id="vitxt"></p></div>
+
+<h2>Pourquoi c'est si difficile — les chiffres</h2>
+<table><tbody>
+  <tr><td>Vitesse de défilement</td><td><b>330 pixels par seconde</b> (réglable de 30 à 900)</td></tr>
+  <tr><td>Hauteur d'une case de mot</td><td><b>30 pixels</b></td></tr>
+  <tr><td>Temps de passage d'un mot</td><td><b>68 à 130 ms</b> selon l'allure de la colonne</td></tr>
+  <tr><td>Séjour de la case sur une colonne</td><td><b>420 ms</b>, sur un cycle de 2,1 s</td></tr>
+  <tr><td>Chance de tomber sur un mot donné</td><td>environ <b>1 sur 570</b></td></tr>
+</tbody></table>
+<p>Il faudrait donc être juste au dixième de seconde près, <b>et</b> tomber dans la tranche de 420 ms de la bonne colonne, <b>et</b> connaître l'état d'un défilement qu'on ne contrôle pas. Toi, avec des yeux et un doigt, tu y arrives peut-être une fois sur dix. Une présence qui agirait sur un microphone ou un champ magnétique n'a ni l'un ni l'autre.</p>
+
+<div class="enc rouge"><span class="lg">la réponse honnête, pour l'instant simple</span>
+<p>Non. En instant simple, <b>le mot n'est pas visable</b>. L'événement est vrai — le moteur est verrouillé sur ce point — mais le mot qui sort est un <b>tirage</b> déclenché par cet événement. C'est une mesure honnête, ce n'est pas un dialogue. L'application le dit, plutôt que de laisser croire le contraire.</p></div>
+
+<h2>S'y ajoute un retard, qu'il fallait corriger</h2>
+<p>Le moteur ne confirme un dépassement qu'après <b>quatre relevés consécutifs</b>, soit environ 400 ms après le début réel de l'excursion. Pendant ces 400 ms, le mur a défilé de trois à six mots. Une intention parfaitement synchronisée aurait donc manqué sa cible <b>même en visant juste</b>.</p>
+<p>C'est corrigé : le mur remonte le défilement jusqu'à l'<b>instant d'attaque</b>, pas jusqu'à celui de la confirmation. Sans cela, la question ne se posait même pas.</p>
+
+<h2>Essaie maintenant : escalier</h2>
+<p>Appuie sur <b>Escalier</b> au-dessus, et recommence. Le mot se construit en trois marches : la famille, puis la page de 24 mots, puis le mot. À chaque marche, la cible reste éclairée <b>2,5 secondes</b> — ou 800 ms pour le mot final. Compare ton score.</p>
+
+<div class="enc vert"><span class="lg">pourquoi ça marche sans rien affaiblir</span>
+<p>On ne baisse aucun seuil : <b>on agrandit la cible</b>. Une fenêtre de 2,5 s au lieu de 100 ms, c'est vingt-cinq fois plus large. Et il faut <b>trois</b> dépassements réels au lieu d'un : la probabilité qu'un hasard produise les trois dans les fenêtres utiles est le produit de trois probabilités déjà minuscules. <b>L'escalier est donc plus sévère que l'instant simple, pas moins.</b></p></div>
+
+<h2>Ce que ça ne prouve toujours pas</h2>
+<p>Qu'un mot sorte par l'escalier ne démontre pas qu'une présence l'a choisi. Trois dépassements réussis restent compatibles avec un enchaînement de hasards — simplement beaucoup moins probable. Et un dépassement peut toujours avoir une cause ordinaire : un camion, une chaudière, un plancher qui refroidit.</p>
+<p><b>L'appareil mesure une anomalie. Il ne désigne pas sa cause.</b> Cherche d'abord l'explication ordinaire ; ne garde l'autre hypothèse que si aucune ne tient. C'est ce qui sépare une mesure d'une croyance — et c'est aussi ce qui rendrait un vrai résultat crédible, le jour où il arriverait.</p>
+
+<div class="enc"><span class="lg">à retenir</span>
+<p>Si tu veux <b>observer</b> et garder une trace inattaquable : instant simple. Si tu veux <b>laisser une chance à quelque chose de s'exprimer</b> : escalier, et accepte qu'un mot demande du temps. Les deux utilisent exactement le même moteur et le même seuil.</p></div>
+
+<p style="margin-top:22px"><a class="lien" href="../">← Retour au mode d'emploi</a> · <a class="lien" href="/ghost-box/mur/">Ouvrir le mur</a></p>
+
+<footer>
+Les chiffres cités ici sont ceux du code : <code>ROW = 30 px</code>, <code>DWELL = 420 ms</code>,
+<code>PAS_FAMILLE = PAS_PAGE = 2500 ms</code>, <code>PAS_MOT = 800 ms</code>, <code>NEED = 4</code> relevés.
+Ils vivent dans <code>lib/mur.js</code> et <code>lib/moteur.js</code>, et cette page est fausse s'ils changent sans elle.
+</footer>
+
+</div>
+
+<script src="/ghost-box/lib/nuit.js?v=17"></script>
+<script src="/ghost-box/lib/mur.js?v=17"></script>
+<script>
+(() => {
+"use strict";
+const $=id=>document.getElementById(id);
+let MUR=null, MOTS=[], cible='', essais=0, reussites=0, mode='instant', ecarts=[];
+
+GBMur.lexique('/ghost-box/data/lexique.json').then(mots=>{
+  MOTS=mots;
+  MUR=GBMur.creer({hote:$('banc'), mots:mots, vitesse:330, mode:'instant',
+                   onMot:juger, onEtape:etape});
+  if(!MUR){ $('score').textContent='Le banc d\'essai n\'a pas pu s\'ouvrir.'; return; }
+  MUR.demarrer(); tirerCible();
+}).catch(()=>{ $('score').textContent='Vocabulaire introuvable — recharge la page une fois en ligne.'; });
+
+/* la cible est tirée dans le lexique réel : aucune facilité */
+function tirerCible(){
+  if(!MOTS.length) return;
+  cible = MOTS[(Math.random()*MOTS.length)|0].mot;
+  $('cible').innerHTML = cible + '<span>mot à viser</span>';
+}
+
+$('gros').onclick=()=>{
+  if(!MUR) return;
+  // exactement le même appel que celui d'un vrai dépassement de seuil :
+  // c'est le doigt qui remplace le capteur, rien d'autre ne change
+  MUR.figer('essai à la main', false, performance.now());
+};
+
+function etape(e){
+  if(e.type==='famille') $('score').innerHTML='Marche 1 franchie — famille <b>'+e.valeur+'</b>. Continue.';
+  else if(e.type==='page') $('score').innerHTML='Marche 2 franchie — page <b>'+e.valeur+'</b>. Encore une.';
+  else if(e.type==='abandon') $('score').innerHTML='<span class="no">Séquence abandonnée</span> — rien n\'a été écrit, comme en séance réelle.';
+}
+
+function juger(d){
+  essais++;
+  const gagne = d.mot === cible;
+  if(gagne) reussites++;
+  // à quelle distance était-on ? mesuré en nombre de mots dans la colonne
+  let ecart='—';
+  if(!gagne){
+    const col=(MUR.colonnes()||[]).findIndex(c=>c.famille===d.colonne);
+    ecart = col>=0 ? 'colonne « '+d.colonne+' »' : '—';
+  }
+  ecarts.push(gagne);
+  const taux = (reussites/essais*100);
+  $('score').innerHTML =
+    (gagne ? '<span class="ok">Touché : <b>'+d.mot+'</b></span>'
+           : '<span class="no">Manqué</span> — sorti : <b>'+d.mot+'</b> ('+ecart+')')
+    + '<br>Essais <b>'+essais+'</b> · réussis <b>'+reussites+'</b> · taux <b>'+taux.toFixed(0)+' %</b>'
+    + ' · hasard pur ≈ <b>0,2 %</b>';
+  if(essais>=5) verdict(taux);
+  // en séance réelle le mot retenu reste 7 s à l'écran ; sur un banc d'essai
+  // ce serait insupportable — on dégèle vite pour pouvoir enchaîner les tirs
+  setTimeout(()=>{ if(MUR && MUR.estFige()) MUR.degeler(); tirerCible(); }, 1100);
+}
+
+function verdict(taux){
+  const b=$('verdictInstant'), t=$('vitxt');
+  b.style.display='block';
+  if(mode==='instant'){
+    b.className='enc rouge';
+    t.innerHTML = taux < 20
+      ? 'Tu as l\'écran sous les yeux, tu sais où est le mot, et tu tombes à <b>'+taux.toFixed(0)+' %</b>. '
+        + 'Une présence qui agirait sur un microphone n\'a ni tes yeux ni ton doigt. En instant simple, '
+        + '<b>le mot n\'est pas visable</b> — c\'est l\'instant qui est vrai, pas le choix du mot.'
+      : 'Tu montes à <b>'+taux.toFixed(0)+' %</b> — bien au-dessus du hasard, mais uniquement parce que tu '
+        + '<b>vois</b> le défilement et que tu anticipes. Ce que rien d\'autre ne peut faire ici.';
+  } else {
+    b.className='enc vert';
+    t.innerHTML = 'Avec l\'escalier tu es à <b>'+taux.toFixed(0)+' %</b>. La cible dure 2,5 s au lieu de 100 ms, '
+      + 'et il faut trois dépassements réels au lieu d\'un — <b>plus sévère, et pourtant atteignable</b>. '
+      + 'C\'est toute la différence entre une mesure et un début de dialogue.';
+  }
+}
+
+function raz(){ essais=0; reussites=0; ecarts=[]; $('score').textContent='Aucun essai pour l\'instant.';
+  $('verdictInstant').style.display='none'; if(MUR) MUR.effacerPhrase(); tirerCible(); }
+$('raz').onclick=raz;
+$('mInstant').onclick=()=>{ mode='instant'; if(MUR) MUR.mode('instant');
+  $('mInstant').className='act'; $('mEsc').className=''; raz(); };
+$('mEsc').onclick=()=>{ mode='escalier'; if(MUR) MUR.mode('escalier');
+  $('mEsc').className='or'; $('mInstant').className=''; raz();
+  $('score').innerHTML='Escalier : il faut <b>trois</b> appuis pour un mot — la famille, la page, puis le mot.'; };
+})();
+</script>
+<script>if('serviceWorker' in navigator){window.addEventListener('load',function(){navigator.serviceWorker.register('/ghost-box/sw.js').catch(function(){});});}</script>
+</body>
+</html>

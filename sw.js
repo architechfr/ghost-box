@@ -20,16 +20,16 @@
    À CHAQUE LIVRAISON : incrémenter VERSION ci-dessous en même temps que les
    ?v= des pages — c'est elle qui jette l'ancien cache.
    ═══════════════════════════════════════════════════════════════════════ */
-const VERSION = 'v14';
+const VERSION = 'v17';
 const CACHE   = 'ghostbox-' + VERSION;
 const RACINE  = '/ghost-box/';
 
 const ENVELOPPE = [
   RACINE,
   RACINE + 'index.html',
-  RACINE + 'seance/', RACINE + 'banc/', RACINE + 'mur/',
+  RACINE + 'simple/', RACINE + 'seance/', RACINE + 'banc/', RACINE + 'mur/',
   RACINE + 'enregistreur/', RACINE + 'bibliotheque/', RACINE + 'contact-ia/', RACINE + 'reglages/',
-  RACINE + 'manuel/',
+  RACINE + 'manuel/', RACINE + 'manuel/viser/',
   // redirections des anciens modes : des raccourcis d'écran d'accueil pointent
   // encore dessus — sans elles, ces raccourcis échoueraient hors ligne
   RACINE + 'realisateur/', RACINE + 'vision/',
@@ -42,7 +42,7 @@ const ENVELOPPE = [
   RACINE + 'assets/icone-192.png',
   RACINE + 'assets/icone-512.png',
   // modules et feuilles, avec leur numéro : ce sont ces URL-là que les pages demandent
-  ...['moteur','mur','tampon','secours','pose','capture','wakelock','media','fullscreen','retour','aide','action','qr','spectre','capteurs','nuit','voix','historique']
+  ...['moteur','mur','tampon','secours','pose','capture','wakelock','media','fullscreen','retour','aide','action','qr','spectre','capteurs','nuit','voix','historique','demarrage']
     .map(m => RACINE + 'lib/' + m + '.js?v=' + VERSION.slice(1)),
   ...['ambiance','fonts'].map(m => RACINE + 'lib/' + m + '.css?v=' + VERSION.slice(1)),
   // polices : sans elles, l'application change de visage hors ligne

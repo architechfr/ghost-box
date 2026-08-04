@@ -10,7 +10,7 @@
 <link rel="manifest" href="/ghost-box/manifest.json">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
-<link rel="stylesheet" href="/ghost-box/lib/fonts.css?v=14">
+<link rel="stylesheet" href="/ghost-box/lib/fonts.css?v=17">
 <style>
 :root{
   --bench:#0A0F12;--panel:#1D262B;--line:#2C383F;--hair:#212B31;
@@ -45,7 +45,7 @@ table{width:100%;border-collapse:collapse;margin-top:8px}
 td{padding:7px 6px 7px 0;border-bottom:1px solid var(--hair);font-family:var(--mono);font-size:12px}
 td:first-child{color:var(--dim);width:46%}
 </style>
-<link rel="stylesheet" href="/ghost-box/lib/ambiance.css?v=14">
+<link rel="stylesheet" href="/ghost-box/lib/ambiance.css?v=17">
 </head>
 <body>
 
@@ -84,6 +84,13 @@ td:first-child{color:var(--dim);width:46%}
 </div>
 
 <div class="step">
+  <div class="lg">Démarrage des séances</div>
+  <p class="ex">À l'ouverture d'un mode, un seul appui allume les capteurs, lance l'apprentissage du lieu et monte l'<b>écran fixe</b> — la position de travail. Si tu as choisi « régler moi-même d'abord » dans un mode, ce bouton remet le démarrage direct partout.</p>
+  <div class="row"><button id="direct">Rétablir le démarrage direct</button></div>
+  <p id="directState" class="ex"></p>
+</div>
+
+<div class="step">
   <div class="lg">Mode nuit</div>
   <p class="ex">L'écran passe en <b>rouge sombre</b> : la vision nocturne met vingt minutes à s'installer et un seul coup d'œil à un écran clair la ruine — le rouge sombre, lui, la préserve. Le réglage suit toutes les pages, images des caméras comprises.</p>
   <div class="row"><button id="nuit">Activer le mode nuit</button></div>
@@ -98,10 +105,11 @@ td:first-child{color:var(--dim);width:46%}
 
 </div>
 
-<script src="/ghost-box/lib/nuit.js?v=14"></script>
-<script src="/ghost-box/lib/qr.js?v=14"></script>
-<script src="/ghost-box/lib/retour.js?v=14"></script>
-<script src="/ghost-box/lib/aide.js?v=14"></script>
+<script src="/ghost-box/lib/nuit.js?v=17"></script>
+<script src="/ghost-box/lib/demarrage.js?v=17"></script>
+<script src="/ghost-box/lib/qr.js?v=17"></script>
+<script src="/ghost-box/lib/retour.js?v=17"></script>
+<script src="/ghost-box/lib/aide.js?v=17"></script>
 <script>
 (() => {
 "use strict";
@@ -118,6 +126,17 @@ function majNuit(){
 }
 $('nuit').onclick=()=>{ if(window.GBNuit) GBNuit.basculer(); majNuit(); };
 majNuit();
+
+/* ── démarrage direct ── */
+const MODES=['seance','banc','mur'];
+function majDirect(){
+  const off=MODES.filter(m=>!GBDemarrage.actif(m));
+  $('directState').innerHTML = off.length
+    ? 'Actuellement en réglage manuel : <b>'+off.join(', ')+'</b>.'
+    : 'Tous les modes démarrent directement en écran fixe.';
+}
+$('direct').onclick=()=>{ MODES.forEach(m=>GBDemarrage.preferer(m,true)); majDirect(); };
+majDirect();
 
 /* ═══════ le QR ═══════ */
 try{
@@ -189,7 +208,8 @@ $('raz').onclick=()=>{
   if(!confirm('Remettre les préférences à neuf ? Les enregistrements de la bibliothèque ne sont PAS touchés.')) return;
   try{
     ['gb-lieu','gb-tampon','gb-incrust','gb-mur-vitesse','gb-balayage','gb-autocap',
-     'gb-aide-vu','gb-aide-pref','gb-camview-pos'].forEach(k=>localStorage.removeItem(k));
+     'gb-aide-vu','gb-aide-pref','gb-camview-pos','gb-mur-mode','gb-banc-fixe-caps',
+     'gb-nuit','gb-voix','gb-direct-seance','gb-direct-banc','gb-direct-mur'].forEach(k=>localStorage.removeItem(k));
     $('razState').textContent='Préférences réinitialisées. Les fichiers de la bibliothèque sont intacts.';
   }catch(e){ $('razState').textContent='Impossible : '+e.name; }
 };
