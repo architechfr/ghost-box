@@ -12,7 +12,7 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="Ghost Box">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<link rel="stylesheet" href="/ghost-box/lib/fonts.css?v=21">
+<link rel="stylesheet" href="/ghost-box/lib/fonts.css?v=22">
 <style>
 :root{
   --bench:#141A1E;--panel:#1D262B;--sunk:#0A0F12;--line:#2C383F;--hair:#212B31;
@@ -61,13 +61,55 @@ td{padding:8px 6px 8px 0;border-bottom:1px solid var(--hair);font-family:var(--m
 .keyb.ok{border-color:var(--signal);color:var(--signal);background:#0F1D18}
 a.back{display:inline-block;margin-top:26px;color:var(--dim);font-size:13px;text-decoration:none}
 video{display:none}
+
+/* ── écran fixe : la position de travail, la même que dans les autres modes ──
+   Bandeau, boutons de composition et sortie ✕ viennent de lib/fixe.js. Cette
+   page ne décrit que son empilement : bandeau · caméra · texte · boutons.
+   Le `, 0px` de chaque env() est obligatoire : sans lui, un navigateur qui ne
+   connaît pas la variable invalide TOUT le calc(). */
+body.gbx{--bas:calc(78px + env(safe-area-inset-bottom, 0px)); --txt:0px}
+body.gbx.avectexte{--txt:21vh}
+body.gbx .wrap > *{display:none}
+body.gbx .wrap{max-width:none;margin:0;padding:0}
+/* la caméra : jamais déformée. `contain` garde les proportions du flux, quitte
+   à border l'image de noir — une silhouette étirée n'est plus une silhouette. */
+body.gbx #camView{display:none !important}
+/* la hauteur est ÉCRITE, pas déduite d'un top+bottom : un canvas est un
+   élément remplacé — avec height:auto il garde sa taille naturelle et ignore
+   le `bottom`, ce qui laissait un trou noir entre l'image et le texte. */
+body.gbx.aveccam #camView{display:block !important;position:fixed;left:0;right:0;
+  top:var(--gbx-bar, 46px);width:100%;max-width:none;margin:0;
+  height:calc(100% - var(--gbx-bar, 46px) - var(--bas) - var(--txt));
+  object-fit:contain;background:#05090C;border:0;border-radius:0;z-index:44}
+body.gbx:not(.aveccam) #camView{display:none !important}
+/* sans caméra, l'écran fixe reste une position de travail : le texte occupe
+   toute la hauteur au lieu de laisser un trou noir */
+body.gbx #trOut{display:none}
+body.gbx.avectexte #trOut{display:block;position:fixed;left:0;right:0;
+  bottom:var(--bas);height:var(--txt);z-index:45;margin:0;
+  padding:9px 12px calc(9px + env(safe-area-inset-bottom, 0px) * 0);
+  overflow-y:auto;background:rgba(4,8,11,.92);
+  border-top:1px solid rgba(95,211,166,.20);font-size:15px;line-height:1.5}
+body.gbx.avectexte:not(.aveccam) #trOut{top:var(--gbx-bar, 46px);height:auto}
+/* les 96 px de droite sont RÉSERVÉS au déclencheur flottant de capture : sans
+   cette marge il se posait par-dessus le bouton vidéo, et l'appui partait dans
+   le mauvais bouton. Même réservation que dans la séance capteurs. */
+body.gbx #rec,body.gbx #vRec{display:block;position:fixed;z-index:60;margin:0;
+  bottom:calc(12px + env(safe-area-inset-bottom, 0px));padding:17px 2px;
+  font-size:12px;letter-spacing:.08em;width:calc(50% - 57px);opacity:.97}
+body.gbx #rec{left:10px}
+body.gbx #vRec{right:96px}
+/* une bande vide n'apprend rien : tant qu'aucune transcription n'existe, elle
+   dit ce qu'elle attend au lieu de montrer un rectangle noir */
+body.gbx.avectexte #trOut:empty::before{content:"Aucune transcription pour l'instant. Enregistre le son de ta box, puis lance la transcription depuis la page — elle envoie l'audio au serveur Mistral.";color:#78868E;font-size:13px;line-height:1.5}
 </style>
-<link rel="stylesheet" href="/ghost-box/lib/ambiance.css?v=21">
+<link rel="stylesheet" href="/ghost-box/lib/ambiance.css?v=22">
 </head>
 <body>
 <div class="wrap">
 
 <h1>Contact via IA <span class="wip">en développement · v7</span></h1>
+<div class="row"><button id="fixBtn">Écran fixe</button></div>
 <p class="sub">Deux expériences pour « entendre » ou « voir » au-delà des mesures brutes du banc. À traiter comme des <b>pistes à vérifier</b>, jamais comme des preuves : l'IA fabrique des mots à partir du bruit et des silhouettes à partir de reflets. La transcription <b>envoie l'audio au serveur Mistral</b> ; la silhouette tourne entièrement sur l'appareil.</p>
 
 <div class="step">
@@ -111,6 +153,9 @@ video{display:none}
 
 <video id="vid" playsinline muted></video>
 
+<!-- l'écran fixe est monté PENDANT le script de la page : ce module doit donc
+     exister avant lui. Les autres ne sont appelés que dans des gestionnaires. -->
+<script src="/ghost-box/lib/fixe.js?v=22"></script>
 <script>
 (() => {
 "use strict";
@@ -322,7 +367,7 @@ $('aiBtn').onclick=async ()=>{
   if(!camActive){ $('poseState').textContent="Active d'abord la caméra."; return; }
   $('poseState').textContent='Chargement du modèle (~5 Mo, une seule fois)…';
   try{
-    if(!POSE) POSE=await import('/ghost-box/lib/pose.js?v=21');
+    if(!POSE) POSE=await import('/ghost-box/lib/pose.js?v=22');
     await POSE.load();
     aiOn=true; $('aiBtn').classList.add('act');
     $('poseState').innerHTML='Silhouette IA active — <b>expérimental</b>. Un squelette doré apparaît si le modèle croit voir quelqu\'un.';
@@ -403,15 +448,88 @@ addEventListener('pagehide',()=>{ try{stopCam();}catch(e){} try{if(micStream)mic
 
 /* bouton de capture flottant, disponible à tout instant */
 addEventListener('load',function(){ try{ GBCapture.init({label:'contact-ia', rec:'#vRec', frame:function(){ return camActive? $('camView') : null; }}); }catch(e){} });
+
+/* ═══════ écran fixe ═══════
+   Ici la position de travail c'est : l'image en grand, tournée vers la pièce,
+   et sous le pouce les deux enregistrements. Le reste de la page — clé API,
+   explications, avertissements — n'a rien à y faire.
+
+   PIÈGE PAYÉ AILLEURS, ÉVITÉ ICI : un élément dont un ANCÊTRE est masqué reste
+   invisible quel que soit son propre css. La caméra, le texte et les deux
+   boutons vivent au fond de blocs que l'écran fixe masque en entier : on les
+   SORT donc vers <body> le temps de l'écran fixe, et on les remet exactement
+   où ils étaient en sortant. */
+const DEPL=['camView','trOut','rec','vRec']; let retours=null;
+function sortirElements(){
+  if(retours) return;
+  retours=DEPL.map(id=>{ const e=$(id); if(!e) return null;
+    const r={el:e, parent:e.parentNode, apres:e.nextSibling}; document.body.appendChild(e); return r; }).filter(Boolean);
+}
+function rendreElements(){
+  if(!retours) return;
+  retours.forEach(r=>{ try{ r.parent.insertBefore(r.el, r.apres); }catch(e){} });
+  retours=null;
+}
+GBFixe.installer({
+  page:'contact-ia',
+  bouton:'#fixBtn',
+  infos(){
+    const L=[];
+    L.push({k:'caméra', v: camActive?'ouverte':'coupée', ton: camActive?'on':''});
+    // lastPeople est la LISTE des silhouettes, pas un compte : afficher l'objet
+    // brut aurait donné « [object Object] pers. » dans le bandeau
+    const n = (aiOn && lastPeople && lastPeople.length) || 0;
+    L.push({k:'silhouette', v: aiOn? (n? n+' pers.' : 'aucune') : 'coupée',
+            ton: aiOn? (n?'alerte':'on') : ''});
+    if(vRecOn) L.push({k:'vidéo', v:fmt((performance.now()-vStart)/1000), ton:'alerte'});
+    if(recording) L.push({k:'audio', v:'en cours', ton:'alerte'});
+    return L;
+  },
+  modules:[
+    {cle:'cam', label:'Caméra', delai:900, actif:()=>camActive, basculer:()=>$('pCam').click()},
+    {cle:'ia',  label:'Silhouette', delai:1200, actif:()=>aiOn, basculer:()=>$('aiBtn').click()},
+    {cle:'texte', label:'Texte', defaut:true},
+    {cle:'nuit', label:'Nuit', actif:()=>!!(window.GBNuit&&GBNuit.actif()),
+      basculer:()=>{ if(window.GBNuit) GBNuit.basculer(); }}
+  ],
+  entrer(){ sortirElements();
+    // les libellés de la page sont écrits pour une pleine largeur ; sous le
+    // pouce, à mi-largeur, « Enregistrer la vidéo » débordait de son bouton
+    if(!vRecOn) $('vRec').textContent='● Vidéo';
+    if(!recording) $('rec').textContent='● Son'; },
+  sortir(){ rendreElements();
+    if(!vRecOn) $('vRec').textContent='● Enregistrer la vidéo';
+    if(!recording) $('rec').textContent='● Enregistrer'; }
+});
+
+/* ═══════ démarrage direct ═══════
+   « Quand on arrive, ça marche déjà. » Un appui : la caméra s'ouvre sur
+   l'objectif retenu, la silhouette IA se charge, l'écran de travail est monté. */
+addEventListener('load',()=>{
+  const C=GBDemarrage.clic, Q=GBDemarrage.clicQuandPret;
+  GBDemarrage.installer({
+    mode:'contact-ia', titre:'Contact via IA',
+    resume:'Caméra ouverte et <b>silhouette IA</b> chargée. À traiter comme des pistes à vérifier, '
+      +'jamais comme des preuves : sans capteur de profondeur, le modèle accroche un reflet, '
+      +'un portrait, toi. La transcription, elle, reste à lancer à la main — <b>elle envoie l\'audio '
+      +'au serveur Mistral</b>.',
+    etapes:[
+      {texte:'Caméra',        faire:()=>{ if(!camActive) C('#pCam'); }, attendre:1400},
+      {texte:'Silhouette IA', faire:()=>Q('#aiBtn',7000), attendre:800}
+    ],
+    fixe:()=>GBFixe.entrer()
+  });
+});
 })();
 </script>
 <script>if('serviceWorker' in navigator){window.addEventListener('load',function(){navigator.serviceWorker.register('/ghost-box/sw.js').catch(function(){});});}</script>
-<script src="/ghost-box/lib/nuit.js?v=21"></script>
-<script src="/ghost-box/lib/wakelock.js?v=21"></script>
-<script src="/ghost-box/lib/retour.js?v=21"></script>
-<script src="/ghost-box/lib/aide.js?v=21"></script>
-<script src="/ghost-box/lib/media.js?v=21"></script>
-<script src="/ghost-box/lib/capture.js?v=21"></script>
-<script src="/ghost-box/lib/fullscreen.js?v=21"></script>
+<script src="/ghost-box/lib/nuit.js?v=22"></script>
+<script src="/ghost-box/lib/demarrage.js?v=22"></script>
+<script src="/ghost-box/lib/wakelock.js?v=22"></script>
+<script src="/ghost-box/lib/retour.js?v=22"></script>
+<script src="/ghost-box/lib/aide.js?v=22"></script>
+<script src="/ghost-box/lib/media.js?v=22"></script>
+<script src="/ghost-box/lib/capture.js?v=22"></script>
+<script src="/ghost-box/lib/fullscreen.js?v=22"></script>
 </body>
 </html>

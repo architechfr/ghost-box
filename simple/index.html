@@ -12,7 +12,7 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="Ghost Box">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<link rel="stylesheet" href="/ghost-box/lib/fonts.css?v=21">
+<link rel="stylesheet" href="/ghost-box/lib/fonts.css?v=22">
 <style>
 :root{
   --bench:#0A0F12;--panel:#141B20;--line:#2C383F;--hair:#1E262B;
@@ -151,7 +151,7 @@ body{margin:0;background:#000;color:var(--text);font-family:var(--body);
   #bottom{padding:10px 22px 4px}#seg{padding:4px 0 10px}
 }
 </style>
-<link rel="stylesheet" href="/ghost-box/lib/ambiance.css?v=21">
+<link rel="stylesheet" href="/ghost-box/lib/ambiance.css?v=22">
 </head>
 <body>
 <div id="app">
@@ -250,17 +250,17 @@ body{margin:0;background:#000;color:var(--text);font-family:var(--body);
 <div id="voile"></div>
 </div><!-- #app -->
 
-<script src="/ghost-box/lib/nuit.js?v=21"></script>
-<script src="/ghost-box/lib/wakelock.js?v=21"></script>
-<script src="/ghost-box/lib/media.js?v=21"></script>
-<script src="/ghost-box/lib/moteur.js?v=21"></script>
-<script src="/ghost-box/lib/capteurs.js?v=21"></script>
-<script src="/ghost-box/lib/mur.js?v=21"></script>
-<script src="/ghost-box/lib/voix.js?v=21"></script>
-<script src="/ghost-box/lib/historique.js?v=21"></script>
-<script src="/ghost-box/lib/tampon.js?v=21"></script>
-<script src="/ghost-box/lib/secours.js?v=21"></script>
-<script src="/ghost-box/lib/capture.js?v=21"></script>
+<script src="/ghost-box/lib/nuit.js?v=22"></script>
+<script src="/ghost-box/lib/wakelock.js?v=22"></script>
+<script src="/ghost-box/lib/media.js?v=22"></script>
+<script src="/ghost-box/lib/moteur.js?v=22"></script>
+<script src="/ghost-box/lib/capteurs.js?v=22"></script>
+<script src="/ghost-box/lib/mur.js?v=22"></script>
+<script src="/ghost-box/lib/voix.js?v=22"></script>
+<script src="/ghost-box/lib/historique.js?v=22"></script>
+<script src="/ghost-box/lib/tampon.js?v=22"></script>
+<script src="/ghost-box/lib/secours.js?v=22"></script>
+<script src="/ghost-box/lib/capture.js?v=22"></script>
 <script>
 /* ═══════════════════════════════════════════════════════════════════════
    Séance simple — un écran, un bouton.
@@ -717,10 +717,10 @@ async function allumerDetection(quoi, silencieux){
   if(!silencieux) $('silAide').textContent='Chargement du modèle (une seule fois)…';
   try{
     if(quoi==='sil'){
-      if(!POSE) POSE = await import('/ghost-box/lib/pose.js?v=21');
+      if(!POSE) POSE = await import('/ghost-box/lib/pose.js?v=22');
       await POSE.load(); silOn=true; silVoulu=true;
     } else {
-      if(!VIS) VIS = await import('/ghost-box/lib/visage.js?v=21');
+      if(!VIS) VIS = await import('/ghost-box/lib/visage.js?v=22');
       await VIS.load(); visOn=true; visVoulu=true;
     }
     $('squelette').classList.add('on'); $('nbPers').classList.add('on');

@@ -12,7 +12,7 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="Ghost Box">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<link rel="stylesheet" href="/ghost-box/lib/fonts.css?v=21">
+<link rel="stylesheet" href="/ghost-box/lib/fonts.css?v=22">
 <style>
 :root{
   --bench:#141A1E;--panel:#1D262B;--sunk:#0A0F12;--line:#2C383F;--hair:#212B31;
@@ -131,7 +131,7 @@ body.filming #hud{display:flex !important;flex-wrap:wrap;gap:6px;position:fixed;
    gagne sur tout le reste — sans eux la bande ferait 120 px dans une case
    de 64 et recouvrirait la caméra */
 body.filming #spectreBox{display:none !important;position:fixed !important;left:0 !important;right:0 !important;
-  top:var(--hud) !important;width:100% !important;height:64px !important;margin:0 !important;
+  top:var(--gbx-bar, var(--hud)) !important;width:100% !important;height:64px !important;margin:0 !important;
   border:0 !important;border-radius:0 !important;z-index:46;
   border-bottom:1px solid rgba(95,211,166,.20) !important}
 body.filming.avecspectre #spectreBox{display:block !important}
@@ -143,7 +143,7 @@ body.filming{ --spectre:0px; --caps:0px; }
    un appui sur l'image bascule en grand — elle prend alors toute la place
    entre le spectre et la phrase, le mur s'efface le temps de regarder. */
 body.filming.aveccam #camView{display:block !important;position:fixed !important;
-  left:0 !important;right:auto !important;top:calc(var(--hud) + var(--spectre)) !important;
+  left:0 !important;right:auto !important;top:calc(var(--gbx-bar, var(--hud)) + var(--spectre)) !important;
   width:100% !important;max-width:none !important;height:var(--cam) !important;
   object-fit:contain;background:#05090C;
   border:0 !important;border-radius:0 !important;z-index:45;margin:0;padding:0;
@@ -152,7 +152,7 @@ body.filming:not(.aveccam) #camView{display:none !important}
 /* deux caméras : côte à côte dans la même bande, chacune dans son format */
 body.filming.aveccam.aveccam2 #camView{width:50% !important;max-width:none !important}
 body.filming.aveccam.aveccam2 #camView2{display:block !important;position:fixed !important;
-  left:50% !important;right:0 !important;top:calc(var(--hud) + var(--spectre)) !important;
+  left:50% !important;right:0 !important;top:calc(var(--gbx-bar, var(--hud)) + var(--spectre)) !important;
   width:50% !important;max-width:none !important;height:var(--cam) !important;
   object-fit:contain;background:#05090C;
   border:0 !important;border-radius:0 !important;z-index:45;margin:0;padding:0;
@@ -167,7 +167,7 @@ body.filming.camzoom.aveccam.aveccam2 #camView2{height:auto !important;bottom:va
 #capsBand{display:none}
 body.filming.aveccaps{--caps:52px}
 body.filming.aveccaps #capsBand{display:flex;position:fixed;left:0;right:0;
-  top:calc(var(--hud) + var(--spectre) + var(--cam));height:var(--caps);z-index:46;
+  top:calc(var(--gbx-bar, var(--hud)) + var(--spectre) + var(--cam));height:var(--caps);z-index:46;
   gap:12px;align-items:center;padding:0 10px;overflow-x:auto;overflow-y:hidden;
   background:rgba(4,8,11,.92);border-bottom:1px solid rgba(95,211,166,.20);
   font-family:var(--mono);font-size:11px;white-space:nowrap}
@@ -177,7 +177,7 @@ body.filming.aveccaps #capsBand{display:flex;position:fixed;left:0;right:0;
 #capsBand .cb .v b{color:var(--signal);font-weight:500}
 #capsBand .cb.chaud .v b{color:var(--gold)}
 body.filming.avecmur #murBox{display:flex !important;position:fixed;left:0;right:0;
-  top:calc(var(--hud) + var(--spectre) + var(--cam) + var(--caps));bottom:var(--mot);height:auto;margin:0;
+  top:calc(var(--gbx-bar, var(--hud)) + var(--spectre) + var(--cam) + var(--caps));bottom:var(--mot);height:auto;margin:0;
   border:0;border-radius:0;z-index:44}
 /* caméra agrandie : le mur et la bande capteurs s'effacent le temps de
    regarder — APRÈS la règle avecmur, sinon elle regagnerait à l'ancienneté */
@@ -200,13 +200,10 @@ body.filming #phraseBox .lg{font-size:9px}
 body.filming .ph.vide{font-size:12px;letter-spacing:.08em}
 body.filming .ph{margin-top:4px;min-height:0;padding:6px 8px;border:0;background:transparent;
   font-size:clamp(17px,5vw,26px);max-height:64px;overflow:hidden}
-#quitFix{display:none}
-/* le bouton plein écran flottant recouvrait « Quitter » et interceptait
-   les appuis : en écran fixe il disparaît, « Quitter » fait le même travail */
-body.filming #fsFloat{display:none !important}
-body.filming #quitFix{display:block !important;position:fixed;z-index:61;right:10px;
-  top:calc(var(--hud) + 8px);padding:8px 11px;font-size:11px;
-  background:rgba(4,8,11,.9);border-color:rgba(95,211,166,.45);color:var(--signal)}
+/* la sortie ✕ et les boutons de composition appartiennent à lib/fixe.js :
+   les mêmes, au même endroit, dans les quatre modes. Le bandeau se réserve la
+   place du ✕ à droite pour ne jamais passer dessous. */
+body.filming #hud{padding-right:92px}
 #zmark{position:absolute;top:-3px;bottom:-3px;width:2px;background:var(--gold)}
 .zlab{display:flex;justify-content:space-between;margin-top:6px}
 #run{width:100%;margin-top:10px;padding:18px 0;font-size:16px;letter-spacing:.2em;
@@ -243,7 +240,7 @@ video{display:none}
   font-family:var(--mono);font-size:9px;color:var(--signal);
   background:rgba(10,15,18,.75);padding:1px 4px;border-radius:2px;pointer-events:none}
 </style>
-<link rel="stylesheet" href="/ghost-box/lib/ambiance.css?v=21">
+<link rel="stylesheet" href="/ghost-box/lib/ambiance.css?v=22">
 </head>
 <body>
 <div class="wrap">
@@ -337,7 +334,6 @@ video{display:none}
     <button id="murBtn" class="tgl">Mur de mots</button>
     <button id="fixBtn" class="tgl">Écran fixe</button>
   </div>
-  <button id="quitFix" type="button">Quitter l'écran fixe</button>
   <div id="phraseBox">
     <div class="lg">ce qui a été retenu <span id="phCount" style="color:var(--paper)"></span></div>
     <div id="phrase" class="ph vide">rien pour l'instant — c'est le résultat le plus fréquent</div>
@@ -379,17 +375,18 @@ video{display:none}
 <video id="vid2" playsinline muted></video>
 </div>
 
-<script src="/ghost-box/lib/nuit.js?v=21"></script>
-<script src="/ghost-box/lib/demarrage.js?v=21"></script>
-<script src="/ghost-box/lib/voix.js?v=21"></script>
-<script src="/ghost-box/lib/historique.js?v=21"></script>
-<script src="/ghost-box/lib/moteur.js?v=21"></script>
-<script src="/ghost-box/lib/spectre.js?v=21"></script>
-<script src="/ghost-box/lib/retour.js?v=21"></script>
-<script src="/ghost-box/lib/aide.js?v=21"></script>
-<script src="/ghost-box/lib/action.js?v=21"></script>
+<script src="/ghost-box/lib/nuit.js?v=22"></script>
+<script src="/ghost-box/lib/demarrage.js?v=22"></script>
+<script src="/ghost-box/lib/voix.js?v=22"></script>
+<script src="/ghost-box/lib/historique.js?v=22"></script>
+<script src="/ghost-box/lib/moteur.js?v=22"></script>
+<script src="/ghost-box/lib/spectre.js?v=22"></script>
+<script src="/ghost-box/lib/retour.js?v=22"></script>
+<script src="/ghost-box/lib/aide.js?v=22"></script>
+<script src="/ghost-box/lib/action.js?v=22"></script>
 <script>addEventListener('load',function(){ try{ GBAction.init(['#run']); }catch(e){} });</script>
-<script src="/ghost-box/lib/mur.js?v=21"></script>
+<script src="/ghost-box/lib/mur.js?v=22"></script>
+<script src="/ghost-box/lib/fixe.js?v=22"></script>
 <script>
 (() => {
 "use strict";
@@ -1150,24 +1147,18 @@ function majHud(now,maxz){
   if(!capsOn) W.forEach(w=> h += chip(w.label.slice(0,14), (w.v!=null? (+w.v).toFixed(2):'—')+(w.unit?' '+w.unit:''), ''));
   if(phase==='learn') h += chip('apprentissage','en cours','alerte');
   if(blind) h += chip('à l\'aveugle','oui','alerte');
-  // ── composer son poste sans quitter l'écran fixe ──
-  // Chaque bouton actionne le VRAI bouton de la page (même philosophie que la
-  // barre d'action) : l'écran fixe n'a pas de logique à lui, il pilote la page.
-  h += '<span class="fxb">'
-    + '<button data-fx="cam" class="'+(camActive?'on':'')+'">Cam</button>'
-    + '<button data-fx="cam2" class="'+(twoCam?'on':'')+'">2e cam</button>'
-    + '<button data-fx="spectre" class="'+(spectreOn?'on':'')+'">Spectre</button>'
-    + '<button data-fx="mur" class="'+(MUR?'on':'')+'">Mur</button>'
-    + '<button data-fx="caps" class="'+(capsOn?'on':'')+'">Capteurs</button>'
-    + '<button data-fx="voix" class="'+(window.GBVoix&&GBVoix.actif()?'on':'')+'">Voix</button>'
-    + '<button data-fx="nuit" class="'+(window.GBNuit&&GBNuit.actif()?'on':'')+'">Nuit</button>'
-    + '</span>';
-  $('hud').innerHTML=h;
+  // le bandeau appartient à lib/fixe.js : cette page lui donne son contenu, il
+  // y ajoute les boutons de composition. Ces boutons actionnent les VRAIS
+  // boutons de la page — l'écran fixe n'a pas de logique à lui, il la pilote.
+  hudHtml = h;
+  GBFixe.rafraichir();
+  // la hauteur du bandeau est mesurée par lib/fixe.js (--gbx-bar) : une seule
+  // source de vérité. Ici on ne garde que le replacement du mur quand elle bouge.
   const hh=$('hud').offsetHeight;
-  if(hh && Math.abs(hh-hudH)>2){ hudH=hh; document.body.style.setProperty('--hud',hh+'px');
-    setTimeout(()=>{ if(MUR) MUR.placer(); },60); }
+  if(hh && Math.abs(hh-hudH)>2){ hudH=hh; setTimeout(()=>{ if(MUR) MUR.placer(); },60); }
   majCapsBand();
 }
+let hudHtml='';
 
 /* ── la bande capteurs : chaque voie armée, valeur · écart · seuil ── */
 let capsOn = (localStorage.getItem('gb-banc-fixe-caps') ?? '1')==='1';
@@ -1182,21 +1173,6 @@ function majCapsBand(){
       + ' · '+(w.z!=null? w.z.toFixed(1):'—')+'σ / '+(w.thr!=null? w.thr.toFixed(1):'—')+'σ</span></span>';
   }).join('');
 }
-/* les boutons du bandeau sont recréés à chaque rafraîchissement :
-   un seul écouteur délégué survit à tous les innerHTML */
-$('hud').addEventListener('click', e=>{
-  const b=e.target.closest('[data-fx]'); if(!b) return;
-  const fx=b.dataset.fx;
-  if(fx==='cam'){ $('pCam').click(); setTimeout(()=>{ document.body.classList.toggle('aveccam', filming&&camActive); majHud(performance.now(), lastZ||0); },400); }
-  else if(fx==='cam2'){ $('twoCam').click(); setTimeout(()=>{ document.body.classList.toggle('aveccam2', filming&&twoCam); majHud(performance.now(), lastZ||0); },400); }
-  else if(fx==='spectre'){ $('spectreBtn').click(); document.body.classList.toggle('avecspectre', filming&&spectreOn); }
-  else if(fx==='mur'){ $('murBtn').click(); }
-  else if(fx==='caps'){ capsOn=!capsOn; try{ localStorage.setItem('gb-banc-fixe-caps', capsOn?'1':'0'); }catch(e2){}
-    document.body.classList.toggle('aveccaps', filming&&capsOn); }
-  else if(fx==='voix'){ if(window.GBVoix) GBVoix.basculer(); }
-  else if(fx==='nuit'){ if(window.GBNuit) GBNuit.basculer(); }
-  setTimeout(()=>{ if(MUR) MUR.placer(); majHud(performance.now(), lastZ||0); },500);
-});
 /* la phrase : la suite exacte des mots retenus */
 function majPhrase(){
   const mots = MUR? MUR.phrase() : trace.filter(t=>!t.est_temoin).map(t=>t.mot).reverse();
@@ -1206,17 +1182,13 @@ function majPhrase(){
   box.className='ph';
   box.innerHTML = mots.map((m,i)=> i===mots.length-1? '<span class="neuf">'+esc(m)+'</span>' : esc(m)).join(' ');
 }
-/* ── écran fixe : la position de travail ── */
+/* ── écran fixe : la position de travail ──
+   Le bandeau, les boutons de composition et la sortie ✕ viennent de lib/fixe.js
+   — les mêmes que dans la séance caméra, l'Écoute et le Contact IA. Ce qui
+   suit est ce que SEULE cette page sait faire : sortir la caméra flottante et
+   le spectre de leurs sections avant de les mettre en bandes. */
 let filming=false, camRetour=null, spRetour=null;
-function setFilming(on){
-  filming=!!on;
-  document.documentElement.classList.toggle('filming',filming);
-  document.body.classList.toggle('filming',filming);
-  document.body.classList.toggle('aveccam', filming && camActive);
-  document.body.classList.toggle('aveccam2', filming && twoCam);
-  document.body.classList.toggle('avecspectre', filming && spectreOn);
-  document.body.classList.toggle('aveccaps', filming && capsOn);
-  if(!filming) document.body.classList.remove('camzoom');
+function preparerFixe(){
   // la vue caméra est flottante et déplaçable en mode normal : sa position est
   // écrite EN LIGNE, ce qui écraserait la mise en page de l'écran fixe. On la
   // met de côté (le CSS !important de l'écran fixe prend la main, `contain`,
@@ -1241,28 +1213,36 @@ function setFilming(on){
   } else if(spRetour){
     spRetour.parent.insertBefore(spb, spRetour.apres); spRetour=null;
   }
-  $('fixBtn').classList.toggle('on',filming);
-  if(filming){
-    try{GBWake.on();}catch(e){}
-    const el=document.documentElement, rq=el.requestFullscreen||el.webkitRequestFullscreen;
-    if(rq){ const r=rq.call(el,{navigationUI:'hide'}); if(r&&r.catch) r.catch(()=>{}); }
-    try{window.scrollTo(0,0);}catch(e){}
-    // l'écran fixe vit TOUT SEUL : c'est la position de travail, y compris
-    // avant la veille (caméra + spectre + mur suffisent à une séance).
-    // Sans ce battement, le bandeau et ses boutons n'existaient que pendant
-    // la veille — écran mort si on entrait en écran fixe avant de la lancer.
-    if(!fixeTick) fixeTick=setInterval(()=>{ if(filming) majHud(performance.now(), lastZ||0); },500);
-    majHud(performance.now(), lastZ||0);
-  } else {
-    if(fixeTick){ clearInterval(fixeTick); fixeTick=0; }
-    if(document.fullscreenElement||document.webkitFullscreenElement){
-      try{(document.exitFullscreen||document.webkitExitFullscreen).call(document);}catch(e){}
-    }
-  }
-  setTimeout(()=>{ if(MUR) MUR.placer(); },90);
+  if(!filming) document.body.classList.remove('camzoom');
 }
+GBFixe.installer({
+  page:'banc',
+  classe:'filming',      // tout le css de cette page est écrit sur ce nom-là
+  barre:'#hud',          // elle a déjà son bandeau : on le remplit
+  bouton:'#fixBtn',
+  bandeau:()=>hudHtml,
+  modules:[
+    {cle:'cam',     label:'Cam',     delai:900,  actif:()=>camActive,  basculer:()=>$('pCam').click()},
+    {cle:'cam2',    label:'2e cam',  delai:900,  actif:()=>twoCam,     basculer:()=>$('twoCam').click()},
+    {cle:'spectre', label:'Spectre',             actif:()=>spectreOn,  basculer:()=>$('spectreBtn').click()},
+    {cle:'mur',     label:'Mur', toujours:true, delai:700, actif:()=>!!MUR, basculer:()=>$('murBtn').click()},
+    {cle:'caps',    label:'Capteurs',            actif:()=>capsOn,
+      basculer:()=>{ capsOn=!capsOn; try{ localStorage.setItem('gb-banc-fixe-caps', capsOn?'1':'0'); }catch(e){} }},
+    {cle:'voix',    label:'Voix',  actif:()=>!!(window.GBVoix&&GBVoix.actif()), basculer:()=>{ if(window.GBVoix) GBVoix.basculer(); }},
+    {cle:'nuit',    label:'Nuit',  actif:()=>!!(window.GBNuit&&GBNuit.actif()), basculer:()=>{ if(window.GBNuit) GBNuit.basculer(); }}
+  ],
+  entrer:()=>{ filming=true; preparerFixe();
+    /* l'écran fixe vit TOUT SEUL : c'est la position de travail, y compris
+       avant la veille (caméra + spectre + mur suffisent à une séance). Sans ce
+       battement, le bandeau n'existait que pendant la veille. */
+    if(!fixeTick) fixeTick=setInterval(()=>{ if(filming) majHud(performance.now(), lastZ||0); },500);
+    majHud(performance.now(), lastZ||0); },
+  sortir:()=>{ filming=false; preparerFixe();
+    if(fixeTick){ clearInterval(fixeTick); fixeTick=0; } },
+  replacer:()=>{ if(MUR) MUR.placer(); }
+});
+function setFilming(on){ GBFixe.basculer(!!on); }
 let fixeTick=0;
-$('fixBtn').onclick=()=>setFilming(!filming);
 
 /* ═══════ démarrage direct ═══════
    Réglages par défaut d'une séance capteurs : tout ce que l'appareil possède
@@ -1296,9 +1276,8 @@ addEventListener('load',()=>{
     fixe:()=>setFilming(true)
   });
 });
-$('quitFix').onclick=()=>setFilming(false);
-addEventListener('fullscreenchange',()=>{ if(!document.fullscreenElement && filming) setFilming(false); });
-addEventListener('touchmove',e=>{ if(filming) e.preventDefault(); },{passive:false});
+/* sortie, plein écran et blocage du défilement : lib/fixe.js s'en charge pour
+   les quatre modes — un seul endroit à corriger le jour où l'un d'eux échoue */
 addEventListener('pagehide',()=>{ try{ if(H){ H.fermer({ mots:trace.filter(x=>!x.est_temoin).length, interrompue:true }); H=null; } }catch(e){} });
 
 let MUR=null;
@@ -1431,7 +1410,7 @@ $('camAi').onclick=async ()=>{
   if(!camActive){ $('aiState').textContent="Active d'abord la caméra."; return; }
   $('aiState').textContent='Chargement du modèle (~5 Mo, une seule fois)…';
   try{
-    if(!POSE) POSE=await import('/ghost-box/lib/pose.js?v=21');
+    if(!POSE) POSE=await import('/ghost-box/lib/pose.js?v=22');
     await POSE.load();
     aiOn=true; $('camAi').className='act';
     $('aiState').innerHTML='Détection active — un squelette n\'apparaît que si une <b>personne réelle</b> est reconnue. Dans le noir, le modèle ne voit rien : c\'est normal.';
@@ -1627,9 +1606,9 @@ addEventListener('load',function(){ try{ GBCapture.init({label:'seance-capteurs'
 })();
 </script>
 <script>if('serviceWorker' in navigator){window.addEventListener('load',function(){navigator.serviceWorker.register('/ghost-box/sw.js').catch(function(){});});}</script>
-<script src="/ghost-box/lib/wakelock.js?v=21"></script>
-<script src="/ghost-box/lib/media.js?v=21"></script>
-<script src="/ghost-box/lib/capture.js?v=21"></script>
-<script src="/ghost-box/lib/fullscreen.js?v=21"></script>
+<script src="/ghost-box/lib/wakelock.js?v=22"></script>
+<script src="/ghost-box/lib/media.js?v=22"></script>
+<script src="/ghost-box/lib/capture.js?v=22"></script>
+<script src="/ghost-box/lib/fullscreen.js?v=22"></script>
 </body>
 </html>

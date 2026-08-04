@@ -12,7 +12,7 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="Ghost Box">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<link rel="stylesheet" href="/ghost-box/lib/fonts.css?v=21">
+<link rel="stylesheet" href="/ghost-box/lib/fonts.css?v=22">
 <style>
 :root{
   --bench:#0A0F12;--panel:#1D262B;--sunk:#0A0F12;--line:#2C383F;--hair:#212B31;
@@ -72,18 +72,26 @@ html.filming{height:100%;overflow:hidden}
 body.filming{position:fixed;inset:0;width:100%;height:100%;padding:0;margin:0;
   overflow:hidden;overscroll-behavior:none;touch-action:none;
   --hud:78px;                                  /* bandeau d'information */
+  /* hauteur de l'image : recalculée par le bandeau dès que la caméra tourne.
+     Sans valeur par défaut, le calc() du mur devenait INVALIDE tant que la
+     boucle d'image n'avait pas tourné une fois — le mur retombait alors à sa
+     position naturelle et laissait un trou noir sous l'image. */
+  --img:32vh;
   --barre:calc(78px + env(safe-area-inset-bottom, 0px));  /* commandes du bas */
   --mur:0px;}
 body.filming.avecmur{ --mur:31vh; }
+/* tout ce qui n'est pas une bande disparaît. La liste nommée oubliait
+   #autoState, #twoState, #prepState, #tampState : leur texte transparaissait
+   DERRIÈRE le bandeau. On masque donc la catégorie entière — un paragraphe
+   n'a jamais rien à faire dans l'écran fixe. */
 body.filming .top,body.filming #setup,body.filming #jSec,
-body.filming #aiState,body.filming #sonState,body.filming #murState,
-body.filming #incrustState,body.filming .row{display:none}
+body.filming p,body.filming .ex,body.filming .row{display:none}
 body.filming .wrap{max-width:none;padding:0;margin:0}
 
 /* l'image : elle prend TOUTE la place qui reste, jamais moins */
 body.filming #stageWrap{position:fixed;left:0;right:0;background:#000;margin:0;
   border:0;border-radius:0;z-index:40;display:flex;align-items:center;justify-content:center;
-  top:var(--hud);
+  top:var(--gbx-bar, var(--hud));
   bottom:calc(var(--barre) + var(--mur));}
 body.filming #stage{width:100%;height:100%;object-fit:contain}
 
@@ -93,7 +101,7 @@ body.filming #stage{width:100%;height:100%;object-fit:contain}
    rogné, on voit exactement ce qui est enregistré) et le mur occupe le reste. */
 body.filming.avecmur #stageWrap{ height:var(--img); bottom:auto; }
 body.filming.avecmur #murBox{position:fixed;left:0;right:0;
-  top:calc(var(--hud) + var(--img));bottom:var(--barre);height:auto;
+  top:calc(var(--gbx-bar, var(--hud)) + var(--img));bottom:var(--barre);height:auto;
   margin:0;border:0;border-top:1px solid rgba(95,211,166,.25);
   border-radius:0;z-index:45;display:flex}
 
@@ -126,15 +134,12 @@ body.filming #recBtn{position:fixed;z-index:60;left:10px;right:88px;width:auto;m
 #murBox{display:none;margin-top:10px;height:32vh;min-height:170px;
   border:1px solid var(--line);border-radius:4px;overflow:hidden}
 body.avecmur #murBox{display:flex}
-#quitFix{display:none}
-/* le bouton plein écran flottant recouvrait « Quitter » et interceptait
-   les appuis : en écran fixe il disparaît, « Quitter » fait le même travail */
-body.filming #fsFloat{display:none !important}
-body.filming #quitFix{display:block;position:fixed;z-index:61;right:10px;
-  top:calc(var(--hud) + 8px);padding:8px 11px;font-size:11px;
-  background:rgba(4,8,11,.9);border-color:rgba(95,211,166,.45);color:var(--signal)}
+/* la sortie et les boutons de composition appartiennent à lib/fixe.js : ils
+   sont les mêmes, au même endroit, dans les quatre modes. Le bandeau se réserve
+   la place du ✕ à droite pour ne jamais passer dessous. */
+body.filming #live{padding-right:92px}
 </style>
-<link rel="stylesheet" href="/ghost-box/lib/ambiance.css?v=21">
+<link rel="stylesheet" href="/ghost-box/lib/ambiance.css?v=22">
 </head>
 <body>
 
@@ -175,7 +180,6 @@ body.filming #quitFix{display:block;position:fixed;z-index:61;right:10px;
 <div id="stageWrap"><canvas id="stage" width="960" height="540"></canvas></div>
 <button id="recBtn" disabled>● Enregistrer</button>
 <div id="murBox"></div>
-<button id="quitFix" type="button">Quitter l'écran fixe</button>
 <div class="row">
   <button id="aiBtn" disabled>Silhouette IA</button>
   <button id="autoBtn" class="act">Capture auto</button>
@@ -207,20 +211,21 @@ body.filming #quitFix{display:block;position:fixed;z-index:61;right:10px;
 <video id="vid3" playsinline muted></video>
 <video id="vid4" playsinline muted></video>
 
-<script src="/ghost-box/lib/nuit.js?v=21"></script>
-<script src="/ghost-box/lib/demarrage.js?v=21"></script>
-<script src="/ghost-box/lib/voix.js?v=21"></script>
-<script src="/ghost-box/lib/historique.js?v=21"></script>
-<script src="/ghost-box/lib/moteur.js?v=21"></script>
-<script src="/ghost-box/lib/retour.js?v=21"></script>
-<script src="/ghost-box/lib/aide.js?v=21"></script>
-<script src="/ghost-box/lib/action.js?v=21"></script>
+<script src="/ghost-box/lib/nuit.js?v=22"></script>
+<script src="/ghost-box/lib/demarrage.js?v=22"></script>
+<script src="/ghost-box/lib/voix.js?v=22"></script>
+<script src="/ghost-box/lib/historique.js?v=22"></script>
+<script src="/ghost-box/lib/moteur.js?v=22"></script>
+<script src="/ghost-box/lib/retour.js?v=22"></script>
+<script src="/ghost-box/lib/aide.js?v=22"></script>
+<script src="/ghost-box/lib/action.js?v=22"></script>
 <script>addEventListener('load',function(){ try{ GBAction.init(['#recBtn','#prep']); }catch(e){} });</script>
-<script src="/ghost-box/lib/secours.js?v=21"></script>
-<script src="/ghost-box/lib/tampon.js?v=21"></script>
-<script src="/ghost-box/lib/mur.js?v=21"></script>
-<script src="/ghost-box/lib/media.js?v=21"></script>
-<script src="/ghost-box/lib/wakelock.js?v=21"></script>
+<script src="/ghost-box/lib/secours.js?v=22"></script>
+<script src="/ghost-box/lib/tampon.js?v=22"></script>
+<script src="/ghost-box/lib/mur.js?v=22"></script>
+<script src="/ghost-box/lib/media.js?v=22"></script>
+<script src="/ghost-box/lib/wakelock.js?v=22"></script>
+<script src="/ghost-box/lib/fixe.js?v=22"></script>
 <script>
 (() => {
 "use strict";
@@ -483,7 +488,7 @@ $('incrustBtn').onclick=()=>{
    entend, ce que l'image bouge, combien de personnes sont vues, où en sont les
    seuils, et ce que le dernier mot a été. Chaque valeur dans sa case, jamais
    une phrase à déchiffrer. */
-let hudH=0, imgH=0;
+let hudH=0, imgH=0, hudHtml='<span class="chip"><span class="k">séance</span><span class="v">prête</span></span>';
 function chip(k,v,cls){ return '<span class="chip'+(cls?' '+cls:'')+'"><span class="k">'+k+'</span><span class="v">'+v+'</span></span>'; }
 function hud(now, frac){
   const lvl=Math.max(0,Math.min(1,(level+70)/60));
@@ -503,11 +508,18 @@ function hud(now, frac){
     + chip('présence', mHits+' / témoin '+cHits, '')
     + (learning? chip('apprentissage', Math.ceil((LEARN_MS-(now-tLearn))/1000)+' s','alerte') : '')
     + (lastWord? chip('mot', lastWord.toUpperCase(), (now-lastWordT<9000)?'alerte':'') : '');
-  $('live').innerHTML = '<div class="hud1">'+l1+'</div><div class="hud2">'+l2+'</div>';
+  // le bandeau appartient à lib/fixe.js : cette page lui donne son contenu,
+  // il y ajoute les boutons de composition — au même endroit que dans les
+  // autres modes. Sans ce passage par le module, la séance caméra aurait un
+  // bandeau riche mais aucun moyen de composer son poste sans en sortir.
+  hudHtml = '<div class="hud1">'+l1+'</div><div class="hud2">'+l2+'</div>';
+  GBFixe.rafraichir();
   // le bandeau fait la hauteur de son contenu : c'est lui qui dit à l'image
   // où commencer, sinon une ligne de trop passe sous l'image ou par-dessus
+  // la hauteur du bandeau est mesurée par lib/fixe.js (--gbx-bar) : une seule
+  // source de vérité. On la relit seulement pour en déduire celle de l'image.
   const h=$('live').offsetHeight;
-  if(h && Math.abs(h-hudH)>2){ hudH=h; document.body.style.setProperty('--hud',h+'px'); }
+  if(h && Math.abs(h-hudH)>2) hudH=h;
   // hauteur réelle de l'image à l'écran : ni plus (ce serait du noir), ni moins
   if(cv.width && cv.height){
     const dispo=window.innerHeight-h-90;
@@ -522,23 +534,28 @@ function hud(now, frac){
    défilement, pas de rebond, pas de barre d'adresse qui remonte. L'image occupe
    tout l'écran, seuls restent le bouton d'enregistrement et la capture. */
 let filming=false;
-function setFilming(on){
-  filming=!!on;
-  document.documentElement.classList.toggle('filming',filming);
-  document.body.classList.toggle('filming',filming);
-  $('fixBtn').className=filming?'act':'';
-  $('fixBtn').textContent=filming?'Quitter':'Écran fixe';
-  if(filming){
-    try{ GBWake.on(); }catch(e){}
-    const el=document.documentElement, rq=el.requestFullscreen||el.webkitRequestFullscreen;
-    if(rq){ const r=rq.call(el,{navigationUI:'hide'}); if(r&&r.catch) r.catch(()=>{}); }
-    try{ window.scrollTo(0,0); }catch(e){}
-  } else if(document.fullscreenElement||document.webkitFullscreenElement){
-    try{ (document.exitFullscreen||document.webkitExitFullscreen).call(document); }catch(e){}
-  }
-  setTimeout(()=>{ try{ sizeStage(); }catch(e){} },80);
-}
-$('fixBtn').onclick=()=>setFilming(!filming);
+GBFixe.installer({
+  page:'seance',
+  classe:'filming',        // tout le css de cette page est écrit sur ce nom-là
+  barre:'#live',           // elle a déjà son bandeau : on le remplit, on n'en pose pas un second
+  bouton:'#fixBtn',
+  bandeau:()=>hudHtml,
+  modules:[
+    {cle:'ia',       label:'Silhouette',  delai:1200, actif:()=>aiOn,    basculer:()=>$('aiBtn').click()},
+    {cle:'auto',     label:'Capture auto',            actif:()=>autoCap, basculer:()=>$('autoBtn').click()},
+    {cle:'mur',      label:'Mur', toujours:true, delai:700, actif:()=>!!MUR, basculer:()=>$('murBtn').click()},
+    {cle:'tampon',   label:'Tampon',      delai:600,  actif:()=>!!(tampon&&tampon.actif()), basculer:()=>$('tampBtn').click()},
+    {cle:'cam2',     label:'2e cam',      delai:1200, actif:()=>nbVues()>1, basculer:()=>$('twoCam').click()},
+    {cle:'incrust',  label:'Incrustation',            actif:()=>incrust, basculer:()=>$('incrustBtn').click()},
+    {cle:'voix',     label:'Voix',  actif:()=>!!(window.GBVoix&&GBVoix.actif()), basculer:()=>{ if(window.GBVoix) GBVoix.basculer(); }},
+    {cle:'nuit',     label:'Nuit',  actif:()=>!!(window.GBNuit&&GBNuit.actif()), basculer:()=>{ if(window.GBNuit) GBNuit.basculer(); }}
+  ],
+  entrer:()=>{ filming=true; },
+  sortir:()=>{ filming=false; },
+  // l'image doit être remesurée : sa bande change de hauteur en entrant
+  replacer:()=>{ try{ sizeStage(); }catch(e){} }
+});
+function setFilming(on){ GBFixe.basculer(!!on); }
 
 /* ═══════ démarrage direct ═══════
    Réglages par défaut d'une séance caméra : caméra et micro ouverts, détection
@@ -560,11 +577,9 @@ addEventListener('load',()=>{
     fixe:()=>setFilming(true)
   });
 });
-$('quitFix').onclick=()=>setFilming(false);
-addEventListener('fullscreenchange',()=>{ if(!document.fullscreenElement && filming) setFilming(false); });
+/* sortie, plein écran et blocage du défilement : lib/fixe.js s'en charge pour
+   les quatre modes — un seul endroit à corriger le jour où l'un d'eux échoue */
 addEventListener('webkitfullscreenchange',()=>{ if(!document.webkitFullscreenElement && filming) setFilming(false); });
-/* aucun glissement de page tant qu'on tourne */
-addEventListener('touchmove',e=>{ if(filming) e.preventDefault(); },{passive:false});
 
 /* ── plein écran ── */
 $('fsBtn').onclick=()=>{
@@ -685,7 +700,7 @@ $('aiBtn').onclick=async ()=>{
   if(!vstream){ $('aiState').textContent="Prépare d'abord le tournage."; return; }
   $('aiState').textContent='Chargement du modèle (~5 Mo, une seule fois)…';
   try{
-    if(!POSE) POSE=await import('/ghost-box/lib/pose.js?v=21');
+    if(!POSE) POSE=await import('/ghost-box/lib/pose.js?v=22');
     await POSE.load();
     aiOn=true; $('aiBtn').className='act';
     $('aiState').innerHTML='Détection active — jusqu\'à <b>4 personnes suivies en même temps</b>, chacune avec sa couleur et son numéro. Les squelettes s\'incrustent dans la vidéo enregistrée, et seulement si une personne réelle est reconnue.';
@@ -1212,7 +1227,7 @@ addEventListener('load',function(){ try{ GBCapture.init({label:($('lieu').value|
 })();
 </script>
 <script>if('serviceWorker' in navigator){window.addEventListener('load',function(){navigator.serviceWorker.register('/ghost-box/sw.js').catch(function(){});});}</script>
-<script src="/ghost-box/lib/capture.js?v=21"></script>
-<script src="/ghost-box/lib/fullscreen.js?v=21"></script>
+<script src="/ghost-box/lib/capture.js?v=22"></script>
+<script src="/ghost-box/lib/fullscreen.js?v=22"></script>
 </body>
 </html>

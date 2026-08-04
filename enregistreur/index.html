@@ -12,7 +12,7 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="Ghost Box">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<link rel="stylesheet" href="/ghost-box/lib/fonts.css?v=21">
+<link rel="stylesheet" href="/ghost-box/lib/fonts.css?v=22">
 <style>
 :root{
   --night:#0A0F12; --bench:#141A1E; --panel:#1D262B; --sunk:#080C0E;
@@ -121,28 +121,50 @@ section{margin-top:20px} hr{border:0;border-top:1px solid var(--hair);margin:18p
 #murBox{display:none;margin-top:10px;height:30vh;min-height:150px;
   border:1px solid var(--line);border-radius:4px;overflow:hidden}
 body.avecmur #murBox{display:flex}
-/* ── séance assise : écran fixe, spectre en haut, mur en bas, Marquer sous le pouce ── */
-html.assis{height:100%;overflow:hidden}
-body.assis{position:fixed;inset:0;width:100%;height:100%;margin:0;padding:0;
-  overflow:hidden;overscroll-behavior:none;touch-action:none}
-body.assis nav,body.assis .fields,body.assis .slide,body.assis section,
-body.assis #msg,body.assis #prog,body.assis .row,body.assis .between{display:none}
-body.assis .wrap{max-width:none;padding:0;margin:0}
-body.assis .frame{position:fixed;left:0;right:0;top:calc(30px + env(safe-area-inset-top));
-  height:26%;margin:0;border-radius:0;border-left:0;border-right:0}
-body.assis .status{position:fixed;left:0;right:0;top:0;z-index:50;margin:0;
-  padding:4px 10px;padding-top:calc(4px + env(safe-area-inset-top));background:rgba(10,15,18,.85)}
-body.assis .meter{position:fixed;left:10px;right:10px;top:calc(30px + env(safe-area-inset-top) + 26%);z-index:50}
-body.assis #murBox{display:flex;position:fixed;left:0;right:0;
-  top:calc(46px + env(safe-area-inset-top) + 26%);bottom:calc(96px + env(safe-area-inset-bottom));
-  height:auto;margin:0;border-left:0;border-right:0;border-radius:0}
-body.assis #mark{position:fixed;left:10px;right:10px;bottom:calc(16px + env(safe-area-inset-bottom));
+/* ── écran fixe : la position de travail, la même que dans les autres modes ──
+   Le bandeau, les boutons de composition et la sortie ✕ appartiennent à
+   lib/fixe.js ; cette page ne décrit QUE l'empilement de ses bandes :
+   bandeau · spectrogramme · niveau · mur · Marquer sous le pouce.
+   Aucune bande n'en recouvre une autre : chacune se pose sous la somme des
+   hauteurs de celles du dessus, et ces hauteurs sont des variables.
+   Le `, 0px` de chaque env() n'est pas du zèle : sans lui, un navigateur qui
+   ne connaît pas la variable rend TOUT le calc() invalide. */
+body.gbx{--sp:0px; --niv:0px; --bas:calc(86px + env(safe-area-inset-bottom, 0px))}
+body.gbx.avecspectre{--sp:32vh}
+/* le niveau est une bande à part entière, juste au-dessus du bouton : posé
+   au-dessous du spectrogramme il se retrouvait PAR-DESSUS lui dès que le mur
+   était éteint et que le spectrogramme s'étirait jusqu'en bas. Une bande n'a
+   le droit d'exister que si tout le monde compte avec elle. */
+body.gbx.avecniveau{--niv:26px}
+/* en écran fixe tout disparaît sauf les bandes : une page de réglages qui
+   traîne derrière, c'est ce qui rendait l'écran illisible */
+body.gbx nav,body.gbx .fields,body.gbx .slide,body.gbx section,body.gbx .status,
+body.gbx #msg,body.gbx #prog,body.gbx .row,body.gbx .between,
+body.gbx .pane#paneA,body.gbx .lg,body.gbx p{display:none}
+body.gbx .wrap{max-width:none;padding:0;margin:0}
+body.gbx .frame{display:none}
+body.gbx.avecspectre .frame{display:block;position:fixed;left:0;right:0;
+  top:var(--gbx-bar, 46px);height:var(--sp);margin:0;
+  border-radius:0;border-left:0;border-right:0;z-index:45}
+/* le canvas porte une hauteur en vh et un plafond de 280 px pensés pour la
+   page normale : dans une bande, ils feraient déborder ou laisseraient un
+   trou. La bande commande, le canvas suit. */
+body.gbx.avecspectre #live{height:100% !important;min-height:0 !important;max-height:none !important}
+/* sans mur, le spectrogramme prend toute la place qui reste : l'écran fixe ne
+   laisse jamais de vide — mais il s'arrête au-dessus du niveau, pas dessus */
+body.gbx.avecspectre:not(.avecmur) .frame{height:auto;bottom:calc(var(--bas) + var(--niv))}
+body.gbx .meter{display:none}
+body.gbx.avecniveau .meter{display:block;position:fixed;left:10px;right:10px;
+  bottom:calc(var(--bas) + 4px);z-index:50;margin:0}
+body.gbx #murBox{display:none}
+body.gbx.avecmur #murBox{display:flex;position:fixed;left:0;right:0;
+  top:calc(var(--gbx-bar, 46px) + var(--sp));bottom:calc(var(--bas) + var(--niv));
+  height:auto;margin:0;border-left:0;border-right:0;border-radius:0;z-index:44}
+body.gbx #mark{display:block;position:fixed;left:10px;right:10px;
+  bottom:calc(14px + env(safe-area-inset-bottom, 0px));
   z-index:60;margin:0;padding:22px 0;font-size:17px;opacity:.96}
-#quitAssis{display:none}
-body.assis #quitAssis{display:block;position:fixed;z-index:61;right:10px;
-  top:calc(3px + env(safe-area-inset-top));padding:6px 9px;font-size:11px;background:rgba(20,26,30,.9)}
 </style>
-<link rel="stylesheet" href="/ghost-box/lib/ambiance.css?v=21">
+<link rel="stylesheet" href="/ghost-box/lib/ambiance.css?v=22">
 </head>
 <body>
 <div class="wrap">
@@ -181,7 +203,6 @@ body.assis #quitAssis{display:block;position:fixed;z-index:61;right:10px;
     <button id="halt" disabled>Arrêter</button>
   </div>
   <button id="mark" disabled>Marquer</button>
-  <button id="quitAssis" type="button">Quitter</button>
   <div class="row">
     <button id="murBtn">Mur de mots</button>
     <button id="murVoix">Voix</button>
@@ -276,6 +297,10 @@ body.assis #quitAssis{display:block;position:fixed;z-index:61;right:10px;
 </div>
 
 </div>
+<!-- l'écran fixe est monté PENDANT le script de la page, pas après : ce module
+     doit donc exister avant lui. Les autres modules ne sont appelés que dans
+     des gestionnaires d'événement, ils peuvent rester en fin de page. -->
+<script src="/ghost-box/lib/fixe.js?v=22"></script>
 <script>
 (() => {
 "use strict";
@@ -522,30 +547,60 @@ function murFeed(r,t){
   }
 }
 
-/* ═══════ séance assise : écran fixe ═══════
+/* ═══════ écran fixe ═══════
    Assis, la box qui balaye, le téléphone posé face à la pièce. L'écran ne doit
-   plus bouger : spectre en haut, mur au milieu, « Marquer » sous le pouce. */
-let assis=false;
-function setAssis(on){
-  assis=!!on;
-  document.documentElement.classList.toggle('assis',assis);
-  document.body.classList.toggle('assis',assis);
-  $('fixBtn').className=assis?'on':'';
-  $('fixBtn').textContent=assis?'Quitter':'Écran fixe';
-  if(assis){
-    try{GBWake.on();}catch(e){}
-    const el=document.documentElement, rq=el.requestFullscreen||el.webkitRequestFullscreen;
-    if(rq){ const r=rq.call(el,{navigationUI:'hide'}); if(r&&r.catch) r.catch(()=>{}); }
-    try{window.scrollTo(0,0);}catch(e){}
-  } else if(document.fullscreenElement||document.webkitFullscreenElement){
-    try{(document.exitFullscreen||document.webkitExitFullscreen).call(document);}catch(e){}
-  }
-  setTimeout(()=>{ if(MUR) MUR.placer(); try{ wipe(); }catch(e){} },120);
-}
-$('fixBtn').onclick=()=>setAssis(!assis);
-$('quitAssis').onclick=()=>setAssis(false);
-addEventListener('fullscreenchange',()=>{ if(!document.fullscreenElement && assis) setAssis(false); });
-addEventListener('touchmove',e=>{ if(assis) e.preventDefault(); },{passive:false});
+   plus bouger : spectrogramme en haut, niveau, mur, « Marquer » sous le pouce.
+   Le bandeau, les boutons de composition et la sortie sont ceux de lib/fixe.js
+   — exactement les mêmes que dans la séance capteurs et la séance caméra.
+   Cette page ne fournit que deux choses : ce qu'elle sait dire (infos) et ce
+   qu'on peut allumer (modules). */
+GBFixe.installer({
+  page:'ecoute',
+  bouton:'#fixBtn',
+  infos(){
+    const L=[{k:'durée', v:$('clock').textContent, ton:recording?'on':''},
+             {k:'état',  v:$('stTxt').textContent, ton:recording?'on':''}];
+    if(fInit) L.push({k:'plancher', v:(20*Math.log10(floorV)).toFixed(0)+' dB'});
+    if(MUR)   L.push({k:'seuil', v: murArme? WSON.thr.toFixed(1)+' σ' : 'apprentissage', ton: murArme?'':'alerte'});
+    L.push({k:'repères', v:events.length});
+    if(nMots) L.push({k:'mots', v:nMots, ton:'alerte'});
+    return L;
+  },
+  modules:[
+    {cle:'spectre', label:'Spectre', defaut:true},
+    {cle:'niveau',  label:'Niveau',  defaut:true},
+    // le mur a son interrupteur dans la page : l'écran fixe l'actionne, il ne
+    // le double pas. `toujours` parce que sa classe sert aussi hors écran fixe.
+    {cle:'mur', label:'Mur', toujours:true, delai:700,
+      actif:()=>!!MUR, basculer:()=>$('murBtn').click()},
+    {cle:'voix', label:'Voix', actif:()=>voix, basculer:()=>$('murVoix').click()},
+    {cle:'nuit', label:'Nuit', actif:()=>!!(window.GBNuit&&GBNuit.actif()),
+      basculer:()=>{ if(window.GBNuit) GBNuit.basculer(); }}
+  ],
+  // le canvas du spectrogramme change de taille en entrant : sans remesure il
+  // resterait étiré. Le mur, lui, recalcule ses colonnes sur la vraie hauteur.
+  replacer(){ try{ wipe(); }catch(e){} if(MUR) MUR.placer(); }
+});
+
+/* ═══════ démarrage direct ═══════
+   « Quand on arrive, ça marche déjà. » Un seul appui : le micro s'ouvre, le
+   mur de mots tourne, et l'écran de travail est monté. Le navigateur n'en
+   autorise pas moins — l'ouverture du micro et le plein écran exigent tous
+   deux un geste de l'utilisateur (voir lib/demarrage.js). */
+addEventListener('load',()=>{
+  const C=GBDemarrage.clic, Q=GBDemarrage.clicQuandPret;
+  GBDemarrage.installer({
+    mode:'ecoute', titre:'Écoute',
+    resume:'Le micro s\'ouvre <b>sans réduction de bruit ni gain automatique</b> : le balayage de ta box '
+      +'est enregistré tel qu\'il sonne. Le mur de mots tourne sous le spectrogramme. '
+      +'L\'appareil apprend d\'abord 30 secondes le bruit du lieu — <b>rien ne peut sortir avant</b>.',
+    etapes:[
+      {texte:'Micro et enregistrement', faire:()=>Q('#go',6000), attendre:900},
+      {texte:'Mur de mots',            faire:()=>{ if(!MUR) C('#murBtn'); }, attendre:700}
+    ],
+    fixe:()=>GBFixe.entrer()
+  });
+});
 
 /* ═══ arrêt + calcul du spectrogramme ═══ */
 $('halt').onclick=async()=>{
@@ -917,15 +972,16 @@ if(!navigator.mediaDevices||!navigator.mediaDevices.getUserMedia)
 })();
 </script>
 <script>if('serviceWorker' in navigator){window.addEventListener('load',function(){navigator.serviceWorker.register('/ghost-box/sw.js').catch(function(){});});}</script>
-<script src="/ghost-box/lib/nuit.js?v=21"></script>
-<script src="/ghost-box/lib/secours.js?v=21"></script>
-<script src="/ghost-box/lib/retour.js?v=21"></script>
-<script src="/ghost-box/lib/aide.js?v=21"></script>
-<script src="/ghost-box/lib/action.js?v=21"></script>
+<script src="/ghost-box/lib/nuit.js?v=22"></script>
+<script src="/ghost-box/lib/demarrage.js?v=22"></script>
+<script src="/ghost-box/lib/secours.js?v=22"></script>
+<script src="/ghost-box/lib/retour.js?v=22"></script>
+<script src="/ghost-box/lib/aide.js?v=22"></script>
+<script src="/ghost-box/lib/action.js?v=22"></script>
 <script>addEventListener('load',function(){ try{ GBAction.init(['#halt','#go']); }catch(e){} });</script>
-<script src="/ghost-box/lib/moteur.js?v=21"></script>
-<script src="/ghost-box/lib/mur.js?v=21"></script>
-<script src="/ghost-box/lib/wakelock.js?v=21"></script>
-<script src="/ghost-box/lib/fullscreen.js?v=21"></script>
+<script src="/ghost-box/lib/moteur.js?v=22"></script>
+<script src="/ghost-box/lib/mur.js?v=22"></script>
+<script src="/ghost-box/lib/wakelock.js?v=22"></script>
+<script src="/ghost-box/lib/fullscreen.js?v=22"></script>
 </body>
 </html>

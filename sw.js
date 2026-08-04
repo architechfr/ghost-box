@@ -20,7 +20,7 @@
    À CHAQUE LIVRAISON : incrémenter VERSION ci-dessous en même temps que les
    ?v= des pages — c'est elle qui jette l'ancien cache.
    ═══════════════════════════════════════════════════════════════════════ */
-const VERSION = 'v21';
+const VERSION = 'v22';
 const CACHE   = 'ghostbox-' + VERSION;
 const RACINE  = '/ghost-box/';
 
@@ -42,7 +42,7 @@ const ENVELOPPE = [
   RACINE + 'assets/icone-192.png',
   RACINE + 'assets/icone-512.png',
   // modules et feuilles, avec leur numéro : ce sont ces URL-là que les pages demandent
-  ...['moteur','mur','tampon','secours','pose','capture','wakelock','media','fullscreen','retour','aide','action','qr','spectre','capteurs','nuit','voix','historique','demarrage','visage']
+  ...['moteur','mur','tampon','secours','pose','capture','wakelock','media','fullscreen','retour','aide','action','qr','spectre','capteurs','nuit','voix','historique','demarrage','visage','fixe']
     .map(m => RACINE + 'lib/' + m + '.js?v=' + VERSION.slice(1)),
   ...['ambiance','fonts'].map(m => RACINE + 'lib/' + m + '.css?v=' + VERSION.slice(1)),
   // polices : sans elles, l'application change de visage hors ligne
