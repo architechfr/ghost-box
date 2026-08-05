@@ -12,7 +12,7 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="Ghost Box">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<link rel="stylesheet" href="/ghost-box/lib/fonts.css?v=31">
+<link rel="stylesheet" href="/ghost-box/lib/fonts.css?v=32">
 <style>
 :root{
   --bench:#0A0F12;--panel:#1D262B;--sunk:#0A0F12;--line:#2C383F;--hair:#212B31;
@@ -84,7 +84,10 @@ body.filming.avecmur{ --mur:31vh; }
    #autoState, #twoState, #prepState, #tampState : leur texte transparaissait
    DERRIÈRE le bandeau. On masque donc la catégorie entière — un paragraphe
    n'a jamais rien à faire dans l'écran fixe. */
-body.filming .top,body.filming #setup,body.filming #jSec,
+/* tout ce qui n'est pas une bande disparaît — y compris l'avertissement de
+   prise interrompue (.warn), qui transparaissait DERRIÈRE le bandeau : il
+   sera encore là en sortant de l'écran fixe, sa place n'est pas ici */
+body.filming .top,body.filming #setup,body.filming #jSec,body.filming .warn,
 body.filming p,body.filming .ex,body.filming .row{display:none}
 body.filming .wrap{max-width:none;padding:0;margin:0}
 
@@ -139,7 +142,7 @@ body.avecmur #murBox{display:flex}
    la place du ✕ à droite pour ne jamais passer dessous. */
 body.filming #live{padding-right:92px}
 </style>
-<link rel="stylesheet" href="/ghost-box/lib/ambiance.css?v=31">
+<link rel="stylesheet" href="/ghost-box/lib/ambiance.css?v=32">
 </head>
 <body>
 
@@ -211,22 +214,22 @@ body.filming #live{padding-right:92px}
 <video id="vid3" playsinline muted></video>
 <video id="vid4" playsinline muted></video>
 
-<script src="/ghost-box/lib/nuit.js?v=31"></script>
-<script src="/ghost-box/lib/demarrage.js?v=31"></script>
-<script src="/ghost-box/lib/voix.js?v=31"></script>
-<script src="/ghost-box/lib/historique.js?v=31"></script>
-<script src="/ghost-box/lib/moteur.js?v=31"></script>
-<script src="/ghost-box/lib/retour.js?v=31"></script>
-<script src="/ghost-box/lib/aide.js?v=31"></script>
-<script src="/ghost-box/lib/action.js?v=31"></script>
+<script src="/ghost-box/lib/nuit.js?v=32"></script>
+<script src="/ghost-box/lib/demarrage.js?v=32"></script>
+<script src="/ghost-box/lib/voix.js?v=32"></script>
+<script src="/ghost-box/lib/historique.js?v=32"></script>
+<script src="/ghost-box/lib/moteur.js?v=32"></script>
+<script src="/ghost-box/lib/retour.js?v=32"></script>
+<script src="/ghost-box/lib/aide.js?v=32"></script>
+<script src="/ghost-box/lib/action.js?v=32"></script>
 <script>addEventListener('load',function(){ try{ GBAction.init(['#recBtn','#prep']); }catch(e){} });</script>
-<script src="/ghost-box/lib/secours.js?v=31"></script>
-<script src="/ghost-box/lib/tampon.js?v=31"></script>
-<script src="/ghost-box/lib/mur.js?v=31"></script>
-<script src="/ghost-box/lib/media.js?v=31"></script>
-<script src="/ghost-box/lib/wakelock.js?v=31"></script>
-<script src="/ghost-box/lib/objectif.js?v=31"></script>
-<script src="/ghost-box/lib/fixe.js?v=31"></script>
+<script src="/ghost-box/lib/secours.js?v=32"></script>
+<script src="/ghost-box/lib/tampon.js?v=32"></script>
+<script src="/ghost-box/lib/mur.js?v=32"></script>
+<script src="/ghost-box/lib/media.js?v=32"></script>
+<script src="/ghost-box/lib/wakelock.js?v=32"></script>
+<script src="/ghost-box/lib/objectif.js?v=32"></script>
+<script src="/ghost-box/lib/fixe.js?v=32"></script>
 <script>
 (() => {
 "use strict";
@@ -716,7 +719,7 @@ $('aiBtn').onclick=async ()=>{
   if(!vstream){ $('aiState').textContent="Prépare d'abord le tournage."; return; }
   $('aiState').textContent='Chargement du modèle (~5 Mo, une seule fois)…';
   try{
-    if(!POSE) POSE=await import('/ghost-box/lib/pose.js?v=31');
+    if(!POSE) POSE=await import('/ghost-box/lib/pose.js?v=32');
     await POSE.load();
     aiOn=true; $('aiBtn').className='act';
     $('aiState').innerHTML='Détection active — jusqu\'à <b>4 personnes suivies en même temps</b>, chacune avec sa couleur et son numéro. Les squelettes s\'incrustent dans la vidéo enregistrée, et seulement si une personne réelle est reconnue.';
@@ -1243,7 +1246,7 @@ addEventListener('load',function(){ try{ GBCapture.init({label:($('lieu').value|
 })();
 </script>
 <script>if('serviceWorker' in navigator){window.addEventListener('load',function(){navigator.serviceWorker.register('/ghost-box/sw.js').catch(function(){});});}</script>
-<script src="/ghost-box/lib/capture.js?v=31"></script>
-<script src="/ghost-box/lib/fullscreen.js?v=31"></script>
+<script src="/ghost-box/lib/capture.js?v=32"></script>
+<script src="/ghost-box/lib/fullscreen.js?v=32"></script>
 </body>
 </html>
