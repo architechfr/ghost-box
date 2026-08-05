@@ -12,7 +12,7 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="Ghost Box">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<link rel="stylesheet" href="/ghost-box/lib/fonts.css?v=24">
+<link rel="stylesheet" href="/ghost-box/lib/fonts.css?v=25">
 <style>
 :root{
   --bench:#0A0F12;--panel:#141B20;--line:#2C383F;--hair:#1E262B;
@@ -80,19 +80,21 @@ body{margin:0;background:#000;color:var(--text);font-family:var(--body);
 #nbPers{position:absolute;left:8px;top:8px;z-index:3;font-family:var(--mono);font-size:11px;
   color:var(--gold);background:rgba(5,9,12,.8);border-radius:4px;padding:4px 8px;display:none}
 #nbPers.on{display:block}
-#legend{flex:none;text-align:center;font-family:var(--mono);font-size:11.5px;color:#5A686F;
-  padding:9px 4px 3px;letter-spacing:.04em}
+#legend{flex:1;min-width:0;text-align:center;font-family:var(--mono);font-size:11.5px;color:#5A686F;
+  padding:0 2px;letter-spacing:.04em}
 /* ── changer d'objectif SANS ouvrir le tiroir ──
-   Le bouton ⟳ de la barre du haut existait déjà, mais il était le premier à
-   disparaître quand l'écran se décalait — donc introuvable exactement quand on
-   en avait besoin. Celui-ci est posé SUR l'image, à l'endroit qu'on regarde,
-   et il dit quel objectif est en cours au lieu de le laisser deviner. */
-#objChip{position:absolute;left:14px;bottom:42px;z-index:4;display:none;
-  align-items:center;gap:7px;font-family:var(--mono);font-size:11.5px;color:var(--text);
-  background:rgba(5,9,12,.86);border:1px solid var(--line);border-radius:9px;
+   Le ⟳ de la barre du haut existait déjà, mais il était le premier à
+   disparaître quand l'écran se décalait. Posé SUR l'image il chevauchait le
+   sujet ; il vit donc dans sa PROPRE rangée, juste sous l'image, à côté de la
+   légende : rien ne se recouvre, et on lit d'un coup quel objectif tourne. */
+#sousvue{flex:none;display:flex;align-items:center;gap:9px;padding:9px 2px 3px;min-width:0}
+#objChip{display:none;flex:none;align-items:center;gap:7px;
+  font-family:var(--mono);font-size:11.5px;color:var(--text);
+  background:var(--panel);border:1px solid var(--line);border-radius:9px;
   padding:8px 11px;min-height:38px;cursor:pointer;letter-spacing:.04em;
-  text-transform:none;font-weight:400}
+  text-transform:none;font-weight:400;white-space:nowrap}
 #objChip.on{display:inline-flex}
+#objChip:active{transform:scale(.96)}
 #objChip .fl{color:var(--signal);font-size:14px;line-height:1}
 
 /* ── deux colonnes de chiffres : tout ce qu'il faut savoir, rien de plus ── */
@@ -202,7 +204,7 @@ body{margin:0;background:#000;color:var(--text);font-family:var(--body);
   #bottom{padding:10px 22px 4px}#seg{padding:4px 0 10px}
 }
 </style>
-<link rel="stylesheet" href="/ghost-box/lib/ambiance.css?v=24">
+<link rel="stylesheet" href="/ghost-box/lib/ambiance.css?v=25">
 </head>
 <body>
 <div id="app">
@@ -218,8 +220,10 @@ body{margin:0;background:#000;color:var(--text);font-family:var(--body);
 
 <div id="scene">
   <div id="vue"><div id="mur"></div><canvas id="squelette"></canvas><span id="nbPers"></span><span id="recPt"></span></div>
-  <button id="objChip" type="button" aria-label="Changer d'objectif"><span class="fl">⟳</span><span id="objNom">objectif</span></button>
-  <div id="legend">appuie sur le bouton pour commencer</div>
+  <div id="sousvue">
+    <button id="objChip" type="button" aria-label="Changer d'objectif"><span class="fl">⟳</span><span id="objNom">objectif</span></button>
+    <div id="legend">appuie sur le bouton pour commencer</div>
+  </div>
   <div id="msg"><p></p></div>
 </div>
 
@@ -311,17 +315,17 @@ body{margin:0;background:#000;color:var(--text);font-family:var(--body);
 <div id="voile"></div>
 </div><!-- #app -->
 
-<script src="/ghost-box/lib/nuit.js?v=24"></script>
-<script src="/ghost-box/lib/wakelock.js?v=24"></script>
-<script src="/ghost-box/lib/media.js?v=24"></script>
-<script src="/ghost-box/lib/moteur.js?v=24"></script>
-<script src="/ghost-box/lib/capteurs.js?v=24"></script>
-<script src="/ghost-box/lib/mur.js?v=24"></script>
-<script src="/ghost-box/lib/voix.js?v=24"></script>
-<script src="/ghost-box/lib/historique.js?v=24"></script>
-<script src="/ghost-box/lib/tampon.js?v=24"></script>
-<script src="/ghost-box/lib/secours.js?v=24"></script>
-<script src="/ghost-box/lib/capture.js?v=24"></script>
+<script src="/ghost-box/lib/nuit.js?v=25"></script>
+<script src="/ghost-box/lib/wakelock.js?v=25"></script>
+<script src="/ghost-box/lib/media.js?v=25"></script>
+<script src="/ghost-box/lib/moteur.js?v=25"></script>
+<script src="/ghost-box/lib/capteurs.js?v=25"></script>
+<script src="/ghost-box/lib/mur.js?v=25"></script>
+<script src="/ghost-box/lib/voix.js?v=25"></script>
+<script src="/ghost-box/lib/historique.js?v=25"></script>
+<script src="/ghost-box/lib/tampon.js?v=25"></script>
+<script src="/ghost-box/lib/secours.js?v=25"></script>
+<script src="/ghost-box/lib/capture.js?v=25"></script>
 <script>
 /* ═══════════════════════════════════════════════════════════════════════
    Séance simple — un écran, un bouton.
@@ -355,7 +359,7 @@ let phase='arret', tPhase=0, tPret=0, armees=0, nMots=0, lastMot=-1e9;
    Déclaré ICI, avec le reste de l'état : la boucle de mesure démarre avant la
    fin du script, et une déclaration plus bas la ferait échouer. */
 const JOURNAL=[];
-let declencheur=null;
+let declencheur=null, chipOccupe=false;
 let vue='mots';
 let murMode = (()=>{ try{ return localStorage.getItem('gb-simple-mode')==='escalier'?'escalier':'instant'; }catch(e){ return 'instant'; } })();
 
@@ -552,6 +556,10 @@ function majInfos(now){
     if(w.ready && w.thr) pc=Math.max(pc, Math.min(999, w.z/w.thr*100)); });
   $('i5').innerHTML='Activité : <b>'+(armees? pc.toFixed(0)+' %' : '—')+'</b>';
   $('i5').className='ln'+(pc>=60?' al':'');
+
+  // la caméra n'ouvre pas toujours en même temps que les autres capteurs :
+  // la pastille se montre d'elle-même dès que le flux existe
+  if(!chipOccupe) majObjChip();
 
   const seuils=Object.values(W).filter(w=>w.ready).map(w=>w.thr);
   // « Sensibilité : réglée sur le lieu » ne tenait pas dans la colonne (mesuré :
@@ -896,10 +904,10 @@ async function allumerDetection(quoi, silencieux){
   if(!silencieux) $('silAide').textContent='Chargement du modèle (une seule fois)…';
   try{
     if(quoi==='sil'){
-      if(!POSE) POSE = await import('/ghost-box/lib/pose.js?v=24');
+      if(!POSE) POSE = await import('/ghost-box/lib/pose.js?v=25');
       await POSE.load(); silOn=true; silVoulu=true;
     } else {
-      if(!VIS) VIS = await import('/ghost-box/lib/visage.js?v=24');
+      if(!VIS) VIS = await import('/ghost-box/lib/visage.js?v=25');
       await VIS.load(); visOn=true; visVoulu=true;
     }
     $('squelette').classList.add('on'); $('nbPers').classList.add('on');
@@ -1006,10 +1014,10 @@ async function listerObjectifs(){
   });
   majObjChip();
 }
-async function choisirObjectif(i){
+async function choisirObjectif(i, muet){
   if(!B.fluxCamera()){
     $('lentilles').insertAdjacentHTML('beforeend',
-      '<span class="vide">la caméra n\'est pas ouverte — démarre la séance</span>'); return;
+      '<span class="vide">la caméra n\'est pas ouverte — démarre la séance</span>'); return false;
   }
   const ok = await B.changerCamera({video:{deviceId:{exact:lentilles[i].id}}, audio:false});
   if(ok){
@@ -1022,20 +1030,34 @@ async function choisirObjectif(i){
          else localStorage.removeItem('gb-objectif-rang'); }catch(e){}
     if(vue==='video') poserVideo();
     majObjChip();
-    $('legend').textContent='objectif : '+lentilles[i].nom+' — retenu pour les prochaines fois';
-  } else {
-    $('legend').textContent='cet objectif a refusé de s\'ouvrir — l\'ancien est gardé';
+    if(!muet) $('legend').textContent='objectif : '+lentilles[i].nom+' — retenu pour les prochaines fois';
   }
   majTiroir();
+  return ok;
 }
 /* le bouton ⟳ : passer à l'objectif suivant, sans ouvrir le tiroir — le geste
    le plus courant doit être le plus court. Deux exemplaires, le même geste :
    celui de la barre du haut, et la pastille posée SUR l'image. */
+function direChip(txt, ms){
+  $('objNom').textContent = txt;
+  if(ms) setTimeout(majObjChip, ms);
+}
 async function objectifSuivant(){
-  if(!B.fluxCamera()){ $('legend').textContent='la caméra n\'est pas ouverte — démarre la séance'; return; }
+  if(chipOccupe) return;
+  if(!B.fluxCamera()){ direChip('caméra fermée', 1600); return; }
   if(!lentilles.length) lentilles = await B.objectifs();
-  if(lentilles.length<2){ $('legend').textContent='un seul objectif sur cet appareil'; return; }
-  await choisirObjectif((iLentille+1) % lentilles.length);
+  if(lentilles.length<2){ direChip('un seul objectif', 1800); return; }
+  chipOccupe=true;
+  direChip('changement…');
+  // certains objectifs listés par le téléphone refusent de s'ouvrir (doublons,
+  // capteurs de profondeur). On passe au suivant au lieu de rester bloqué sur
+  // un bouton qui « ne fait rien » — et on le dit si aucun n'accepte.
+  let ok=false;
+  for(let n=1; n<lentilles.length && !ok; n++){
+    ok = await choisirObjectif((iLentille+n) % lentilles.length, true);
+  }
+  chipOccupe=false;
+  if(ok) majObjChip(); else direChip('aucun autre objectif', 2200);
 }
 $('objectif').onclick = objectifSuivant;
 $('objChip').onclick  = objectifSuivant;
@@ -1047,7 +1069,8 @@ function majObjChip(){
   $('objChip').classList.toggle('on', on);
   if(!on) return;
   const l = lentilles[iLentille];
-  $('objNom').textContent = l ? l.nom : 'objectif';
+  const nom = l ? l.nom : 'objectif';
+  if($('objNom').textContent !== nom) $('objNom').textContent = nom;
 }
 
 /* la vignette montre le dernier fichier gardé — sans l'ouvrir.
