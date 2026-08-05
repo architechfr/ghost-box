@@ -12,7 +12,7 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="Ghost Box">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<link rel="stylesheet" href="/ghost-box/lib/fonts.css?v=27">
+<link rel="stylesheet" href="/ghost-box/lib/fonts.css?v=28">
 <style>
 :root{
   --bench:#0A0F12;--panel:#1D262B;--sunk:#0A0F12;--line:#2C383F;--hair:#212B31;
@@ -49,10 +49,28 @@ button.on{background:var(--gold);color:#191204;border-color:var(--gold)}
 .clip .sub{font-family:var(--mono);font-size:11px;color:var(--dim);margin-top:3px}
 .clip .acts{display:flex;gap:6px;margin-top:7px;flex-wrap:wrap}
 .clip .acts button{padding:7px 9px;font-size:11px;letter-spacing:.1em;min-width:0;flex:none}
+/* ── choisir plusieurs fichiers ──
+   Après une séance d'une heure il y a des dizaines de fichiers, et le geste
+   réel n'est pas « tout garder » ni « tout jeter » : c'est « je garde ces
+   deux-là ». Tout cocher puis décocher deux cases est le chemin le plus court
+   vers ce geste — le faire à l'endroit demanderait trente appuis. */
+.clip .ck{flex:none;width:28px;height:28px;border-radius:50%;border:2px solid var(--line);
+  display:none;align-items:center;justify-content:center;margin-top:15px;
+  color:#06110C;font-size:15px;font-weight:700;line-height:1;background:transparent}
+body.choix .clip .ck{display:flex}
+body.choix .clip{cursor:pointer;padding-left:2px}
+.clip.sel{background:rgba(95,211,166,.08)}
+.clip.sel .ck{background:var(--signal);border-color:var(--signal)}
+#barSel{position:sticky;bottom:0;z-index:15;display:none;margin-top:10px;
+  background:rgba(10,15,18,.97);backdrop-filter:blur(8px);
+  border-top:1px solid var(--line);padding:8px 0 calc(8px + env(safe-area-inset-bottom, 0px))}
+body.choix #barSel{display:block}
+#barSel .row{margin-top:8px}
+#barSel .row:first-child{margin-top:0}
 .empty{color:var(--dim);font-size:13.5px;padding:14px 0;line-height:1.55}
 video.player{width:100%;margin-top:8px;border:1px solid var(--line);border-radius:3px;background:#000}
 </style>
-<link rel="stylesheet" href="/ghost-box/lib/ambiance.css?v=27">
+<link rel="stylesheet" href="/ghost-box/lib/ambiance.css?v=28">
 </head>
 <body>
 
@@ -74,18 +92,34 @@ video.player{width:100%;margin-top:8px;border:1px solid var(--line);border-radiu
     <button id="fSea">Séances</button>
   </div>
   <div id="secours"></div>
-  <div class="row"><button id="dlAll">Tout envoyer vers le téléphone</button></div>
+  <div class="row">
+    <button id="choix">Sélectionner</button>
+    <button id="dlAll">Tout envoyer vers le téléphone</button>
+  </div>
   <div id="lib"><p class="empty">Aucun enregistrement.</p></div>
   <div class="row"><button id="wipe" class="ko">Tout supprimer</button></div>
   <p id="libStat" class="ex"></p>
+
+  <div id="barSel">
+    <div class="row">
+      <button id="selTout">Tout cocher</button>
+      <button id="selAucun">Tout décocher</button>
+      <button id="selInv">Inverser</button>
+    </div>
+    <div class="row">
+      <button id="selDl">Envoyer</button>
+      <button id="selDel" class="ko">Supprimer</button>
+    </div>
+    <p class="ex" id="selAide"></p>
+  </div>
 </div>
 
 </div>
 
-<script src="/ghost-box/lib/nuit.js?v=27"></script>
-<script src="/ghost-box/lib/secours.js?v=27"></script>
-<script src="/ghost-box/lib/retour.js?v=27"></script>
-<script src="/ghost-box/lib/aide.js?v=27"></script>
+<script src="/ghost-box/lib/nuit.js?v=28"></script>
+<script src="/ghost-box/lib/secours.js?v=28"></script>
+<script src="/ghost-box/lib/retour.js?v=28"></script>
+<script src="/ghost-box/lib/aide.js?v=28"></script>
 <script>
 (() => {
 "use strict";
@@ -137,6 +171,79 @@ const dureeL=s=>{ s=Math.max(0,Math.round(s||0));
   const h=Math.floor(s/3600), m=Math.floor((s%3600)/60);
   return h? h+' h '+String(m).padStart(2,'0') : (m? m+' min' : s+' s'); };
 
+/* ══════════ choisir plusieurs fichiers ══════════
+   Le geste réel après une séance : « je garde ces deux-là, je jette le
+   reste ». Tout cocher puis décocher deux cases, plutôt que cocher trente
+   fois. La sélection survit aux filtres et aux rafraîchissements. */
+let choix=false, vusIds=[];
+const SEL=new Set();
+
+function ligneChoix(d, id){
+  const ck=document.createElement('div'); ck.className='ck'; ck.textContent='✓';
+  d.insertBefore(ck, d.firstChild);
+  if(SEL.has(id)) d.classList.add('sel');
+  d.addEventListener('click', e=>{
+    if(!choix) return;
+    // les commandes de la carte (Lire, Télécharger, Supprimer) gardent la main
+    if(e.target.closest('button, a, input, video, audio')) return;
+    if(SEL.has(id)) SEL.delete(id); else SEL.add(id);
+    d.classList.toggle('sel', SEL.has(id));
+    majSel();
+  });
+}
+
+function majSel(){
+  const n=SEL.size;
+  $('selDl').textContent  = 'Envoyer'   + (n? ' ('+n+')' : '');
+  $('selDel').textContent = 'Supprimer' + (n? ' ('+n+')' : '');
+  $('selDl').disabled = $('selDel').disabled = !n;
+  $('selAide').innerHTML = n
+    ? '<b>'+n+' coché'+(n>1?'s':'')+'</b> sur '+vusIds.length+' affiché'+(vusIds.length>1?'s':'')
+      +'. Appuie sur une carte pour la décocher.'
+    : 'Appuie sur une carte pour la cocher. <b>Tout cocher</b> ne coche que ce qui est '
+      + 'affiché par le filtre en cours — pour tout garder sauf deux fichiers : tout cocher, '
+      + 'décocher ces deux-là, puis Supprimer.';
+}
+
+$('choix').onclick=()=>{
+  choix=!choix;
+  document.body.classList.toggle('choix', choix);
+  $('choix').classList.toggle('on', choix);
+  $('choix').textContent = choix ? 'Quitter la sélection' : 'Sélectionner';
+  if(!choix) SEL.clear();
+  render();
+};
+$('selTout').onclick  = ()=>{ vusIds.forEach(i=>SEL.add(i)); render(); };
+$('selAucun').onclick = ()=>{ SEL.clear(); render(); };
+$('selInv').onclick   = ()=>{ vusIds.forEach(i=>{ if(SEL.has(i)) SEL.delete(i); else SEL.add(i); }); render(); };
+
+$('selDel').onclick=async ()=>{
+  const ids=[...SEL];
+  if(!ids.length) return;
+  if(!confirm('Supprimer '+ids.length+' fichier(s) ? Action définitive.')) return;
+  $('selDel').disabled=true;
+  for(let i=0;i<ids.length;i++){
+    try{ await dbDel(ids[i]); }catch(e){}
+    $('libStat').textContent='Suppression '+(i+1)+' / '+ids.length+'…';
+  }
+  SEL.clear();
+  $('libStat').textContent=ids.length+' fichier(s) supprimé(s).';
+  render();
+};
+$('selDl').onclick=async ()=>{
+  const ids=new Set(SEL);
+  if(!ids.size) return;
+  let all=[]; try{ all=await dbAll(); }catch(e){}
+  const liste=all.filter(c=>ids.has(c.id) && c.blob).sort((a,b)=>a.id-b.id);
+  if(!liste.length){ $('libStat').textContent='Rien à envoyer dans la sélection (une fiche de séance n\'est pas un fichier).'; return; }
+  for(let i=0;i<liste.length;i++){
+    dl(liste[i].blob, liste[i].nom);
+    $('libStat').textContent='Envoi '+(i+1)+' / '+liste.length+'…';
+    await new Promise(r=>setTimeout(r,700));   // le navigateur refuse les rafales
+  }
+  $('libStat').textContent='Terminé — les fichiers sont dans les téléchargements de l\'appareil.';
+};
+
 async function render(){
   let all=[]; try{ all=await dbAll(); }catch(e){}
   all=all.filter(c=>!c.secours);           // les morceaux d'une prise en cours ne sont pas des fichiers
@@ -148,6 +255,13 @@ async function render(){
     filtre==='seance' ? estSeance(c) :
     (!estPhoto(c) && !estAudio(c) && !estSeance(c)));
   $('cnt').textContent = all.length? all.length+' fichier'+(all.length>1?'s':'') : '';
+  // ce qui est AFFICHÉ : c'est sur cet ensemble qu'agit « Tout cocher »
+  vusIds = vus.map(c=>c.id);
+  // un fichier supprimé ne doit pas rester coché dans l'ombre
+  const vivants=new Set(all.map(c=>c.id));
+  [...SEL].forEach(i=>{ if(!vivants.has(i)) SEL.delete(i); });
+  $('choix').parentElement.style.display = all.length? '' : 'none';
+  majSel();
   const box=$('lib');
   // rien à supprimer ni à envoyer : ces boutons n'ont pas à exister
   $('wipe').parentElement.style.display = all.length? '' : 'none';
@@ -191,6 +305,7 @@ async function render(){
       const bx=document.createElement('button'); bx.textContent='Supprimer'; bx.className='ko';
       bx.onclick=async ()=>{ if(!confirm('Supprimer cette fiche de séance ?')) return; await dbDel(c.id); render(); };
       acts.appendChild(bo); acts.appendChild(bj); acts.appendChild(bx);
+      ligneChoix(d, c.id);
       box.appendChild(d);
       return;
     }
@@ -235,6 +350,7 @@ async function render(){
         d.querySelector('.meta').appendChild(p); };
       acts.appendChild(bj);
     }
+    ligneChoix(d, c.id);
     box.appendChild(d);
   });
   let quota='';
@@ -293,6 +409,6 @@ secours(); render();
 })();
 </script>
 <script>if('serviceWorker' in navigator){window.addEventListener('load',function(){navigator.serviceWorker.register('/ghost-box/sw.js').catch(function(){});});}</script>
-<script src="/ghost-box/lib/fullscreen.js?v=27"></script>
+<script src="/ghost-box/lib/fullscreen.js?v=28"></script>
 </body>
 </html>
