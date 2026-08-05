@@ -12,7 +12,7 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="Ghost Box">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<link rel="stylesheet" href="/ghost-box/lib/fonts.css?v=23">
+<link rel="stylesheet" href="/ghost-box/lib/fonts.css?v=24">
 <style>
 :root{
   --bench:#0A0F12;--panel:#141B20;--line:#2C383F;--hair:#1E262B;
@@ -50,7 +50,12 @@ body{margin:0;background:#000;color:var(--text);font-family:var(--body);
    Deux verrous, pas un : les rangées ont le droit de rétrécir, et la marque
    aussi — `object-fit:contain` lui garde ses proportions. */
 #app > *{min-width:0}
-#top img{min-width:0;max-width:100%}
+/* et pas seulement les rangées : le même piège existe à chaque niveau. Un
+   conteneur en flex refuse lui aussi de descendre sous la largeur de son
+   contenu, donc on désarme la règle partout où une rangée pourrait pousser. */
+#top > *,#scene > *,#infos .col,#bottom > *{min-width:0}
+#app img,#app canvas,#app video{max-width:100%}
+#top img{min-width:0}
 
 /* ── barre du haut : la marque, et un seul accès aux réglages ── */
 #top{display:flex;align-items:center;gap:10px;padding:14px 14px 10px}
@@ -77,6 +82,18 @@ body{margin:0;background:#000;color:var(--text);font-family:var(--body);
 #nbPers.on{display:block}
 #legend{flex:none;text-align:center;font-family:var(--mono);font-size:11.5px;color:#5A686F;
   padding:9px 4px 3px;letter-spacing:.04em}
+/* ── changer d'objectif SANS ouvrir le tiroir ──
+   Le bouton ⟳ de la barre du haut existait déjà, mais il était le premier à
+   disparaître quand l'écran se décalait — donc introuvable exactement quand on
+   en avait besoin. Celui-ci est posé SUR l'image, à l'endroit qu'on regarde,
+   et il dit quel objectif est en cours au lieu de le laisser deviner. */
+#objChip{position:absolute;left:14px;bottom:42px;z-index:4;display:none;
+  align-items:center;gap:7px;font-family:var(--mono);font-size:11.5px;color:var(--text);
+  background:rgba(5,9,12,.86);border:1px solid var(--line);border-radius:9px;
+  padding:8px 11px;min-height:38px;cursor:pointer;letter-spacing:.04em;
+  text-transform:none;font-weight:400}
+#objChip.on{display:inline-flex}
+#objChip .fl{color:var(--signal);font-size:14px;line-height:1}
 
 /* ── deux colonnes de chiffres : tout ce qu'il faut savoir, rien de plus ── */
 #infos{margin:12px 14px 0;border-radius:16px;background:var(--panel);border:1px solid var(--line);
@@ -145,6 +162,23 @@ body{margin:0;background:#000;color:var(--text);font-family:var(--body);
    l'utilisateur doit voir que ce n'est pas lui qui l'a coupé */
 #tiroir .opts button.ko{border-color:var(--flag);color:var(--flag)}
 #tiroir .opts .vide{font-family:var(--mono);font-size:11.5px;color:#5A686F;padding:6px 0}
+/* ── le journal et les voies : des lignes, pas des boutons ──
+   C'est ici qu'on répond à « quel capteur, et de combien ? ». Une colonne par
+   ligne plutôt qu'une ligne compressée : sur un téléphone, un texte de mesure
+   coupé ne sert à rien. */
+#tiroir .jr{display:flex;flex-direction:column;gap:6px}
+#tiroir .jr .l{display:flex;flex-direction:column;gap:3px;font-family:var(--mono);font-size:11.5px;
+  border:1px solid var(--hair);border-radius:9px;padding:9px 11px;background:var(--panel);color:#7E8E96}
+#tiroir .jr .l .h{display:flex;justify-content:space-between;gap:10px;align-items:baseline}
+#tiroir .jr .l .m{font-family:var(--legend);text-transform:uppercase;letter-spacing:.1em;
+  font-size:15px;color:var(--gold)}
+#tiroir .jr .l .q{font-size:10px;color:#5A686F}
+#tiroir .jr .l .d{color:#A9B7BE;line-height:1.5}
+#tiroir .jr .l .d b{color:var(--text);font-weight:500}
+#tiroir .jr .l.bouge{border-color:rgba(226,87,76,.45)}
+#tiroir .jr .l.bouge .d b{color:var(--flag)}
+#tiroir .jr .l.chaud{border-color:rgba(233,180,76,.5)}
+#tiroir .jr .vide{font-family:var(--mono);font-size:11.5px;color:#5A686F;padding:6px 0}
 #tiroir .opts.liens{display:grid;grid-template-columns:1fr 1fr}
 #tiroir .opts.liens a{display:block;text-decoration:none;font-size:13px;color:var(--text);
   border:1px solid var(--line);background:var(--panel);border-radius:10px;padding:13px 12px;min-height:46px}
@@ -168,7 +202,7 @@ body{margin:0;background:#000;color:var(--text);font-family:var(--body);
   #bottom{padding:10px 22px 4px}#seg{padding:4px 0 10px}
 }
 </style>
-<link rel="stylesheet" href="/ghost-box/lib/ambiance.css?v=23">
+<link rel="stylesheet" href="/ghost-box/lib/ambiance.css?v=24">
 </head>
 <body>
 <div id="app">
@@ -184,6 +218,7 @@ body{margin:0;background:#000;color:var(--text);font-family:var(--body);
 
 <div id="scene">
   <div id="vue"><div id="mur"></div><canvas id="squelette"></canvas><span id="nbPers"></span><span id="recPt"></span></div>
+  <button id="objChip" type="button" aria-label="Changer d'objectif"><span class="fl">⟳</span><span id="objNom">objectif</span></button>
   <div id="legend">appuie sur le bouton pour commencer</div>
   <div id="msg"><p></p></div>
 </div>
@@ -219,6 +254,15 @@ body{margin:0;background:#000;color:var(--text);font-family:var(--body);
 <!-- Tiroir : rien n'est retiré du produit, tout est simplement rangé. -->
 <div id="tiroir">
   <div class="poignee" id="fermer">⌄</div>
+
+  <div class="tt">Ce qui a fait sortir chaque mot</div>
+  <div id="journal" class="jr"><span class="vide">aucun mot pour l'instant — c'est le résultat le plus fréquent</span></div>
+  <p class="aide">Chaque mot est daté et rattaché à <b>la voie qui l'a fait sortir</b>, avec l'écart mesuré et le seuil appris sur ce lieu. « 9,4 σ pour un seuil de 6,5 » veut dire que la mesure a dépassé de moitié tout ce que le bruit de ce lieu savait produire pendant l'apprentissage. <b>Si la voie est l'accéléromètre, le gyroscope ou l'inclinaison, c'est que l'appareil a bougé</b> — une main, une table qui vibre, une voiture qui passe. Si c'est la caméra, c'est que la lumière ou l'image a changé : quelqu'un passe, une porte s'ouvre, un nuage. Ces mots-là ne valent rien de plus que leur cause.</p>
+
+  <div class="tt">Les voies, en direct</div>
+  <div id="voies" class="jr"><span class="vide">démarre la séance pour voir les voies</span></div>
+  <p class="aide">Chaque voie armée, sa valeur du moment, son écart et son seuil. C'est ce qu'il faut regarder <b>avant</b> qu'un mot sorte : une voie qui monte souvent est une voie agitée par le lieu, pas par autre chose. Poser l'appareil sur quelque chose de stable suffit à faire taire les trois voies de mouvement.</p>
+
   <div class="tt">Objectif</div>
   <div class="opts" id="lentilles"><span class="vide">démarre la séance pour voir les objectifs</span></div>
   <p class="aide">L'objectif choisi est <b>mémorisé</b> et repris à la séance suivante. Par défaut, l'appareil ouvre la caméra <b>arrière</b>.</p>
@@ -267,17 +311,17 @@ body{margin:0;background:#000;color:var(--text);font-family:var(--body);
 <div id="voile"></div>
 </div><!-- #app -->
 
-<script src="/ghost-box/lib/nuit.js?v=23"></script>
-<script src="/ghost-box/lib/wakelock.js?v=23"></script>
-<script src="/ghost-box/lib/media.js?v=23"></script>
-<script src="/ghost-box/lib/moteur.js?v=23"></script>
-<script src="/ghost-box/lib/capteurs.js?v=23"></script>
-<script src="/ghost-box/lib/mur.js?v=23"></script>
-<script src="/ghost-box/lib/voix.js?v=23"></script>
-<script src="/ghost-box/lib/historique.js?v=23"></script>
-<script src="/ghost-box/lib/tampon.js?v=23"></script>
-<script src="/ghost-box/lib/secours.js?v=23"></script>
-<script src="/ghost-box/lib/capture.js?v=23"></script>
+<script src="/ghost-box/lib/nuit.js?v=24"></script>
+<script src="/ghost-box/lib/wakelock.js?v=24"></script>
+<script src="/ghost-box/lib/media.js?v=24"></script>
+<script src="/ghost-box/lib/moteur.js?v=24"></script>
+<script src="/ghost-box/lib/capteurs.js?v=24"></script>
+<script src="/ghost-box/lib/mur.js?v=24"></script>
+<script src="/ghost-box/lib/voix.js?v=24"></script>
+<script src="/ghost-box/lib/historique.js?v=24"></script>
+<script src="/ghost-box/lib/tampon.js?v=24"></script>
+<script src="/ghost-box/lib/secours.js?v=24"></script>
+<script src="/ghost-box/lib/capture.js?v=24"></script>
 <script>
 /* ═══════════════════════════════════════════════════════════════════════
    Séance simple — un écran, un bouton.
@@ -305,6 +349,13 @@ const APPREND=45000, SETTLE=60000, RAFALE=60000;
 const B=GBCapteurs.creer();
 let MUR=null, W={}, ATT={}, H=null;
 let phase='arret', tPhase=0, tPret=0, armees=0, nMots=0, lastMot=-1e9;
+/* Le journal : une ligne par mot, avec ce qui l'a fait sortir. C'est le seul
+   moyen de répondre à la question qui compte — « quel capteur, et de combien ? »
+   Un mot qu'on ne peut pas remonter jusqu'à sa mesure ne vaut rien.
+   Déclaré ICI, avec le reste de l'état : la boucle de mesure démarre avant la
+   fin du script, et une déclaration plus bas la ferait échouer. */
+const JOURNAL=[];
+let declencheur=null;
 let vue='mots';
 let murMode = (()=>{ try{ return localStorage.getItem('gb-simple-mode')==='escalier'?'escalier':'instant'; }catch(e){ return 'instant'; } })();
 
@@ -345,7 +396,10 @@ async function demarrer(){
     return;
   }
   if(vue==='video') poserVideo();
-  listerObjectifs();
+  // la pastille dira quel objectif tourne — inutile de le mettre dans la
+  // légende, que la phase d'apprentissage réécrit dans la seconde qui suit
+  await listerObjectifs();
+  majObjChip();
   // ── détection allumée d'office : c'est le mode où l'on ne règle rien ──
   // Mais un allumage silencieux qui ÉCHOUE silencieusement est un mensonge :
   // le modèle vient d'un CDN et, sans réseau la première fois, il ne charge
@@ -386,6 +440,7 @@ async function arreter(){
   phase='arret'; armees=0; W={};
   silOn=false; visOn=false;
   $('squelette').classList.remove('on'); $('nbPers').classList.remove('on');
+  $('objChip').classList.remove('on');
   $('go').className='';
   $('legend').textContent='séance terminée — appuie pour recommencer';
   poserMur();
@@ -426,7 +481,14 @@ function mesure(){
     if(tireur && (now-tPret)>=SETTLE && (now-lastMot)>=RAFALE && MUR && !MUR.estFige()){
       lastMot=now;
       const w=W[tireur.code];
-      MUR.figer(tireur.label+' · écart '+w.z.toFixed(1)+' σ', false, tAtt);
+      // ── LA CAUSE, RELEVÉE À L'INSTANT DU TIR ──
+      // Sans elle, un mot sorti est un mot orphelin : on ne peut ni le
+      // comprendre ni le contester. Ce que l'appareil sait, il doit le dire.
+      declencheur = { voie:tireur.label, famille:tireur.famille, code:tireur.code,
+        valeur:(tireur.val!=null ? +(+tireur.val).toFixed(2) : null), unite:tireur.unite||'',
+        sigma:+w.z.toFixed(1), seuil:+(w.thr||0).toFixed(1),
+        relevages:w.raises||0, t:Date.now() };
+      MUR.figer(tireur.label+' · écart '+w.z.toFixed(1)+' σ / seuil '+(w.thr||0).toFixed(1)+' σ', false, tAtt);
     }
   }
 
@@ -437,9 +499,19 @@ mesure();
 
 function motSorti(d){
   nMots++;
+  const j = Object.assign({
+    heure:new Date().toLocaleTimeString('fr-FR'),
+    mot:d.mot, colonne:d.colonne, maniere:d.mode||murMode,
+    retard_ms:d.retard_ms
+  }, declencheur||{voie:'—', sigma:null, seuil:null});
+  JOURNAL.unshift(j); declencheur=null;
+  if(JOURNAL.length>60) JOURNAL.length=60;
+  majJournal();
   $('phrase').textContent = MUR? MUR.phrase().join(' ') : '';
   if(window.GBVoix) GBVoix.dire(d.mot);
-  if(H) H.noter('mot', d.mot+' · '+d.colonne);
+  if(H) H.noter('mot', d.mot+' · '+d.colonne+' · '+j.voie
+    +(j.sigma!=null ? ' · '+j.sigma+' σ / seuil '+j.seuil+' σ' : '')
+    +(j.valeur!=null ? ' · '+j.valeur+' '+(j.unite||'') : ''));
   if(navigator.vibrate) navigator.vibrate(90);
   // un mot retenu EST l'événement important de cette application : on garde
   // la photo et les secondes qui l'ont précédé, sans rien demander
@@ -540,10 +612,65 @@ function tiroir(on){
   $('tiroir').classList.toggle('on', on);
   $('voile').classList.toggle('on', on);
   if(on) majTiroir();
+  battreTiroir(on);
 }
+/* la phrase est la question : « d'où viennent ces mots ? ». Appuyer dessus
+   ouvre la réponse, au lieu d'obliger à chercher dans le tiroir. */
+$('phrase').onclick=()=>{ if(JOURNAL.length) tiroir(true); };
+$('phrase').style.cursor='pointer';
 $('chev').onclick=()=>tiroir(true);
 $('fermer').onclick=()=>tiroir(false);
 $('voile').onclick=()=>tiroir(false);
+
+/* ── le journal : un mot, une cause, en toutes lettres ── */
+const MOUVEMENT = ['mvt_accel','mvt_gyro','mvt_tilt'];
+// virgule décimale : le reste des textes de l'application est en français,
+// « 9.4 σ » au milieu d'une phrase française fait tache
+const nb = (x,d)=> (x==null||!isFinite(x)) ? '—' : (+x).toFixed(d==null?1:d).replace('.',',');
+function majJournal(){
+  const box=$('journal'); if(!box) return;
+  if(!JOURNAL.length){
+    box.innerHTML='<span class="vide">aucun mot pour l\'instant — c\'est le résultat le plus fréquent</span>';
+    return;
+  }
+  box.innerHTML = JOURNAL.map(j=>{
+    // nommer sans détour ce qui s'est passé : « l'appareil a bougé » est une
+    // information, « mvt_accel 9,4 σ » n'en est pas une pour la plupart des gens
+    const bouge = MOUVEMENT.indexOf(j.code)>=0;
+    const cam   = j.code==='cam_lum' || j.code==='cam_diff';
+    const quoi  = bouge ? '<b>l\'appareil a bougé</b>'
+                : cam   ? '<b>l\'image a changé</b>'
+                : j.famille==='micro' ? '<b>un son</b>'
+                : j.famille==='magnetique' ? '<b>le champ magnétique a varié</b>' : '';
+    const mesure = (j.sigma!=null)
+      ? esc(j.voie)+' · <b>'+nb(j.sigma)+' σ</b> pour un seuil de '+nb(j.seuil)+' σ'
+        + (j.valeur!=null ? ' · '+nb(j.valeur,2)+' '+esc(j.unite||'') : '')
+      : 'cause non relevée';
+    return '<div class="l'+(bouge?' bouge':'')+'">'
+      + '<div class="h"><span class="m">'+esc(j.mot)+'</span>'
+      + '<span class="q">'+esc(j.heure)+' · '+esc(j.colonne||'')+'</span></div>'
+      + '<div class="d">'+mesure+(quoi? ' — '+quoi : '')+'</div></div>';
+  }).join('');
+}
+
+/* ── les voies, en direct : voir l'agitation AVANT qu'un mot sorte ── */
+function majVoies(){
+  const box=$('voies'); if(!box) return;
+  const L=B.voies().filter(v=>v.vivante);
+  if(!L.length){ box.innerHTML='<span class="vide">démarre la séance pour voir les voies</span>'; return; }
+  box.innerHTML = L.map(v=>{
+    const w=W[v.code];
+    const z = (w && w.ready && w.z!=null) ? w.z : null;
+    const t = (w && w.thr) ? w.thr : null;
+    const chaud = (z!=null && t) && z >= t*0.6;
+    const val = (v.val!=null) ? nb(v.val)+' '+esc(v.unite||'') : '—';
+    const ecart = (z!=null && t) ? '<b>'+nb(z)+' σ</b> / seuil '+nb(t)+' σ'
+                : (w ? 'en apprentissage' : '—');
+    return '<div class="l'+(chaud?' chaud':'')+'">'
+      + '<div class="h"><span class="d">'+esc(v.label)+'</span><span class="q">'+val+'</span></div>'
+      + '<div class="d">'+ecart+'</div></div>';
+  }).join('');
+}
 
 function majTiroir(){
   $('oInstant').className = murMode==='instant' ? 'on' : '';
@@ -561,7 +688,15 @@ function majTiroir(){
     : (visVoulu && detectionRatee ? 'Visage — indispo.' : 'Visage');
   $('oVoix').className = (window.GBVoix && GBVoix.actif()) ? 'on' : '';
   $('oNuit').className = (window.GBNuit && GBNuit.actif()) ? 'on' : '';
+  majJournal(); majVoies();
   listerObjectifs();
+}
+/* les voies bougent : tant que le tiroir est ouvert, elles se rafraîchissent.
+   Un tableau figé au moment de l'ouverture aurait menti dès la seconde suivante. */
+let battTiroir=0;
+function battreTiroir(on){
+  if(on && !battTiroir) battTiroir=setInterval(majVoies, 700);
+  if(!on && battTiroir){ clearInterval(battTiroir); battTiroir=0; }
 }
 $('oInstant').onclick=()=>{ murMode='instant'; if(MUR) MUR.mode('instant');
   try{ localStorage.setItem('gb-simple-mode','instant'); }catch(e){} majTiroir(); };
@@ -658,6 +793,9 @@ function conditions(extra){
               relevages_temoin:w.raises||0}; });
   return Object.assign({
     mode:'séance simple', lieu:'—',
+    // le journal voyage AVEC le fichier : en le rouvrant six mois plus tard,
+    // on doit encore pouvoir dire quelle voie a fait sortir quel mot
+    journal: JOURNAL.slice(0, 20),
     veille_s: phase==='veille' ? Math.round((performance.now()-tPret)/1000) : 0,
     voies_armees: armees, capteurs: voies,
     silhouette: silOn, maniere: murMode,
@@ -758,10 +896,10 @@ async function allumerDetection(quoi, silencieux){
   if(!silencieux) $('silAide').textContent='Chargement du modèle (une seule fois)…';
   try{
     if(quoi==='sil'){
-      if(!POSE) POSE = await import('/ghost-box/lib/pose.js?v=23');
+      if(!POSE) POSE = await import('/ghost-box/lib/pose.js?v=24');
       await POSE.load(); silOn=true; silVoulu=true;
     } else {
-      if(!VIS) VIS = await import('/ghost-box/lib/visage.js?v=23');
+      if(!VIS) VIS = await import('/ghost-box/lib/visage.js?v=24');
       await VIS.load(); visOn=true; visVoulu=true;
     }
     $('squelette').classList.add('on'); $('nbPers').classList.add('on');
@@ -866,6 +1004,7 @@ async function listerObjectifs(){
     b.onclick=()=>choisirObjectif(i);
     box.appendChild(b);
   });
+  majObjChip();
 }
 async function choisirObjectif(i){
   if(!B.fluxCamera()){
@@ -882,19 +1021,34 @@ async function choisirObjectif(i){
     try{ if(lentilles[i].rang) localStorage.setItem('gb-objectif-rang', String(lentilles[i].rang));
          else localStorage.removeItem('gb-objectif-rang'); }catch(e){}
     if(vue==='video') poserVideo();
+    majObjChip();
     $('legend').textContent='objectif : '+lentilles[i].nom+' — retenu pour les prochaines fois';
   } else {
     $('legend').textContent='cet objectif a refusé de s\'ouvrir — l\'ancien est gardé';
   }
   majTiroir();
 }
-/* le bouton ⟳ de la barre du haut : passer à l'objectif suivant, sans ouvrir
-   le tiroir — le geste le plus courant doit être le plus court */
-$('objectif').onclick=async ()=>{
+/* le bouton ⟳ : passer à l'objectif suivant, sans ouvrir le tiroir — le geste
+   le plus courant doit être le plus court. Deux exemplaires, le même geste :
+   celui de la barre du haut, et la pastille posée SUR l'image. */
+async function objectifSuivant(){
+  if(!B.fluxCamera()){ $('legend').textContent='la caméra n\'est pas ouverte — démarre la séance'; return; }
   if(!lentilles.length) lentilles = await B.objectifs();
   if(lentilles.length<2){ $('legend').textContent='un seul objectif sur cet appareil'; return; }
   await choisirObjectif((iLentille+1) % lentilles.length);
-};
+}
+$('objectif').onclick = objectifSuivant;
+$('objChip').onclick  = objectifSuivant;
+
+/* la pastille dit quel objectif tourne. Sans elle, « ce n'est pas la bonne
+   caméra » n'a pas de réponse : on ne sait même pas laquelle est en cours. */
+function majObjChip(){
+  const on = !!B.fluxCamera();
+  $('objChip').classList.toggle('on', on);
+  if(!on) return;
+  const l = lentilles[iLentille];
+  $('objNom').textContent = l ? l.nom : 'objectif';
+}
 
 /* la vignette montre le dernier fichier gardé — sans l'ouvrir.
    Rafraîchie après chaque capture : figée au chargement, elle aurait menti
