@@ -12,7 +12,7 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="Ghost Box">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<link rel="stylesheet" href="/ghost-box/lib/fonts.css?v=30">
+<link rel="stylesheet" href="/ghost-box/lib/fonts.css?v=31">
 <style>
 :root{
   --bench:#0A0F12;--panel:#141B20;--line:#2C383F;--hair:#1E262B;
@@ -202,6 +202,29 @@ body{margin:0;background:#000;color:var(--text);font-family:var(--body);
   border:1px solid var(--line);background:var(--panel);border-radius:10px;padding:13px 12px;min-height:46px}
 #tiroir .aide{font-size:12px;line-height:1.55;color:var(--dim);margin:9px 0 0}
 #tiroir .aide a{color:var(--signal)}
+/* ── le panneau de liaison : un écran à la fois, une consigne à la fois ── */
+#croisePanel{position:fixed;inset:0;z-index:90;background:rgba(5,9,12,.97);display:none;
+  align-items:center;justify-content:center;padding:20px}
+#croisePanel.on{display:flex}
+.cp-in{width:min(92vw,420px);max-height:92vh;overflow-y:auto;display:flex;flex-direction:column;
+  gap:12px;align-items:center;text-align:center}
+.cp-titre{font-family:var(--legend);text-transform:uppercase;letter-spacing:.16em;
+  font-size:13px;color:var(--signal);font-weight:600}
+.cp-txt{font-size:13.5px;line-height:1.55;color:#AEBBC2;margin:0}
+.cp-txt b{color:var(--paper)}
+/* le QR sur fond BLANC : un QR sombre sur fond sombre ne se lit pas, et le
+   mode nuit rouge le rendrait illisible — le filtre s'applique à lui aussi,
+   c'est le prix d'un filtre global, mais le contraste reste suffisant */
+.cp-qr{display:none;background:#FFF;border-radius:10px;padding:10px}
+.cp-qr.on{display:block}
+.cp-qr img{display:block;width:min(70vw,300px);height:auto;image-rendering:pixelated}
+#cpVid{display:none;width:min(80vw,340px);border-radius:10px;border:1px solid var(--line);background:#000}
+#cpVid.on{display:block}
+.cp-btns{display:flex;gap:8px;width:100%}
+.cp-btns button{flex:1;font-family:var(--body);font-size:13.5px;font-weight:500;
+  border:1px solid var(--line);background:var(--panel);color:var(--text);border-radius:10px;
+  padding:13px 10px;min-height:46px;cursor:pointer;text-transform:none;letter-spacing:0}
+.cp-btns #cpAction{border-color:var(--signal);color:var(--signal)}
 #voile{position:fixed;inset:0;z-index:79;background:rgba(0,0,0,.55);display:none}
 #voile.on{display:block}
 
@@ -261,7 +284,7 @@ body{margin:0;background:#000;color:var(--text);font-family:var(--body);
 }
 
 </style>
-<link rel="stylesheet" href="/ghost-box/lib/ambiance.css?v=30">
+<link rel="stylesheet" href="/ghost-box/lib/ambiance.css?v=31">
 </head>
 <body>
 <div id="app">
@@ -359,6 +382,13 @@ body{margin:0;background:#000;color:var(--text);font-family:var(--body);
     <button id="oVoix" type="button">Voix</button>
     <button id="oNuit" type="button">Mode nuit</button>
   </div>
+  <div class="tt">Témoin croisé — un deuxième téléphone</div>
+  <div class="opts">
+    <button id="oLier" type="button">Créer la liaison</button>
+    <button id="oRejoindre" type="button">Rejoindre</button>
+  </div>
+  <p class="aide" id="croiseEtat">Deux téléphones dans la même pièce, reliés <b>directement</b> — sans internet, il suffit du même WiFi ou d'un partage de connexion. Chacun mesure de son côté ; quand les deux retiennent quelque chose <b>dans la même seconde et demie</b>, c'est une <b>coïncidence croisée</b> : un événement qui ne peut plus s'expliquer par un seul appareil. Rien ne quitte les deux téléphones.</p>
+
   <div class="tt">Les autres modes</div>
   <div class="opts liens">
     <a href="../seance/">Séance caméra</a>
@@ -371,21 +401,37 @@ body{margin:0;background:#000;color:var(--text);font-family:var(--body);
   </div>
 </div>
 
+<!-- La liaison entre deux téléphones : trois QR, aucun serveur. -->
+<div id="croisePanel">
+  <div class="cp-in">
+    <div class="cp-titre" id="cpTitre">Témoin croisé</div>
+    <p class="cp-txt" id="cpTxt"></p>
+    <div class="cp-qr" id="cpQrBox"><img id="cpQr" alt=""></div>
+    <video id="cpVid" playsinline muted></video>
+    <div class="cp-btns">
+      <button id="cpAction" type="button">Continuer</button>
+      <button id="cpFermer" type="button">Fermer</button>
+    </div>
+  </div>
+</div>
+
 <div id="voile"></div>
 </div><!-- #app -->
 
-<script src="/ghost-box/lib/nuit.js?v=30"></script>
-<script src="/ghost-box/lib/wakelock.js?v=30"></script>
-<script src="/ghost-box/lib/media.js?v=30"></script>
-<script src="/ghost-box/lib/moteur.js?v=30"></script>
-<script src="/ghost-box/lib/capteurs.js?v=30"></script>
-<script src="/ghost-box/lib/objectif.js?v=30"></script>
-<script src="/ghost-box/lib/mur.js?v=30"></script>
-<script src="/ghost-box/lib/voix.js?v=30"></script>
-<script src="/ghost-box/lib/historique.js?v=30"></script>
-<script src="/ghost-box/lib/tampon.js?v=30"></script>
-<script src="/ghost-box/lib/secours.js?v=30"></script>
-<script src="/ghost-box/lib/capture.js?v=30"></script>
+<script src="/ghost-box/lib/nuit.js?v=31"></script>
+<script src="/ghost-box/lib/wakelock.js?v=31"></script>
+<script src="/ghost-box/lib/media.js?v=31"></script>
+<script src="/ghost-box/lib/moteur.js?v=31"></script>
+<script src="/ghost-box/lib/capteurs.js?v=31"></script>
+<script src="/ghost-box/lib/objectif.js?v=31"></script>
+<script src="/ghost-box/lib/qr.js?v=31"></script>
+<script src="/ghost-box/lib/croise.js?v=31"></script>
+<script src="/ghost-box/lib/mur.js?v=31"></script>
+<script src="/ghost-box/lib/voix.js?v=31"></script>
+<script src="/ghost-box/lib/historique.js?v=31"></script>
+<script src="/ghost-box/lib/tampon.js?v=31"></script>
+<script src="/ghost-box/lib/secours.js?v=31"></script>
+<script src="/ghost-box/lib/capture.js?v=31"></script>
 <script>
 /* ═══════════════════════════════════════════════════════════════════════
    Séance simple — un écran, un bouton.
@@ -582,6 +628,10 @@ function motSorti(d){
   JOURNAL.unshift(j); declencheur=null;
   if(JOURNAL.length>60) JOURNAL.length=60;
   majJournal();
+  // l'autre appareil, s'il est là, reçoit l'événement avec son INSTANT :
+  // c'est lui qui décide si le sien tombe dans la même fenêtre
+  try{ GBCroise.signaler({ quoi:'mot', detail:d.mot, voie:j.voie||'', sigma:j.sigma,
+    quand:(j.t||Date.now()) - (d.retard_ms||0) }); }catch(e){}
   $('phrase').textContent = MUR? MUR.phrase().join(' ') : '';
   if(window.GBVoix) GBVoix.dire(d.mot);
   if(H) H.noter('mot', d.mot+' · '+d.colonne+' · '+j.voie
@@ -697,6 +747,135 @@ function poserVideo(){
 $('mMots').onclick=()=>{ if(vue!=='mots') poserMur(); };
 $('mVideo').onclick=()=>{ if(vue!=='video') poserVideo(); };
 
+/* ═══════════ témoin croisé : deux téléphones, chacun juge de l'autre ═══════════
+   La liaison est DIRECTE (WebRTC, lib/croise.js) : rien ne quitte les deux
+   appareils. La présentation se fait en trois QR — offre, réponse, lecture —
+   parce qu'un QR n'a besoin ni de réseau, ni de compte, ni de clavier.
+   Une coïncidence croisée est traitée comme CE QUI COMPTE : elle entre au
+   journal, dans l'historique, et déclenche la capture automatique. */
+let scanArret=null, nCoincidences=0;
+function cpOuvrir(){ $('croisePanel').classList.add('on'); }
+function cpFermer(){
+  $('croisePanel').classList.remove('on');
+  if(scanArret){ scanArret(); scanArret=null; }
+}
+$('cpFermer').onclick=cpFermer;
+
+function cpQr(texte){
+  const q=qrcode(0,'L'); q.addData(texte); q.make();
+  $('cpQr').src=q.createDataURL(4,2);
+  $('cpQrBox').classList.add('on'); $('cpVid').classList.remove('on');
+}
+/* lire un QR avec la caméra. BarcodeDetector est natif sur Chrome Android ;
+   s'il manque, on le DIT plutôt que de montrer un scanner qui ne trouve rien. */
+async function cpScanner(surLecture){
+  if(!GBCroise.scanDispo()){
+    $('cpTxt').innerHTML='<b style="color:var(--flag)">Ce navigateur ne sait pas lire les QR</b> — il faut Chrome (Android). Tout le reste de la séance fonctionne.';
+    return;
+  }
+  let flux=null, propre=false;
+  const vElem=$('cpVid');
+  try{
+    // si la séance tourne, la caméra est déjà ouverte : on lit dans son flux
+    const dejaOuvert = B.fluxCamera();
+    if(dejaOuvert){ flux=dejaOuvert; }
+    else { flux=await navigator.mediaDevices.getUserMedia({video:{facingMode:{ideal:'environment'}}}); propre=true; }
+    vElem.srcObject=flux; await vElem.play();
+    vElem.classList.add('on'); $('cpQrBox').classList.remove('on');
+  }catch(e){
+    $('cpTxt').innerHTML='<b style="color:var(--flag)">Caméra indisponible</b> — '+(window.GBMedia?GBMedia.explain(e):'accès refusé.');
+    return;
+  }
+  const det=new BarcodeDetector({formats:['qr_code']});
+  let vivant=true;
+  scanArret=()=>{ vivant=false;
+    vElem.classList.remove('on'); vElem.srcObject=null;
+    if(propre && flux){ try{ flux.getTracks().forEach(t=>t.stop()); }catch(e){} } };
+  (async function boucle(){
+    while(vivant){
+      try{
+        const r=await det.detect(vElem);
+        if(r && r.length && r[0].rawValue){ const v=r[0].rawValue; scanArret(); scanArret=null; surLecture(v); return; }
+      }catch(e){}
+      await new Promise(r2=>setTimeout(r2,240));
+    }
+  })();
+}
+
+/* ── côté POSTE : créer la liaison ── */
+$('oLier').onclick=async ()=>{
+  if(!GBCroise.dispo()){ $('croiseEtat').innerHTML='<b style="color:var(--flag)">Ce navigateur ne sait pas faire la liaison directe.</b>'; return; }
+  tiroir(false); cpOuvrir();
+  $('cpTitre').textContent='Témoin croisé — 1 sur 3';
+  $('cpTxt').innerHTML='Préparation de la liaison…';
+  $('cpAction').style.display='none';
+  try{
+    const offre=await GBCroise.creerOffre();
+    cpQr(offre);
+    $('cpTxt').innerHTML='Sur l\'<b>autre téléphone</b> : ouvre la séance simple, tiroir, <b>Rejoindre</b>, et fais-lui lire ce code.';
+    $('cpAction').style.display='';
+    $('cpAction').textContent='Puis scanner sa réponse';
+    $('cpAction').onclick=()=>{
+      $('cpTitre').textContent='Témoin croisé — 3 sur 3';
+      $('cpTxt').innerHTML='Vise le <b>code de réponse</b> affiché sur l\'autre téléphone.';
+      $('cpAction').style.display='none';
+      cpScanner(async v=>{
+        $('cpTxt').textContent='Liaison en cours…';
+        try{ await GBCroise.recevoirReponse(v); }
+        catch(e){ $('cpTxt').innerHTML='<b style="color:var(--flag)">Ce code n\'est pas une réponse valable.</b> Recommence depuis le début.'; }
+      });
+    };
+  }catch(e){ $('cpTxt').innerHTML='<b style="color:var(--flag)">La liaison n\'a pas pu être préparée.</b> '+esc(e.message||''); }
+};
+
+/* ── côté RENFORT : rejoindre ── */
+$('oRejoindre').onclick=async ()=>{
+  if(!GBCroise.dispo()){ $('croiseEtat').innerHTML='<b style="color:var(--flag)">Ce navigateur ne sait pas faire la liaison directe.</b>'; return; }
+  tiroir(false); cpOuvrir();
+  $('cpTitre').textContent='Témoin croisé — 2 sur 3';
+  $('cpTxt').innerHTML='Vise le <b>code affiché sur le premier téléphone</b>.';
+  $('cpAction').style.display='none';
+  cpScanner(async v=>{
+    $('cpTxt').textContent='Préparation de la réponse…';
+    try{
+      const rep=await GBCroise.recevoirOffre(v);
+      cpQr(rep);
+      $('cpTxt').innerHTML='Maintenant, sur le <b>premier téléphone</b> : « Puis scanner sa réponse », et fais-lui lire ce code. La liaison se fera toute seule.';
+    }catch(e){ $('cpTxt').innerHTML='<b style="color:var(--flag)">Ce code n\'est pas une offre valable.</b> Recommence depuis le début.'; }
+  });
+};
+
+GBCroise.installer({
+  onEtat(e){
+    const t = e==='lie' ? '<b style="color:var(--signal)">Liaison établie</b> — les deux appareils se surveillent mutuellement. Décalage d\'horloge corrigé : '+GBCroise.horloge().offset+' ms.'
+      : e==='perdu' ? '<b style="color:var(--flag)">Liaison perdue</b> — l\'autre téléphone ne répond plus. Les mesures locales continuent, seules.'
+      : e==='attente' ? 'Liaison en préparation…'
+      : 'Aucune liaison.';
+    $('croiseEtat').innerHTML=t;
+    if(e==='lie'){ cpFermer(); if(H) H.noter('croise','liaison établie avec un second appareil'); }
+    if(e==='perdu' && H) H.noter('croise','liaison perdue');
+  },
+  onCoincidence(co){
+    nCoincidences++;
+    // LA COÏNCIDENCE EST L'ÉVÉNEMENT LE PLUS FORT QUE CETTE APPLICATION SACHE
+    // PRODUIRE : deux moteurs indépendants, deux appareils, la même seconde.
+    // Elle entre au journal avec ses deux causes, et tout est gardé.
+    JOURNAL.unshift({ croise:true,
+      heure:new Date().toLocaleTimeString('fr-FR'),
+      ecart_ms:co.ecart_ms,
+      ici:  (co.local.detail||co.local.quoi)+(co.local.voie? ' ('+co.local.voie+')':''),
+      labas:(co.distant.detail||co.distant.quoi)+(co.distant.voie? ' ('+co.distant.voie+')':'') });
+    if(JOURNAL.length>60) JOURNAL.length=60;
+    majJournal();
+    if(H) H.noter('coincidence','ICI '+(co.local.detail||co.local.quoi)+' · LÀ-BAS '+(co.distant.detail||co.distant.quoi)+' · écart '+co.ecart_ms+' ms');
+    if(navigator.vibrate) navigator.vibrate([90,80,90]);
+    photoAuto('coïncidence croisée : '+(co.local.detail||co.local.quoi)+' + '+(co.distant.detail||co.distant.quoi));
+    if(!videoEnCours){ videoAuto('coïncidence croisée');
+      setTimeout(()=>stopVideoAuto('fin de séquence'), 8000); }
+  }
+});
+addEventListener('pagehide',()=>{ try{ GBCroise.couper(); }catch(e){} });
+
 /* ═══ sorties ═══
    Le retour au menu manquait : une fois entré dans ce mode, on n'avait plus
    aucun moyen de revoir les autres. C'est le premier devoir d'un écran. */
@@ -732,6 +911,15 @@ function majJournal(){
     return;
   }
   box.innerHTML = JOURNAL.map(j=>{
+    // la coïncidence croisée : l'événement le plus fort de l'application,
+    // affiché avec ses DEUX causes — celle d'ici et celle de là-bas
+    if(j.croise){
+      return '<div class="l chaud">'
+        + '<div class="h"><span class="m" style="color:var(--signal)">Coïncidence croisée</span>'
+        + '<span class="q">'+esc(j.heure)+' · ±'+nb(j.ecart_ms/1000,2)+' s</span></div>'
+        + '<div class="d">ici : <b>'+esc(j.ici)+'</b><br>là-bas : <b>'+esc(j.labas)+'</b>'
+        + ' — deux appareils indépendants, la même fenêtre. C\'est l\'événement le plus difficile à expliquer par un artefact.</div></div>';
+    }
     // nommer sans détour ce qui s'est passé : « l'appareil a bougé » est une
     // information, « mvt_accel 9,4 σ » n'en est pas une pour la plupart des gens
     const bouge = MOUVEMENT.indexOf(j.code)>=0;
@@ -909,6 +1097,8 @@ function conditions(extra){
     // le journal voyage AVEC le fichier : en le rouvrant six mois plus tard,
     // on doit encore pouvoir dire quelle voie a fait sortir quel mot
     journal: JOURNAL.slice(0, 20),
+    temoin_croise: { liaison: GBCroise.etat(), coincidences: nCoincidences,
+                     fenetre_ms: GBCroise.fenetre() },
     veille_s: phase==='veille' ? Math.round((performance.now()-tPret)/1000) : 0,
     voies_armees: armees, capteurs: voies,
     silhouette: silOn, visage: visOn, severite_detection: sens, maniere: murMode,
@@ -982,7 +1172,8 @@ function sauver(o){
 function autoTic(now, quelquun){
   if(!autoOn) return;
   if(quelquun){
-    if(!personneDepuis){ personneDepuis=now; photoAuto('silhouette confirmée'); }
+    if(!personneDepuis){ personneDepuis=now; photoAuto('silhouette confirmée');
+      try{ GBCroise.signaler({ quoi:'silhouette', detail:'silhouette confirmée', quand:Date.now() }); }catch(e){} }
     else if(now-personneDepuis > VIDEO_APRES && !videoEnCours) videoAuto('silhouette qui reste');
   } else {
     personneDepuis=0;
@@ -1020,10 +1211,10 @@ async function allumerDetection(quoi, silencieux){
   if(!silencieux) $('silAide').textContent='Chargement du modèle (une seule fois)…';
   try{
     if(quoi==='sil'){
-      if(!POSE) POSE = await import('/ghost-box/lib/pose.js?v=30');
+      if(!POSE) POSE = await import('/ghost-box/lib/pose.js?v=31');
       await POSE.load(); silOn=true; silVoulu=true; appliquerSeverite();
     } else {
-      if(!VIS) VIS = await import('/ghost-box/lib/visage.js?v=30');
+      if(!VIS) VIS = await import('/ghost-box/lib/visage.js?v=31');
       await VIS.load(); visOn=true; visVoulu=true; appliquerSeverite();
     }
     $('squelette').classList.add('on'); $('nbPers').classList.add('on');

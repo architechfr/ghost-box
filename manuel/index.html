@@ -11,7 +11,7 @@
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="Ghost Box">
-<link rel="stylesheet" href="/ghost-box/lib/fonts.css?v=30">
+<link rel="stylesheet" href="/ghost-box/lib/fonts.css?v=31">
 <style>
 :root{
   --bench:#0A0F12;--panel:#1D262B;--line:#2C383F;--hair:#212B31;
@@ -57,7 +57,7 @@ code{font-family:var(--mono);font-size:12.5px;color:var(--paper);background:#141
   text-decoration:none;margin-top:14px}
 footer{margin-top:36px;padding-top:16px;border-top:1px solid var(--line);font-size:12px;color:#55636B;line-height:1.7}
 </style>
-<link rel="stylesheet" href="/ghost-box/lib/ambiance.css?v=30">
+<link rel="stylesheet" href="/ghost-box/lib/ambiance.css?v=31">
 </head>
 <body>
 
@@ -159,6 +159,8 @@ footer{margin-top:36px;padding-top:16px;border-top:1px solid var(--line);font-si
 <p>Micro sans traitement, spectrogramme défilant, marqueurs posés à la main, détection de pics. Relecture avec boucle, rognage et filtres réglables, export WAV. C'est le mode fait pour la box radio elle-même.</p>
 <h3>Bibliothèque</h3>
 <p>Tout ce qui a été gardé, quel que soit le mode : vidéos, photos, prises audio, extraits venus de la mémoire tampon. Relecture avec le journal de séance, envoi vers les téléchargements du téléphone, suppression.</p>
+<h3>Témoin croisé — un deuxième téléphone</h3>
+<p>Dans la séance simple, deux téléphones peuvent se relier <b>directement</b>, sans internet et sans serveur — trois QR codes à se faire lire, et il suffit qu'ils partagent le même WiFi ou un partage de connexion. Chacun mesure ensuite de son côté, avec son propre apprentissage et ses propres seuils. Quand les deux retiennent quelque chose <b>dans la même seconde et demie</b>, c'est une <b>coïncidence croisée</b> : un événement qui n'apparaît que sur un appareil peut toujours être un artefact de cet appareil — un événement qui apparaît sur deux appareils indépendants, posés à des endroits différents, au même instant, ne peut plus s'expliquer ainsi. Les horloges des deux téléphones sont synchronisées à la liaison ; la coïncidence est datée, documentée des deux côtés, et déclenche la capture automatique. Rien ne quitte les deux appareils.</p>
 <h3>Contact via IA — retiré</h3>
 <p>Ce mode a existé et il a été <b>retiré</b>, volontairement. Trois de ses quatre fonctions existaient déjà ailleurs, en mieux : enregistrement audio (Écoute), silhouette (les trois modes de séance), vidéo au squelette incrusté (séance caméra). Il ne restait que la transcription automatique par un service externe — et c'était celle qui contredisait le principe de l'application : sur du bruit radio, une IA de transcription <b>fabrique</b> des mots, c'est sa nature même. Une fonction qui invente des mots n'a pas sa place dans un outil dont toute la valeur est qu'un mot ne sorte jamais pour rien.</p>
 <a class="haut" href="#haut">↑ sommaire</a>
@@ -207,8 +209,8 @@ Les réglages du moteur cités ici (plancher 6,5 σ, témoin éprouvé 16 fois p
 
 </div>
 
-<script src="/ghost-box/lib/nuit.js?v=30"></script>
-<script src="/ghost-box/lib/retour.js?v=30"></script>
+<script src="/ghost-box/lib/nuit.js?v=31"></script>
+<script src="/ghost-box/lib/retour.js?v=31"></script>
 <script>if('serviceWorker' in navigator){window.addEventListener('load',function(){navigator.serviceWorker.register('/ghost-box/sw.js').catch(function(){});});}</script>
 </body>
 </html>
