@@ -12,7 +12,7 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="Ghost Box">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<link rel="stylesheet" href="/ghost-box/lib/fonts.css?v=28">
+<link rel="stylesheet" href="/ghost-box/lib/fonts.css?v=29">
 <style>
 :root{--night:#0A0F12;--panel:#1D262B;--sunk:#0A0F12;--line:#2C383F;--hair:#212B31;
   --signal:#5FD3A6;--gold:#E9B44C;--flag:#E2574C;--paper:#CFC6B4;--dim:#78868E;--text:#DDE6EA;
@@ -55,7 +55,7 @@ footer a{color:var(--dim)}
   .card .det{color:#6E7C84;font-size:12.5px;line-height:1.6;margin-top:8px;
     padding-top:8px;border-top:1px solid rgba(95,211,166,.12)}
 </style>
-<link rel="stylesheet" href="/ghost-box/lib/ambiance.css?v=28">
+<link rel="stylesheet" href="/ghost-box/lib/ambiance.css?v=29">
 </head>
 <body>
 <div class="wrap">
@@ -124,11 +124,6 @@ footer a{color:var(--dim)}
   <span class="when">→ à lire une fois posément ; il fonctionne aussi sans réseau</span>
 </a>
 
-<a class="card f" href="contact-ia/">
-  <h2>Contact via IA <span class="wip">en développement</span><span class="arrow">→</span></h2>
-  <p>Transcription de la box radio (Voxtral) et détection de silhouette humaine. Expérimental : l'IA fabrique des mots à partir du bruit et des formes à partir de reflets — à traiter comme des pistes à vérifier, pas comme des preuves.</p>
-  <span class="when">→ envoie l'audio à un service externe</span>
-</a>
 
 <hr>
 <div class="lg">cet appareil</div>
@@ -173,7 +168,7 @@ document.getElementById('ctx').innerHTML = ios
 })();
 </script>
 <script>if('serviceWorker' in navigator){window.addEventListener('load',function(){navigator.serviceWorker.register('/ghost-box/sw.js').catch(function(){});});}</script>
-<script src="/ghost-box/lib/nuit.js?v=28"></script>
-<script src="/ghost-box/lib/fullscreen.js?v=28"></script>
+<script src="/ghost-box/lib/nuit.js?v=29"></script>
+<script src="/ghost-box/lib/fullscreen.js?v=29"></script>
 </body>
 </html>

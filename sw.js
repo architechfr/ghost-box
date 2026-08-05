@@ -14,13 +14,15 @@
      quand leur contenu change, le cache ne peut pas mentir ;
    — le modèle de détection de personne (CDN externe, ~5 Mo) est mis en cache
      à sa première utilisation : la détection marche hors ligne dès qu'elle a
-     marché une fois en ligne ;
-   — l'API Mistral n'est JAMAIS mise en cache : c'est un envoi, pas un fichier.
+     marché une fois en ligne.
+
+   Plus aucune exception réseau depuis le retrait de Contact via IA : hormis ce
+   modèle téléchargé une seule fois, RIEN ne quitte l'appareil.
 
    À CHAQUE LIVRAISON : incrémenter VERSION ci-dessous en même temps que les
    ?v= des pages — c'est elle qui jette l'ancien cache.
    ═══════════════════════════════════════════════════════════════════════ */
-const VERSION = 'v28';
+const VERSION = 'v29';
 const CACHE   = 'ghostbox-' + VERSION;
 const RACINE  = '/ghost-box/';
 
@@ -78,9 +80,6 @@ self.addEventListener('fetch', e => {
   const req = e.request;
   if (req.method !== 'GET') return;
   const url = new URL(req.url);
-
-  // jamais de cache sur l'API : une transcription est un envoi, pas un fichier
-  if (url.hostname === 'api.mistral.ai') return;
 
   // pages : réseau d'abord (fraîcheur), cache en secours (terrain sans réseau)
   if (req.mode === 'navigate') {

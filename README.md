@@ -18,7 +18,7 @@ Tout fonctionne côté navigateur. Aucune donnée ne quitte l'appareil, aucune d
 | `bibliotheque/` | Tout ce qui a été gardé, de n'importe quel mode : relecture avec le journal de séance, envoi vers les téléchargements du téléphone, suppression |
 | `enregistreur/` | Écoute : micro sans traitement, spectrogramme, marqueurs, détection de pics, relecture (boucle, rognage, filtres), export WAV |
 | `banc/` | Banc d'essai : capteurs en direct, moteur capteur → mot à seuil auto-calibré, coïncidence multi-capteurs, forme caméra avec témoin visuel, enregistrement audio de la box radio, mode témoin à l'aveugle, trace exportable |
-| `contact-ia/` | Contact via IA (en développement) : transcription Voxtral de la box radio, silhouette IA en direct |
+| `contact-ia/` | **Redirection** vers l'accueil — rubrique retirée (voir CLAUDE.md 8nonies-000t) |
 | `db/` | Schémas PostgreSQL/Supabase et MySQL, jeux de données de départ |
 | `data/` | Lexique 567 mots (CSV, JSON) et le script qui le régénère |
 | `docs/` | Inventaire détaillé des capteurs et de la chaîne capteur → mot |
