@@ -12,7 +12,7 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="Ghost Box">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<link rel="stylesheet" href="/ghost-box/lib/fonts.css?v=29">
+<link rel="stylesheet" href="/ghost-box/lib/fonts.css?v=30">
 <style>
 :root{
   --bench:#0A0F12;--panel:#141B20;--line:#2C383F;--hair:#1E262B;
@@ -94,15 +94,8 @@ body{margin:0;background:#000;color:var(--text);font-family:var(--body);
    chevauchait le sujet), une rangée sous l'image (une rangée de plus à lire).
    Ici : à sa place dans la barre du haut, avec les autres commandes, et il
    PORTE le nom de l'objectif — « Arrière 1 » est à la fois l'état et le bouton. */
-#objChip{display:none;flex:0 1 auto;min-width:0;align-items:center;gap:6px;
-  font-family:var(--mono);font-size:11.5px;color:var(--text);
-  background:var(--panel);border:1px solid var(--line);border-radius:11px;
-  padding:0 11px;height:42px;cursor:pointer;letter-spacing:.03em;
-  text-transform:none;font-weight:400;white-space:nowrap;overflow:hidden}
-#objChip.on{display:inline-flex}
-#objChip:active{transform:scale(.96)}
-#objChip .fl{color:var(--signal);font-size:15px;line-height:1;flex:none}
-#objNom{overflow:hidden;text-overflow:ellipsis}
+/* le bouton lui-même vit dans lib/objectif.js — le même dans les quatre modes.
+   La page ne dit que sa PLACE dans la barre, et sa taille en paysage. */
 
 /* ── deux colonnes de chiffres : tout ce qu'il faut savoir, rien de plus ── */
 #infos{margin:12px 14px 0;border-radius:16px;background:var(--panel);border:1px solid var(--line);
@@ -243,7 +236,7 @@ body{margin:0;background:#000;color:var(--text);font-family:var(--body);
   #top{grid-column:1/-1;padding:8px 12px 6px}
   #top img{height:22px}
   #top .rd{width:38px;height:38px;border-radius:10px}
-  #objChip{height:38px;padding:0 9px;font-size:11px}
+  #gbObj{height:38px;padding:0 9px;font-size:11px}
   #scene{grid-column:1;grid-row:2;margin:0 8px 8px 12px}
   #cote{grid-column:2;grid-row:2;justify-content:space-between;
         padding:0 12px 8px 0;overflow:hidden}
@@ -268,7 +261,7 @@ body{margin:0;background:#000;color:var(--text);font-family:var(--body);
 }
 
 </style>
-<link rel="stylesheet" href="/ghost-box/lib/ambiance.css?v=29">
+<link rel="stylesheet" href="/ghost-box/lib/ambiance.css?v=30">
 </head>
 <body>
 <div id="app">
@@ -278,7 +271,6 @@ body{margin:0;background:#000;color:var(--text);font-family:var(--body);
        jamais revenir aux autres modes une fois entré ici. -->
   <button class="rd" id="menu" type="button" aria-label="Menu principal">←</button>
   <img src="/ghost-box/assets/marque.png" alt="Ghost Box" style="height:30px;flex:1 1 40px;min-width:0;object-fit:contain;object-position:left">
-  <button id="objChip" type="button" aria-label="Changer d'objectif"><span class="fl">⟳</span><span id="objNom">objectif</span></button>
   <button class="rd" id="reglages" type="button" aria-label="Réglages">⚙</button>
 </div>
 
@@ -382,17 +374,18 @@ body{margin:0;background:#000;color:var(--text);font-family:var(--body);
 <div id="voile"></div>
 </div><!-- #app -->
 
-<script src="/ghost-box/lib/nuit.js?v=29"></script>
-<script src="/ghost-box/lib/wakelock.js?v=29"></script>
-<script src="/ghost-box/lib/media.js?v=29"></script>
-<script src="/ghost-box/lib/moteur.js?v=29"></script>
-<script src="/ghost-box/lib/capteurs.js?v=29"></script>
-<script src="/ghost-box/lib/mur.js?v=29"></script>
-<script src="/ghost-box/lib/voix.js?v=29"></script>
-<script src="/ghost-box/lib/historique.js?v=29"></script>
-<script src="/ghost-box/lib/tampon.js?v=29"></script>
-<script src="/ghost-box/lib/secours.js?v=29"></script>
-<script src="/ghost-box/lib/capture.js?v=29"></script>
+<script src="/ghost-box/lib/nuit.js?v=30"></script>
+<script src="/ghost-box/lib/wakelock.js?v=30"></script>
+<script src="/ghost-box/lib/media.js?v=30"></script>
+<script src="/ghost-box/lib/moteur.js?v=30"></script>
+<script src="/ghost-box/lib/capteurs.js?v=30"></script>
+<script src="/ghost-box/lib/objectif.js?v=30"></script>
+<script src="/ghost-box/lib/mur.js?v=30"></script>
+<script src="/ghost-box/lib/voix.js?v=30"></script>
+<script src="/ghost-box/lib/historique.js?v=30"></script>
+<script src="/ghost-box/lib/tampon.js?v=30"></script>
+<script src="/ghost-box/lib/secours.js?v=30"></script>
+<script src="/ghost-box/lib/capture.js?v=30"></script>
 <script>
 /* ═══════════════════════════════════════════════════════════════════════
    Séance simple — un écran, un bouton.
@@ -426,7 +419,7 @@ let phase='arret', tPhase=0, tPret=0, armees=0, nMots=0, lastMot=-1e9;
    Déclaré ICI, avec le reste de l'état : la boucle de mesure démarre avant la
    fin du script, et une déclaration plus bas la ferait échouer. */
 const JOURNAL=[];
-let declencheur=null, chipOccupe=false, gArret=false;
+let declencheur=null, gArret=false;
 let vue='mots';
 let murMode = (()=>{ try{ return localStorage.getItem('gb-simple-mode')==='escalier'?'escalier':'instant'; }catch(e){ return 'instant'; } })();
 let sens = (()=>{ try{ return localStorage.getItem('gb-simple-sens')==='permissive'?'permissive':'prudente'; }catch(e){ return 'prudente'; } })();
@@ -477,7 +470,7 @@ async function demarrer(){
   // la pastille dira quel objectif tourne — inutile de le mettre dans la
   // légende, que la phase d'apprentissage réécrit dans la seconde qui suit
   await listerObjectifs();
-  majObjChip();
+  GBObjectif.maj();
   // ── détection allumée d'office : c'est le mode où l'on ne règle rien ──
   // Mais un allumage silencieux qui ÉCHOUE silencieusement est un mensonge :
   // le modèle vient d'un CDN et, sans réseau la première fois, il ne charge
@@ -523,7 +516,6 @@ async function arreter(){
   phase='arret'; armees=0; W={};
   silOn=false; visOn=false;
   $('squelette').classList.remove('on'); $('nbPers').classList.remove('on');
-  $('objChip').classList.remove('on');
   gArret=false; $('go').disabled=false; majGo();
   $('legend').textContent='séance terminée — appuie pour recommencer';
   poserMur();
@@ -657,7 +649,7 @@ function majInfos(now){
 
   // la caméra n'ouvre pas toujours en même temps que les autres capteurs :
   // la pastille se montre d'elle-même dès que le flux existe
-  if(!chipOccupe) majObjChip();
+  GBObjectif.maj();
 
   const seuils=Object.values(W).filter(w=>w.ready).map(w=>w.thr);
   // « Sensibilité : réglée sur le lieu » ne tenait pas dans la colonne (mesuré :
@@ -1028,10 +1020,10 @@ async function allumerDetection(quoi, silencieux){
   if(!silencieux) $('silAide').textContent='Chargement du modèle (une seule fois)…';
   try{
     if(quoi==='sil'){
-      if(!POSE) POSE = await import('/ghost-box/lib/pose.js?v=29');
+      if(!POSE) POSE = await import('/ghost-box/lib/pose.js?v=30');
       await POSE.load(); silOn=true; silVoulu=true; appliquerSeverite();
     } else {
-      if(!VIS) VIS = await import('/ghost-box/lib/visage.js?v=29');
+      if(!VIS) VIS = await import('/ghost-box/lib/visage.js?v=30');
       await VIS.load(); visOn=true; visVoulu=true; appliquerSeverite();
     }
     $('squelette').classList.add('on'); $('nbPers').classList.add('on');
@@ -1123,88 +1115,38 @@ $('oNuit').onclick=()=>{ if(window.GBNuit) GBNuit.basculer(); majTiroir(); };
 /* ═══ les objectifs ═══
    Le navigateur ne donne le NOM des caméras qu'après une première
    autorisation : avant la séance, la liste est anonyme — on le dit. */
-let lentilles=[], iLentille=0;
+/* la liste du tiroir et le bouton de la barre disent la MÊME chose, parce
+   qu'ils viennent du même module : lib/objectif.js. */
 async function listerObjectifs(){
   const box=$('lentilles');
-  lentilles = await B.objectifs();
-  if(!lentilles.length){
+  const L = await GBObjectif.rafraichir();
+  if(!L.length){
     box.innerHTML='<span class="vide">démarre la séance pour voir les objectifs</span>'; return;
   }
-  // repérer l'objectif RÉELLEMENT en cours, pas celui qu'on croit
-  try{
-    const st=B.fluxCamera();
-    const id = st && st.getVideoTracks()[0] && st.getVideoTracks()[0].getSettings().deviceId;
-    if(id){ const k=lentilles.findIndex(l=>l.id===id); if(k>=0) iLentille=k; }
-  }catch(e){}
+  const cour = GBObjectif.courant();
   box.innerHTML='';
-  lentilles.forEach((l,i)=>{
+  L.forEach((l,i)=>{
     const b=document.createElement('button');
-    // « Arrière 1/2/3 » plutôt que « camera2 2, facing back » : il faut pouvoir
-    // NOMMER l'objectif qu'on veut, sinon on ne peut pas le redemander
     b.textContent = l.nom;
-    b.className = (i===iLentille) ? 'on' : '';
-    b.onclick=()=>choisirObjectif(i);
+    b.className = (cour && l.id===cour.id) ? 'on' : '';
+    b.onclick=async ()=>{ await GBObjectif.choisir(i); majTiroir(); };
     box.appendChild(b);
   });
-  majObjChip();
 }
-async function choisirObjectif(i, muet){
-  if(!B.fluxCamera()){
-    $('lentilles').insertAdjacentHTML('beforeend',
-      '<span class="vide">la caméra n\'est pas ouverte — démarre la séance</span>'); return false;
-  }
-  const ok = await B.changerCamera({video:{deviceId:{exact:lentilles[i].id}}, audio:false});
-  if(ok){
-    iLentille=i;
-    // DEUX mémoires, partagées avec lib/capteurs.js : l'identifiant exact, et
-    // le rang parmi les arrières. Sur certains téléphones l'identifiant change
-    // d'une session à l'autre — le rang, lui, tient, et « Arrière 3 » revient.
-    try{ localStorage.setItem('gb-objectif', lentilles[i].id); }catch(e){}
-    try{ if(lentilles[i].rang) localStorage.setItem('gb-objectif-rang', String(lentilles[i].rang));
-         else localStorage.removeItem('gb-objectif-rang'); }catch(e){}
-    if(vue==='video') poserVideo();
-    majObjChip();
-    if(!muet) $('legend').textContent='objectif : '+lentilles[i].nom+' — retenu pour les prochaines fois';
-  }
-  majTiroir();
-  return ok;
-}
-/* le bouton ⟳ : passer à l'objectif suivant, sans ouvrir le tiroir — le geste
-   le plus courant doit être le plus court. Deux exemplaires, le même geste :
-   celui de la barre du haut, et la pastille posée SUR l'image. */
-function direChip(txt, ms){
-  $('objNom').textContent = txt;
-  if(ms) setTimeout(majObjChip, ms);
-}
-async function objectifSuivant(){
-  if(chipOccupe) return;
-  if(!B.fluxCamera()){ direChip('caméra fermée', 1600); return; }
-  if(!lentilles.length) lentilles = await B.objectifs();
-  if(lentilles.length<2){ direChip('un seul objectif', 1800); return; }
-  chipOccupe=true;
-  direChip('changement…');
-  // certains objectifs listés par le téléphone refusent de s'ouvrir (doublons,
-  // capteurs de profondeur). On passe au suivant au lieu de rester bloqué sur
-  // un bouton qui « ne fait rien » — et on le dit si aucun n'accepte.
-  let ok=false;
-  for(let n=1; n<lentilles.length && !ok; n++){
-    ok = await choisirObjectif((iLentille+n) % lentilles.length, true);
-  }
-  chipOccupe=false;
-  if(ok) majObjChip(); else direChip('aucun autre objectif', 2200);
-}
-$('objChip').onclick  = objectifSuivant;
-
-/* la pastille dit quel objectif tourne. Sans elle, « ce n'est pas la bonne
-   caméra » n'a pas de réponse : on ne sait même pas laquelle est en cours. */
-function majObjChip(){
-  const on = !!B.fluxCamera();
-  $('objChip').classList.toggle('on', on);
-  if(!on) return;
-  const l = lentilles[iLentille];
-  const nom = l ? l.nom : 'objectif';
-  if($('objNom').textContent !== nom) $('objNom').textContent = nom;
-}
+/* ══════════ l'objectif ══════════
+   Un seul bouton, dans la barre du haut, qui porte le NOM de l'objectif en
+   cours — et c'est exactement le même dans la séance caméra, la séance
+   capteurs et Le mur, parce qu'il vient du même module. La page ne fournit
+   que ce qu'elle est seule à savoir faire : remplacer son flux vidéo. */
+GBObjectif.installer({
+  hote:'#top', avant:'#reglages',
+  flux:  ()=>B.fluxCamera(),
+  // lib/capteurs.js libère le flux AVANT d'en demander un autre : Android
+  // refuse deux objectifs arrière ouverts en même temps
+  changer: id => B.changerCamera({video:{deviceId:{exact:id}}, audio:false}),
+  apres: ()=>{ if(vue==='video') poserVideo(); majTiroir(); }
+});
+function majObjChip(){ GBObjectif.maj(); }
 
 /* la vignette montre le dernier fichier gardé — sans l'ouvrir.
    Rafraîchie après chaque capture : figée au chargement, elle aurait menti

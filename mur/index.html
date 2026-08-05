@@ -12,7 +12,7 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="Ghost Box">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<link rel="stylesheet" href="/ghost-box/lib/fonts.css?v=29">
+<link rel="stylesheet" href="/ghost-box/lib/fonts.css?v=30">
 <style>
 :root{
   --bench:#0A0F12;--panel:#1D262B;--sunk:#0A0F12;--line:#2C383F;--hair:#212B31;
@@ -118,7 +118,7 @@ body.filming #quitFix{display:block;position:fixed;z-index:61;right:10px;
   top:calc(10px + env(safe-area-inset-top, 0px));padding:6px 9px;font-size:11px;
   background:rgba(20,26,30,.85)}
 </style>
-<link rel="stylesheet" href="/ghost-box/lib/ambiance.css?v=29">
+<link rel="stylesheet" href="/ghost-box/lib/ambiance.css?v=30">
 </head>
 <body>
 
@@ -206,21 +206,22 @@ body.filming #quitFix{display:block;position:fixed;z-index:61;right:10px;
 
 </div>
 
-<script src="/ghost-box/lib/nuit.js?v=29"></script>
-<script src="/ghost-box/lib/demarrage.js?v=29"></script>
-<script src="/ghost-box/lib/voix.js?v=29"></script>
-<script src="/ghost-box/lib/historique.js?v=29"></script>
-<script src="/ghost-box/lib/wakelock.js?v=29"></script>
-<script src="/ghost-box/lib/retour.js?v=29"></script>
-<script src="/ghost-box/lib/aide.js?v=29"></script>
-<script src="/ghost-box/lib/action.js?v=29"></script>
+<script src="/ghost-box/lib/nuit.js?v=30"></script>
+<script src="/ghost-box/lib/demarrage.js?v=30"></script>
+<script src="/ghost-box/lib/voix.js?v=30"></script>
+<script src="/ghost-box/lib/historique.js?v=30"></script>
+<script src="/ghost-box/lib/wakelock.js?v=30"></script>
+<script src="/ghost-box/lib/retour.js?v=30"></script>
+<script src="/ghost-box/lib/aide.js?v=30"></script>
+<script src="/ghost-box/lib/action.js?v=30"></script>
 <script>addEventListener('load',function(){ try{ GBAction.init(['#prep']); }catch(e){} });</script>
-<script src="/ghost-box/lib/media.js?v=29"></script>
-<script src="/ghost-box/lib/moteur.js?v=29"></script>
-<script src="/ghost-box/lib/capteurs.js?v=29"></script>
-<script src="/ghost-box/lib/spectre.js?v=29"></script>
-<script src="/ghost-box/lib/mur.js?v=29"></script>
-<script src="/ghost-box/lib/fullscreen.js?v=29"></script>
+<script src="/ghost-box/lib/media.js?v=30"></script>
+<script src="/ghost-box/lib/moteur.js?v=30"></script>
+<script src="/ghost-box/lib/capteurs.js?v=30"></script>
+<script src="/ghost-box/lib/objectif.js?v=30"></script>
+<script src="/ghost-box/lib/spectre.js?v=30"></script>
+<script src="/ghost-box/lib/mur.js?v=30"></script>
+<script src="/ghost-box/lib/fullscreen.js?v=30"></script>
 <script>
 (() => {
 "use strict";
@@ -275,6 +276,13 @@ $('mEscalier').onclick=()=>{ MODE='escalier'; REG.note('gb-mur-mode',MODE); if(M
 
 /* ═══════════ les capteurs ═══════════ */
 const B = GBCapteurs.creer();
+/* le bouton d'objectif, le même que dans les autres modes. Le mur passe par
+   lib/capteurs.js, qui libère le flux avant d'en demander un autre. */
+addEventListener('load',()=>{
+  try{ GBObjectif.installer({ hote:'.topin',
+    flux:()=>B.fluxCamera(),
+    changer:id => B.changerCamera({video:{deviceId:{exact:id}}, audio:false}) }); }catch(e){}
+});
 const ETAT = {micro:false, mouvement:false, magnetique:false, camera:false};
 const BTN = {micro:'bMic', mouvement:'bMvt', magnetique:'bMag', camera:'bCam'};
 let SP=null;
