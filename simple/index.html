@@ -12,7 +12,7 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="Ghost Box">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<link rel="stylesheet" href="/ghost-box/lib/fonts.css?v=25">
+<link rel="stylesheet" href="/ghost-box/lib/fonts.css?v=26">
 <style>
 :root{
   --bench:#0A0F12;--panel:#141B20;--line:#2C383F;--hair:#1E262B;
@@ -34,9 +34,15 @@ body{margin:0;background:#000;color:var(--text);font-family:var(--body);
    deviennent des ITEMS et décalent tout le placement — mesuré au navigateur,
    la scène tombait à 396 px au lieu de 546, et 150 px restaient vides sous le
    sélecteur. Avec ambiance désactivée, la même page donnait 546 px. */
+/* Trois rangées seulement : la barre, la scène (qui prend tout ce qui reste),
+   et le côté — chiffres, phrase, déclencheur, chevron, bascule. Les regrouper
+   dans un conteneur n'est pas cosmétique : c'est ce qui permet, en paysage,
+   de basculer d'un empilement à DEUX COLONNES sans toucher au html. */
 #app{position:fixed;inset:0;display:grid;
-  grid-template-rows:auto minmax(0,1fr) auto auto auto auto auto;
+  grid-template-rows:auto minmax(0,1fr) auto;
   padding:env(safe-area-inset-top, 0px) 0 env(safe-area-inset-bottom, 0px)}
+#cote{display:flex;flex-direction:column;min-width:0;min-height:0}
+#cote > *{min-width:0}
 /* ── SECOND PIÈGE PAYÉ ICI, ET IL DÉCALAIT TOUT L'ÉCRAN ──
    Un item de grille (comme un item de flex) a `min-width:auto` : il refuse de
    descendre sous la largeur minimale de son CONTENU. Tant que la marque n'est
@@ -80,22 +86,23 @@ body{margin:0;background:#000;color:var(--text);font-family:var(--body);
 #nbPers{position:absolute;left:8px;top:8px;z-index:3;font-family:var(--mono);font-size:11px;
   color:var(--gold);background:rgba(5,9,12,.8);border-radius:4px;padding:4px 8px;display:none}
 #nbPers.on{display:block}
-#legend{flex:1;min-width:0;text-align:center;font-family:var(--mono);font-size:11.5px;color:#5A686F;
-  padding:0 2px;letter-spacing:.04em}
-/* ── changer d'objectif SANS ouvrir le tiroir ──
-   Le ⟳ de la barre du haut existait déjà, mais il était le premier à
-   disparaître quand l'écran se décalait. Posé SUR l'image il chevauchait le
-   sujet ; il vit donc dans sa PROPRE rangée, juste sous l'image, à côté de la
-   légende : rien ne se recouvre, et on lit d'un coup quel objectif tourne. */
-#sousvue{flex:none;display:flex;align-items:center;gap:9px;padding:9px 2px 3px;min-width:0}
-#objChip{display:none;flex:none;align-items:center;gap:7px;
+#legend{flex:none;text-align:center;font-family:var(--mono);font-size:11.5px;color:#5A686F;
+  padding:9px 4px 3px;letter-spacing:.04em}
+/* ── changer d'objectif : UN bouton, dans la barre, qui dit son nom ──
+   Trois emplacements essayés, trois défauts : un ⟳ muet dans la barre (on ne
+   savait pas quel objectif tournait), une pastille posée SUR l'image (elle
+   chevauchait le sujet), une rangée sous l'image (une rangée de plus à lire).
+   Ici : à sa place dans la barre du haut, avec les autres commandes, et il
+   PORTE le nom de l'objectif — « Arrière 1 » est à la fois l'état et le bouton. */
+#objChip{display:none;flex:0 1 auto;min-width:0;align-items:center;gap:6px;
   font-family:var(--mono);font-size:11.5px;color:var(--text);
-  background:var(--panel);border:1px solid var(--line);border-radius:9px;
-  padding:8px 11px;min-height:38px;cursor:pointer;letter-spacing:.04em;
-  text-transform:none;font-weight:400;white-space:nowrap}
+  background:var(--panel);border:1px solid var(--line);border-radius:11px;
+  padding:0 11px;height:42px;cursor:pointer;letter-spacing:.03em;
+  text-transform:none;font-weight:400;white-space:nowrap;overflow:hidden}
 #objChip.on{display:inline-flex}
 #objChip:active{transform:scale(.96)}
-#objChip .fl{color:var(--signal);font-size:14px;line-height:1}
+#objChip .fl{color:var(--signal);font-size:15px;line-height:1;flex:none}
+#objNom{overflow:hidden;text-overflow:ellipsis}
 
 /* ── deux colonnes de chiffres : tout ce qu'il faut savoir, rien de plus ── */
 #infos{margin:12px 14px 0;border-radius:16px;background:var(--panel);border:1px solid var(--line);
@@ -189,6 +196,16 @@ body{margin:0;background:#000;color:var(--text);font-family:var(--body);
 #voile{position:fixed;inset:0;z-index:79;background:rgba(0,0,0,.55);display:none}
 #voile.on{display:block}
 
+/* ══════════════════════════════════════════════════════════════════
+   MODE PAYSAGE — jamais vérifié jusqu'ici, et cassé : mesuré au navigateur,
+   l'image tombait à ZÉRO pixel de haut sur un écran de 412 px de hauteur,
+   les chiffres, le déclencheur et la bascule consommant à eux seuls toute
+   la place. Un écran qu'on n'a pas mesuré dans les deux sens n'est pas fini.
+   En paysage on ne comprime pas : on change de disposition. L'image prend
+   la largeur, tout le reste passe en colonne à droite — la disposition d'un
+   appareil photo tenu à l'horizontale.
+   ══════════════════════════════════════════════════════════════════ */
+
 /* ── message plein cadre : autorisation refusée, capteur absent… ── */
 #msg{position:absolute;inset:8px;border-radius:9px;background:rgba(5,9,12,.94);display:none;
   flex-direction:column;align-items:center;justify-content:center;gap:14px;padding:26px;text-align:center}
@@ -203,8 +220,39 @@ body{margin:0;background:#000;color:var(--text);font-family:var(--body);
   #go{width:76px;height:76px}#vign,#grid{width:54px;height:54px}
   #bottom{padding:10px 22px 4px}#seg{padding:4px 0 10px}
 }
+
+@media (orientation:landscape) and (max-height:560px){
+  #app{grid-template-columns:minmax(0,1fr) minmax(168px,24vw);
+       grid-template-rows:auto minmax(0,1fr)}
+  #top{grid-column:1/-1;padding:8px 12px 6px}
+  #top img{height:22px}
+  #top .rd{width:38px;height:38px;border-radius:10px}
+  #objChip{height:38px;padding:0 9px;font-size:11px}
+  #scene{grid-column:1;grid-row:2;margin:0 8px 8px 12px}
+  #cote{grid-column:2;grid-row:2;justify-content:space-between;
+        padding:0 12px 8px 0;overflow:hidden}
+  /* les deux colonnes de chiffres deviennent une seule liste : 170 px de large
+     ne peuvent pas en porter deux sans couper chaque ligne en morceaux */
+  #infos{margin:0;padding:8px 11px;flex-direction:column;border-radius:12px}
+  #infos .col+.col{border-left:0;padding-left:0;border-top:1px solid var(--hair);
+                   margin-top:6px;padding-top:6px}
+  #infos .ln{line-height:1.5;font-size:11.5px}
+  #phrase{margin:8px 0 0;font-size:clamp(14px,3.2vw,19px);max-height:44px}
+  #bottom{padding:8px 0 0;gap:6px;justify-content:space-between}
+  #go{width:58px;height:58px;border-width:4px}
+  #vign,#grid{width:44px;height:44px;border-radius:11px}
+  #grid i{width:12px;height:12px}
+  #chev{min-height:32px;width:70px;font-size:18px}
+  #seg{padding:2px 0 0;flex:none}
+  #seg button{padding:7px 16px;min-height:34px;font-size:12.5px}
+  /* dernier filet : si l'appareil est vraiment très bas de plafond, la colonne
+     défile plutôt que de laisser une commande sortir de l'écran */
+  #cote{overflow-y:auto}
+  #tiroir{max-height:92vh}
+}
+
 </style>
-<link rel="stylesheet" href="/ghost-box/lib/ambiance.css?v=25">
+<link rel="stylesheet" href="/ghost-box/lib/ambiance.css?v=26">
 </head>
 <body>
 <div id="app">
@@ -213,20 +261,18 @@ body{margin:0;background:#000;color:var(--text);font-family:var(--body);
   <!-- Sortie vers le menu : elle manquait, et sans elle on ne pouvait plus
        jamais revenir aux autres modes une fois entré ici. -->
   <button class="rd" id="menu" type="button" aria-label="Menu principal">←</button>
-  <img src="/ghost-box/assets/marque.png" alt="Ghost Box" style="height:30px;flex:1;object-fit:contain;object-position:left">
-  <button class="rd" id="objectif" type="button" aria-label="Changer d'objectif">⟳</button>
+  <img src="/ghost-box/assets/marque.png" alt="Ghost Box" style="height:30px;flex:1 1 40px;min-width:0;object-fit:contain;object-position:left">
+  <button id="objChip" type="button" aria-label="Changer d'objectif"><span class="fl">⟳</span><span id="objNom">objectif</span></button>
   <button class="rd" id="reglages" type="button" aria-label="Réglages">⚙</button>
 </div>
 
 <div id="scene">
   <div id="vue"><div id="mur"></div><canvas id="squelette"></canvas><span id="nbPers"></span><span id="recPt"></span></div>
-  <div id="sousvue">
-    <button id="objChip" type="button" aria-label="Changer d'objectif"><span class="fl">⟳</span><span id="objNom">objectif</span></button>
-    <div id="legend">appuie sur le bouton pour commencer</div>
-  </div>
+  <div id="legend">appuie sur le bouton pour commencer</div>
   <div id="msg"><p></p></div>
 </div>
 
+<div id="cote">
 <div id="infos">
   <div class="col">
     <div class="ln" id="i1">État : <b>à l'arrêt</b></div>
@@ -254,6 +300,7 @@ body{margin:0;background:#000;color:var(--text);font-family:var(--body);
   <button id="mMots" class="on" type="button">Mots</button>
   <button id="mVideo" type="button">Vidéo</button>
 </div></div>
+</div><!-- #cote -->
 
 <!-- Tiroir : rien n'est retiré du produit, tout est simplement rangé. -->
 <div id="tiroir">
@@ -292,6 +339,11 @@ body{margin:0;background:#000;color:var(--text);font-family:var(--body);
     <button id="oSilhouette" type="button">Silhouette</button>
     <button id="oVisage" type="button">Visage</button>
   </div>
+  <div class="opts" style="margin-top:8px">
+    <button id="oPrudente" type="button">Prudente</button>
+    <button id="oPermissive" type="button">Permissive</button>
+  </div>
+  <p class="aide" id="sensAide"></p>
   <p class="aide" id="silAide">Les deux se complètent. La <b>silhouette</b> reconnaît un corps entier — tête, épaules, bras, jambes — et trace son squelette. Le <b>visage</b> se voit à partir de quelques dizaines de pixels, sans le reste du corps : dans un miroir, à une fenêtre, dans l'entrebâillement d'une porte. Les critères sont sévères des deux côtés, et un visage n'est affiché qu'après cinq images consécutives au même endroit — la paréidolie est le piège le plus courant de ce loisir. Modèles téléchargés une seule fois, ensuite ils fonctionnent sans réseau.</p>
 
   <div class="tt">Confort</div>
@@ -315,17 +367,17 @@ body{margin:0;background:#000;color:var(--text);font-family:var(--body);
 <div id="voile"></div>
 </div><!-- #app -->
 
-<script src="/ghost-box/lib/nuit.js?v=25"></script>
-<script src="/ghost-box/lib/wakelock.js?v=25"></script>
-<script src="/ghost-box/lib/media.js?v=25"></script>
-<script src="/ghost-box/lib/moteur.js?v=25"></script>
-<script src="/ghost-box/lib/capteurs.js?v=25"></script>
-<script src="/ghost-box/lib/mur.js?v=25"></script>
-<script src="/ghost-box/lib/voix.js?v=25"></script>
-<script src="/ghost-box/lib/historique.js?v=25"></script>
-<script src="/ghost-box/lib/tampon.js?v=25"></script>
-<script src="/ghost-box/lib/secours.js?v=25"></script>
-<script src="/ghost-box/lib/capture.js?v=25"></script>
+<script src="/ghost-box/lib/nuit.js?v=26"></script>
+<script src="/ghost-box/lib/wakelock.js?v=26"></script>
+<script src="/ghost-box/lib/media.js?v=26"></script>
+<script src="/ghost-box/lib/moteur.js?v=26"></script>
+<script src="/ghost-box/lib/capteurs.js?v=26"></script>
+<script src="/ghost-box/lib/mur.js?v=26"></script>
+<script src="/ghost-box/lib/voix.js?v=26"></script>
+<script src="/ghost-box/lib/historique.js?v=26"></script>
+<script src="/ghost-box/lib/tampon.js?v=26"></script>
+<script src="/ghost-box/lib/secours.js?v=26"></script>
+<script src="/ghost-box/lib/capture.js?v=26"></script>
 <script>
 /* ═══════════════════════════════════════════════════════════════════════
    Séance simple — un écran, un bouton.
@@ -362,6 +414,13 @@ const JOURNAL=[];
 let declencheur=null, chipOccupe=false;
 let vue='mots';
 let murMode = (()=>{ try{ return localStorage.getItem('gb-simple-mode')==='escalier'?'escalier':'instant'; }catch(e){ return 'instant'; } })();
+let sens = (()=>{ try{ return localStorage.getItem('gb-simple-sens')==='permissive'?'permissive':'prudente'; }catch(e){ return 'prudente'; } })();
+const SEVERITE = {
+  prudente:   { pose:null, visage:null },
+  permissive: { pose:{points:6, moyenne:0.5, suite:3, hauteur:0.045},
+                visage:{confiance:0.55, suite:3, taille:0.026} }
+};
+
 
 /* ═══ le mur, monté tout de suite : l'écran n'est jamais vide ═══ */
 GBMur.lexique('../data/lexique.json').then(mots=>{
@@ -694,6 +753,15 @@ function majTiroir(){
   $('oVisage').className = visOn ? 'or' : (visVoulu && detectionRatee ? 'ko' : '');
   $('oVisage').textContent = visOn ? 'Visage'
     : (visVoulu && detectionRatee ? 'Visage — indispo.' : 'Visage');
+  $('oPrudente').className   = sens==='prudente'   ? 'on' : '';
+  $('oPermissive').className = sens==='permissive' ? 'or' : '';
+  $('sensAide').innerHTML = sens==='permissive'
+    ? '<b style="color:var(--gold)">Permissive</b> — la barre est baissée : une forme est retenue plus loin, plus petite '
+      + 'et après moins d\'images de confirmation. Tu verras davantage de silhouettes et de visages, et <b>une partie '
+      + 'sera fausse</b> : reflets, plis de tissu, motifs. À utiliser en sachant ce qu\'on regarde.'
+    : '<b>Prudente</b> — les seuils du projet : une forme doit être assez grande, assez nette, et tenir '
+      + 'plusieurs images au même endroit. Des personnes lointaines ou de dos peuvent être ignorées ; '
+      + 'c\'est voulu. Si la pastille sur l\'image dit « trop petite », c\'est ici qu\'on peut changer d\'avis.';
   $('oVoix').className = (window.GBVoix && GBVoix.actif()) ? 'on' : '';
   $('oNuit').className = (window.GBNuit && GBNuit.actif()) ? 'on' : '';
   majJournal(); majVoies();
@@ -710,6 +778,12 @@ $('oInstant').onclick=()=>{ murMode='instant'; if(MUR) MUR.mode('instant');
   try{ localStorage.setItem('gb-simple-mode','instant'); }catch(e){} majTiroir(); };
 $('oEsc').onclick=()=>{ murMode='escalier'; if(MUR) MUR.mode('escalier');
   try{ localStorage.setItem('gb-simple-mode','escalier'); }catch(e){} majTiroir(); };
+function poserSens(v){
+  sens=v; try{ localStorage.setItem('gb-simple-sens', v); }catch(e){}
+  appliquerSeverite(); majTiroir();
+}
+$('oPrudente').onclick   = ()=>poserSens('prudente');
+$('oPermissive').onclick = ()=>poserSens('permissive');
 $('oVoix').onclick=()=>{ if(window.GBVoix) GBVoix.basculer(); majTiroir(); };
 
 /* ═══════════════════════════════════════════════════════════════════════
@@ -806,7 +880,7 @@ function conditions(extra){
     journal: JOURNAL.slice(0, 20),
     veille_s: phase==='veille' ? Math.round((performance.now()-tPret)/1000) : 0,
     voies_armees: armees, capteurs: voies,
-    silhouette: silOn, maniere: murMode,
+    silhouette: silOn, visage: visOn, severite_detection: sens, maniere: murMode,
     phrase: MUR? MUR.phrase() : []
   }, extra||{});
 }
@@ -896,6 +970,17 @@ try{ silOn = localStorage.getItem('gb-simple-sil') !== '0'; }catch(e){}
 try{ visOn = localStorage.getItem('gb-simple-vis') !== '0'; }catch(e){}
 let silVoulu = silOn, visVoulu = visOn;   // ce que l'utilisateur veut, même caméra fermée
 silOn = visOn = false;                    // rien n'est actif tant que le modèle n'est pas là
+/* ── la sévérité de la détection, choisie EXPLICITEMENT ──
+   Par défaut : prudente, les seuils du projet — mieux vaut manquer un vrai
+   qu'en inventer un. Permissive : la barre baisse, on voit plus loin et plus
+   petit, et on récolte MÉCANIQUEMENT plus de fausses formes. Ce n'est pas un
+   réglage de confort, c'est un compromis, et il est dit comme tel. */
+function appliquerSeverite(){
+  const r = SEVERITE[sens] || SEVERITE.prudente;
+  try{ if(POSE && POSE.regler) POSE.regler(r.pose); }catch(e){}
+  try{ if(VIS && VIS.regler)  VIS.regler(r.visage); }catch(e){}
+}
+
 async function allumerDetection(quoi, silencieux){
   if(!B.fluxCamera()){
     if(!silencieux) $('silAide').innerHTML='<b style="color:var(--flag)">La caméra n\'est pas ouverte</b> — démarre la séance d\'abord.';
@@ -904,11 +989,11 @@ async function allumerDetection(quoi, silencieux){
   if(!silencieux) $('silAide').textContent='Chargement du modèle (une seule fois)…';
   try{
     if(quoi==='sil'){
-      if(!POSE) POSE = await import('/ghost-box/lib/pose.js?v=25');
-      await POSE.load(); silOn=true; silVoulu=true;
+      if(!POSE) POSE = await import('/ghost-box/lib/pose.js?v=26');
+      await POSE.load(); silOn=true; silVoulu=true; appliquerSeverite();
     } else {
-      if(!VIS) VIS = await import('/ghost-box/lib/visage.js?v=25');
-      await VIS.load(); visOn=true; visVoulu=true;
+      if(!VIS) VIS = await import('/ghost-box/lib/visage.js?v=26');
+      await VIS.load(); visOn=true; visVoulu=true; appliquerSeverite();
     }
     $('squelette').classList.add('on'); $('nbPers').classList.add('on');
     if(vue!=='video' && !silencieux){ poserVideo(); tiroir(false); }
@@ -980,8 +1065,18 @@ function boucleSil(){
   const parts=[];
   if(fraisP) parts.push(vu.people.length>1 ? vu.people.length+' personnes' : '1 personne');
   if(fraisV) parts.push(vv.faces.length>1 ? vv.faces.length+' visages' : '1 visage');
+  // ── DIRE POURQUOI ──
+  // « rien de confirmé » devant une pièce pleine de gens est inutilisable :
+  // impossible de savoir si le modèle ne tourne pas, s'il ne voit rien, ou
+  // s'il voit quelque chose qu'il refuse. Les deux modules savent l'expliquer
+  // (why()), on ne faisait que jeter leur réponse.
+  let motif='';
+  if(!parts.length && (silOn||visOn)){
+    try{ if(silOn && POSE && POSE.why) motif = POSE.why()||''; }catch(e){}
+    if(!motif){ try{ if(visOn && VIS && VIS.why) motif = VIS.why()||''; }catch(e){} }
+  }
   $('nbPers').textContent = parts.length ? parts.join(' · ')
-    : (silOn||visOn ? 'rien de confirmé' : '');
+    : (silOn||visOn ? (motif || 'rien de confirmé') : '');
   $('nbPers').style.color = parts.length ? 'var(--gold)' : 'var(--dim)';
 }
 $('oNuit').onclick=()=>{ if(window.GBNuit) GBNuit.basculer(); majTiroir(); };
@@ -1059,7 +1154,6 @@ async function objectifSuivant(){
   chipOccupe=false;
   if(ok) majObjChip(); else direChip('aucun autre objectif', 2200);
 }
-$('objectif').onclick = objectifSuivant;
 $('objChip').onclick  = objectifSuivant;
 
 /* la pastille dit quel objectif tourne. Sans elle, « ce n'est pas la bonne

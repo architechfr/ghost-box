@@ -12,7 +12,7 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="Ghost Box">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<link rel="stylesheet" href="/ghost-box/lib/fonts.css?v=25">
+<link rel="stylesheet" href="/ghost-box/lib/fonts.css?v=26">
 <style>
 :root{
   --bench:#141A1E;--panel:#1D262B;--sunk:#0A0F12;--line:#2C383F;--hair:#212B31;
@@ -103,7 +103,7 @@ body.gbx #vRec{right:96px}
    dit ce qu'elle attend au lieu de montrer un rectangle noir */
 body.gbx.avectexte #trOut:empty::before{content:"Aucune transcription pour l'instant. Enregistre le son de ta box, puis lance la transcription depuis la page — elle envoie l'audio au serveur Mistral.";color:#78868E;font-size:13px;line-height:1.5}
 </style>
-<link rel="stylesheet" href="/ghost-box/lib/ambiance.css?v=25">
+<link rel="stylesheet" href="/ghost-box/lib/ambiance.css?v=26">
 </head>
 <body>
 <div class="wrap">
@@ -155,7 +155,7 @@ body.gbx.avectexte #trOut:empty::before{content:"Aucune transcription pour l'ins
 
 <!-- l'écran fixe est monté PENDANT le script de la page : ce module doit donc
      exister avant lui. Les autres ne sont appelés que dans des gestionnaires. -->
-<script src="/ghost-box/lib/fixe.js?v=25"></script>
+<script src="/ghost-box/lib/fixe.js?v=26"></script>
 <script>
 (() => {
 "use strict";
@@ -367,7 +367,7 @@ $('aiBtn').onclick=async ()=>{
   if(!camActive){ $('poseState').textContent="Active d'abord la caméra."; return; }
   $('poseState').textContent='Chargement du modèle (~5 Mo, une seule fois)…';
   try{
-    if(!POSE) POSE=await import('/ghost-box/lib/pose.js?v=25');
+    if(!POSE) POSE=await import('/ghost-box/lib/pose.js?v=26');
     await POSE.load();
     aiOn=true; $('aiBtn').classList.add('act');
     $('poseState').innerHTML='Silhouette IA active — <b>expérimental</b>. Un squelette doré apparaît si le modèle croit voir quelqu\'un.';
@@ -523,13 +523,13 @@ addEventListener('load',()=>{
 })();
 </script>
 <script>if('serviceWorker' in navigator){window.addEventListener('load',function(){navigator.serviceWorker.register('/ghost-box/sw.js').catch(function(){});});}</script>
-<script src="/ghost-box/lib/nuit.js?v=25"></script>
-<script src="/ghost-box/lib/demarrage.js?v=25"></script>
-<script src="/ghost-box/lib/wakelock.js?v=25"></script>
-<script src="/ghost-box/lib/retour.js?v=25"></script>
-<script src="/ghost-box/lib/aide.js?v=25"></script>
-<script src="/ghost-box/lib/media.js?v=25"></script>
-<script src="/ghost-box/lib/capture.js?v=25"></script>
-<script src="/ghost-box/lib/fullscreen.js?v=25"></script>
+<script src="/ghost-box/lib/nuit.js?v=26"></script>
+<script src="/ghost-box/lib/demarrage.js?v=26"></script>
+<script src="/ghost-box/lib/wakelock.js?v=26"></script>
+<script src="/ghost-box/lib/retour.js?v=26"></script>
+<script src="/ghost-box/lib/aide.js?v=26"></script>
+<script src="/ghost-box/lib/media.js?v=26"></script>
+<script src="/ghost-box/lib/capture.js?v=26"></script>
+<script src="/ghost-box/lib/fullscreen.js?v=26"></script>
 </body>
 </html>
