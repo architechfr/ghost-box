@@ -12,7 +12,7 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="Ghost Box">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<link rel="stylesheet" href="/ghost-box/lib/fonts.css?v=33">
+<link rel="stylesheet" href="/ghost-box/lib/fonts.css?v=34">
 <style>
 :root{
   --bench:#0A0F12;--panel:#1D262B;--sunk:#0A0F12;--line:#2C383F;--hair:#212B31;
@@ -142,7 +142,7 @@ body.avecmur #murBox{display:flex}
    la place du ✕ à droite pour ne jamais passer dessous. */
 body.filming #live{padding-right:92px}
 </style>
-<link rel="stylesheet" href="/ghost-box/lib/ambiance.css?v=33">
+<link rel="stylesheet" href="/ghost-box/lib/ambiance.css?v=34">
 </head>
 <body>
 
@@ -214,22 +214,22 @@ body.filming #live{padding-right:92px}
 <video id="vid3" playsinline muted></video>
 <video id="vid4" playsinline muted></video>
 
-<script src="/ghost-box/lib/nuit.js?v=33"></script>
-<script src="/ghost-box/lib/demarrage.js?v=33"></script>
-<script src="/ghost-box/lib/voix.js?v=33"></script>
-<script src="/ghost-box/lib/historique.js?v=33"></script>
-<script src="/ghost-box/lib/moteur.js?v=33"></script>
-<script src="/ghost-box/lib/retour.js?v=33"></script>
-<script src="/ghost-box/lib/aide.js?v=33"></script>
-<script src="/ghost-box/lib/action.js?v=33"></script>
+<script src="/ghost-box/lib/nuit.js?v=34"></script>
+<script src="/ghost-box/lib/demarrage.js?v=34"></script>
+<script src="/ghost-box/lib/voix.js?v=34"></script>
+<script src="/ghost-box/lib/historique.js?v=34"></script>
+<script src="/ghost-box/lib/moteur.js?v=34"></script>
+<script src="/ghost-box/lib/retour.js?v=34"></script>
+<script src="/ghost-box/lib/aide.js?v=34"></script>
+<script src="/ghost-box/lib/action.js?v=34"></script>
 <script>addEventListener('load',function(){ try{ GBAction.init(['#recBtn','#prep']); }catch(e){} });</script>
-<script src="/ghost-box/lib/secours.js?v=33"></script>
-<script src="/ghost-box/lib/tampon.js?v=33"></script>
-<script src="/ghost-box/lib/mur.js?v=33"></script>
-<script src="/ghost-box/lib/media.js?v=33"></script>
-<script src="/ghost-box/lib/wakelock.js?v=33"></script>
-<script src="/ghost-box/lib/objectif.js?v=33"></script>
-<script src="/ghost-box/lib/fixe.js?v=33"></script>
+<script src="/ghost-box/lib/secours.js?v=34"></script>
+<script src="/ghost-box/lib/tampon.js?v=34"></script>
+<script src="/ghost-box/lib/mur.js?v=34"></script>
+<script src="/ghost-box/lib/media.js?v=34"></script>
+<script src="/ghost-box/lib/wakelock.js?v=34"></script>
+<script src="/ghost-box/lib/objectif.js?v=34"></script>
+<script src="/ghost-box/lib/fixe.js?v=34"></script>
 <script>
 (() => {
 "use strict";
@@ -556,12 +556,13 @@ GBFixe.installer({
   bouton:'#fixBtn',
   bandeau:()=>hudHtml,
   modules:[
-    {cle:'ia',       label:'Silhouette',  delai:1200, actif:()=>aiOn,    basculer:()=>$('aiBtn').click()},
-    {cle:'auto',     label:'Capture auto',            actif:()=>autoCap, basculer:()=>$('autoBtn').click()},
+    // libellés COURTS : chaque lettre du bandeau est volée à l'image et au mur
+    {cle:'ia',       label:'IA',   delai:1200, actif:()=>aiOn,    basculer:()=>$('aiBtn').click()},
+    {cle:'auto',     label:'Auto',             actif:()=>autoCap, basculer:()=>$('autoBtn').click()},
     {cle:'mur',      label:'Mur', toujours:true, delai:700, actif:()=>!!MUR, basculer:()=>$('murBtn').click()},
     {cle:'tampon',   label:'Tampon',      delai:600,  actif:()=>!!(tampon&&tampon.actif()), basculer:()=>$('tampBtn').click()},
     {cle:'cam2',     label:'2e cam',      delai:1200, actif:()=>nbVues()>1, basculer:()=>$('twoCam').click()},
-    {cle:'incrust',  label:'Incrustation',            actif:()=>incrust, basculer:()=>$('incrustBtn').click()},
+    {cle:'incrust',  label:'Incrust',                 actif:()=>incrust, basculer:()=>$('incrustBtn').click()},
     // bouton d'ACTION et non de bascule : il passe à l'objectif suivant et
     // porte le nom de celui qui tourne
     {cle:'obj', label:()=>GBObjectif.nom(), action:()=>GBObjectif.suivant(), delai:1400,
@@ -719,7 +720,7 @@ $('aiBtn').onclick=async ()=>{
   if(!vstream){ $('aiState').textContent="Prépare d'abord le tournage."; return; }
   $('aiState').textContent='Chargement du modèle (~5 Mo, une seule fois)…';
   try{
-    if(!POSE) POSE=await import('/ghost-box/lib/pose.js?v=33');
+    if(!POSE) POSE=await import('/ghost-box/lib/pose.js?v=34');
     await POSE.load();
     aiOn=true; $('aiBtn').className='act';
     $('aiState').innerHTML='Détection active — jusqu\'à <b>4 personnes suivies en même temps</b>, chacune avec sa couleur et son numéro. Les squelettes s\'incrustent dans la vidéo enregistrée, et seulement si une personne réelle est reconnue.';
@@ -1246,7 +1247,7 @@ addEventListener('load',function(){ try{ GBCapture.init({label:($('lieu').value|
 })();
 </script>
 <script>if('serviceWorker' in navigator){window.addEventListener('load',function(){navigator.serviceWorker.register('/ghost-box/sw.js').catch(function(){});});}</script>
-<script src="/ghost-box/lib/capture.js?v=33"></script>
-<script src="/ghost-box/lib/fullscreen.js?v=33"></script>
+<script src="/ghost-box/lib/capture.js?v=34"></script>
+<script src="/ghost-box/lib/fullscreen.js?v=34"></script>
 </body>
 </html>
