@@ -12,7 +12,7 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="Ghost Box">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<link rel="stylesheet" href="/ghost-box/lib/fonts.css?v=22">
+<link rel="stylesheet" href="/ghost-box/lib/fonts.css?v=23">
 <style>
 :root{
   --bench:#0A0F12;--panel:#141B20;--line:#2C383F;--hair:#1E262B;
@@ -37,6 +37,20 @@ body{margin:0;background:#000;color:var(--text);font-family:var(--body);
 #app{position:fixed;inset:0;display:grid;
   grid-template-rows:auto minmax(0,1fr) auto auto auto auto auto;
   padding:env(safe-area-inset-top, 0px) 0 env(safe-area-inset-bottom, 0px)}
+/* ── SECOND PIÈGE PAYÉ ICI, ET IL DÉCALAIT TOUT L'ÉCRAN ──
+   Un item de grille (comme un item de flex) a `min-width:auto` : il refuse de
+   descendre sous la largeur minimale de son CONTENU. Tant que la marque n'est
+   pas décodée, le navigateur ne connaît pas sa largeur naturelle et tout tient
+   dans l'écran ; à la première mise en page qui suit son décodage — sur le
+   terrain, cela tombait au moment où l'apprentissage se termine — sa largeur
+   naturelle (276 px pour 30 px de haut) s'impose, la barre du haut passe à
+   460 px dans un écran de 412, et TOUTES les rangées se décalent : la droite
+   de l'image, le bouton ⚙ et la colonne de droite sortent de l'écran, que
+   `overflow:hidden` coupe net. Mesuré au navigateur : 412 → 460 px.
+   Deux verrous, pas un : les rangées ont le droit de rétrécir, et la marque
+   aussi — `object-fit:contain` lui garde ses proportions. */
+#app > *{min-width:0}
+#top img{min-width:0;max-width:100%}
 
 /* ── barre du haut : la marque, et un seul accès aux réglages ── */
 #top{display:flex;align-items:center;gap:10px;padding:14px 14px 10px}
@@ -127,6 +141,9 @@ body{margin:0;background:#000;color:var(--text);font-family:var(--body);
   padding:12px 10px;min-height:46px;cursor:pointer;text-transform:none;letter-spacing:0}
 #tiroir .opts button.on{border-color:var(--signal);color:var(--signal)}
 #tiroir .opts button.or{border-color:var(--gold);color:var(--gold)}
+/* voulu, mais le modèle n'a pas pu se charger : ni allumé ni éteint —
+   l'utilisateur doit voir que ce n'est pas lui qui l'a coupé */
+#tiroir .opts button.ko{border-color:var(--flag);color:var(--flag)}
 #tiroir .opts .vide{font-family:var(--mono);font-size:11.5px;color:#5A686F;padding:6px 0}
 #tiroir .opts.liens{display:grid;grid-template-columns:1fr 1fr}
 #tiroir .opts.liens a{display:block;text-decoration:none;font-size:13px;color:var(--text);
@@ -151,7 +168,7 @@ body{margin:0;background:#000;color:var(--text);font-family:var(--body);
   #bottom{padding:10px 22px 4px}#seg{padding:4px 0 10px}
 }
 </style>
-<link rel="stylesheet" href="/ghost-box/lib/ambiance.css?v=22">
+<link rel="stylesheet" href="/ghost-box/lib/ambiance.css?v=23">
 </head>
 <body>
 <div id="app">
@@ -250,17 +267,17 @@ body{margin:0;background:#000;color:var(--text);font-family:var(--body);
 <div id="voile"></div>
 </div><!-- #app -->
 
-<script src="/ghost-box/lib/nuit.js?v=22"></script>
-<script src="/ghost-box/lib/wakelock.js?v=22"></script>
-<script src="/ghost-box/lib/media.js?v=22"></script>
-<script src="/ghost-box/lib/moteur.js?v=22"></script>
-<script src="/ghost-box/lib/capteurs.js?v=22"></script>
-<script src="/ghost-box/lib/mur.js?v=22"></script>
-<script src="/ghost-box/lib/voix.js?v=22"></script>
-<script src="/ghost-box/lib/historique.js?v=22"></script>
-<script src="/ghost-box/lib/tampon.js?v=22"></script>
-<script src="/ghost-box/lib/secours.js?v=22"></script>
-<script src="/ghost-box/lib/capture.js?v=22"></script>
+<script src="/ghost-box/lib/nuit.js?v=23"></script>
+<script src="/ghost-box/lib/wakelock.js?v=23"></script>
+<script src="/ghost-box/lib/media.js?v=23"></script>
+<script src="/ghost-box/lib/moteur.js?v=23"></script>
+<script src="/ghost-box/lib/capteurs.js?v=23"></script>
+<script src="/ghost-box/lib/mur.js?v=23"></script>
+<script src="/ghost-box/lib/voix.js?v=23"></script>
+<script src="/ghost-box/lib/historique.js?v=23"></script>
+<script src="/ghost-box/lib/tampon.js?v=23"></script>
+<script src="/ghost-box/lib/secours.js?v=23"></script>
+<script src="/ghost-box/lib/capture.js?v=23"></script>
 <script>
 /* ═══════════════════════════════════════════════════════════════════════
    Séance simple — un écran, un bouton.
@@ -329,10 +346,25 @@ async function demarrer(){
   }
   if(vue==='video') poserVideo();
   listerObjectifs();
-  // détection allumée d'office : c'est le mode où l'on ne règle rien
+  // ── détection allumée d'office : c'est le mode où l'on ne règle rien ──
+  // Mais un allumage silencieux qui ÉCHOUE silencieusement est un mensonge :
+  // le modèle vient d'un CDN et, sans réseau la première fois, il ne charge
+  // pas. On le dit, au lieu de laisser croire que la détection tourne.
   if(B.fluxCamera()){
-    if(silVoulu) allumerDetection('sil', true);
-    if(visVoulu) allumerDetection('vis', true);
+    Promise.all([
+      silVoulu ? allumerDetection('sil', true) : Promise.resolve(null),
+      visVoulu ? allumerDetection('vis', true) : Promise.resolve(null)
+    ]).then(([a,b])=>{
+      const voulu = (silVoulu?1:0)+(visVoulu?1:0);
+      const obtenu = (a===true?1:0)+(b===true?1:0);
+      if(voulu && !obtenu){
+        detectionRatee = true;
+        $('silAide').innerHTML='<b style="color:var(--flag)">Détection indisponible</b> — '
+          +'son modèle se télécharge une seule fois, et il faut du réseau pour cette '
+          +'première fois. Tout le reste de la séance fonctionne normalement.';
+      } else detectionRatee = false;
+      majTiroir();
+    });
   }
 
   W={}; ATT={};
@@ -450,7 +482,9 @@ function majInfos(now){
   $('i5').className='ln'+(pc>=60?' al':'');
 
   const seuils=Object.values(W).filter(w=>w.ready).map(w=>w.thr);
-  $('i6').innerHTML='Sensibilité : <b>'+(seuils.length? 'réglée sur le lieu' : '—')+'</b>';
+  // « Sensibilité : réglée sur le lieu » ne tenait pas dans la colonne (mesuré :
+  // 232 px pour 188 disponibles) et finissait coupé par des points de suspension
+  $('i6').innerHTML='Réglé : <b>'+(seuils.length? 'sur ce lieu' : '—')+'</b>';
   $('i6').className='ln'+(seuils.length?' on':'');
 
   if(phase==='veille' && (now-tPret)<SETTLE)
@@ -516,8 +550,15 @@ function majTiroir(){
   $('oEsc').className     = murMode==='escalier' ? 'or' : '';
   $('oAuto').className = autoOn ? 'on' : '';
   $('oTampon').textContent = 'Mémoire '+tamponSec+' s';
-  $('oSilhouette').className = silOn ? 'or' : '';
-  $('oVisage').className = visOn ? 'or' : '';
+  // trois états, pas deux : allumée, éteinte, ou VOULUE mais indisponible.
+  // Un bouton éteint alors que l'utilisateur l'a demandé lui ferait croire
+  // qu'il a coupé quelque chose — c'est le modèle qui n'a pas pu se charger.
+  $('oSilhouette').className = silOn ? 'or' : (silVoulu && detectionRatee ? 'ko' : '');
+  $('oSilhouette').textContent = silOn ? 'Silhouette'
+    : (silVoulu && detectionRatee ? 'Silhouette — indispo.' : 'Silhouette');
+  $('oVisage').className = visOn ? 'or' : (visVoulu && detectionRatee ? 'ko' : '');
+  $('oVisage').textContent = visOn ? 'Visage'
+    : (visVoulu && detectionRatee ? 'Visage — indispo.' : 'Visage');
   $('oVoix').className = (window.GBVoix && GBVoix.actif()) ? 'on' : '';
   $('oNuit').className = (window.GBNuit && GBNuit.actif()) ? 'on' : '';
   listerObjectifs();
@@ -702,7 +743,7 @@ function autoTic(now, quelquun){
    Même module et mêmes critères sévères que la séance caméra : le tracé est
    dessiné PAR-DESSUS l'image, jamais dedans, et il n'entre dans aucune mesure.
    Le modèle vient d'un CDN — sans réseau la première fois, on le dit. */
-let POSE=null, VIS=null, silOn=false, visOn=false, lastVT=-1;
+let POSE=null, VIS=null, silOn=false, visOn=false, lastVT=-1, detectionRatee=false;
 /* Détection allumée PAR DÉFAUT : c'est la raison d'être d'un mode qui doit
    marcher sans rien régler. Le réglage reste mémorisé si l'utilisateur coupe. */
 try{ silOn = localStorage.getItem('gb-simple-sil') !== '0'; }catch(e){}
@@ -717,10 +758,10 @@ async function allumerDetection(quoi, silencieux){
   if(!silencieux) $('silAide').textContent='Chargement du modèle (une seule fois)…';
   try{
     if(quoi==='sil'){
-      if(!POSE) POSE = await import('/ghost-box/lib/pose.js?v=22');
+      if(!POSE) POSE = await import('/ghost-box/lib/pose.js?v=23');
       await POSE.load(); silOn=true; silVoulu=true;
     } else {
-      if(!VIS) VIS = await import('/ghost-box/lib/visage.js?v=22');
+      if(!VIS) VIS = await import('/ghost-box/lib/visage.js?v=23');
       await VIS.load(); visOn=true; visVoulu=true;
     }
     $('squelette').classList.add('on'); $('nbPers').classList.add('on');
@@ -818,7 +859,9 @@ async function listerObjectifs(){
   box.innerHTML='';
   lentilles.forEach((l,i)=>{
     const b=document.createElement('button');
-    b.textContent = l.nom.length>26 ? l.nom.slice(0,26)+'…' : l.nom;
+    // « Arrière 1/2/3 » plutôt que « camera2 2, facing back » : il faut pouvoir
+    // NOMMER l'objectif qu'on veut, sinon on ne peut pas le redemander
+    b.textContent = l.nom;
     b.className = (i===iLentille) ? 'on' : '';
     b.onclick=()=>choisirObjectif(i);
     box.appendChild(b);
@@ -832,9 +875,16 @@ async function choisirObjectif(i){
   const ok = await B.changerCamera({video:{deviceId:{exact:lentilles[i].id}}, audio:false});
   if(ok){
     iLentille=i;
-    // clé partagée avec lib/capteurs.js : l'objectif est repris à l'ouverture
+    // DEUX mémoires, partagées avec lib/capteurs.js : l'identifiant exact, et
+    // le rang parmi les arrières. Sur certains téléphones l'identifiant change
+    // d'une session à l'autre — le rang, lui, tient, et « Arrière 3 » revient.
     try{ localStorage.setItem('gb-objectif', lentilles[i].id); }catch(e){}
+    try{ if(lentilles[i].rang) localStorage.setItem('gb-objectif-rang', String(lentilles[i].rang));
+         else localStorage.removeItem('gb-objectif-rang'); }catch(e){}
     if(vue==='video') poserVideo();
+    $('legend').textContent='objectif : '+lentilles[i].nom+' — retenu pour les prochaines fois';
+  } else {
+    $('legend').textContent='cet objectif a refusé de s\'ouvrir — l\'ancien est gardé';
   }
   majTiroir();
 }
@@ -844,7 +894,6 @@ $('objectif').onclick=async ()=>{
   if(!lentilles.length) lentilles = await B.objectifs();
   if(lentilles.length<2){ $('legend').textContent='un seul objectif sur cet appareil'; return; }
   await choisirObjectif((iLentille+1) % lentilles.length);
-  $('legend').textContent='objectif : '+lentilles[iLentille].nom.slice(0,30);
 };
 
 /* la vignette montre le dernier fichier gardé — sans l'ouvrir.
