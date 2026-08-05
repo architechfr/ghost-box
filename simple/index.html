@@ -12,7 +12,7 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="Ghost Box">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<link rel="stylesheet" href="/ghost-box/lib/fonts.css?v=26">
+<link rel="stylesheet" href="/ghost-box/lib/fonts.css?v=27">
 <style>
 :root{
   --bench:#0A0F12;--panel:#141B20;--line:#2C383F;--hair:#1E262B;
@@ -129,10 +129,23 @@ body{margin:0;background:#000;color:var(--text);font-family:var(--body);
   overflow:hidden;cursor:pointer;flex:none;padding:0;display:flex;align-items:center;justify-content:center}
 #vign img{width:100%;height:100%;object-fit:cover;display:block}
 #vign span{font-family:var(--mono);font-size:9px;color:var(--dim);letter-spacing:.08em}
-/* le déclencheur : gros, rond, au centre — impossible à manquer dans le noir */
+/* ── le gros bouton : gros, rond, au centre — et il DIT ce qu'il fait ──
+   Il ressemble au déclencheur d'un appareil photo, mais il démarre et arrête
+   la séance. La couleur seule ne le disait pas : « quand il est rouge, quel
+   est l'intérêt ? » Un signe à l'intérieur lève l'ambiguïté sans un mot —
+   ▶ pour démarrer, le décompte pendant l'apprentissage, ■ pour arrêter, le
+   carré blanc sur fond rouge étant le signe universel de l'arrêt.
+   Le point rouge clignotant de l'enregistrement reste, lui, SUR l'image :
+   ce sont deux choses différentes et elles ne doivent pas se confondre. */
 #go{width:88px;height:88px;border-radius:50%;background:#FFF;border:5px solid rgba(255,255,255,.28);
-  cursor:pointer;flex:none;padding:0;transition:background .18s,border-color .18s}
+  cursor:pointer;flex:none;padding:0;transition:background .18s,border-color .18s;
+  display:flex;align-items:center;justify-content:center;
+  font-family:var(--mono);font-variant-numeric:tabular-nums;color:#0A0F12}
 #go:active{transform:scale(.95)}
+#go:disabled{opacity:.75;cursor:default}
+#goIco{font-size:30px;line-height:1;pointer-events:none}
+#go.wait #goIco{font-size:27px;font-weight:500}
+#go.on #goIco{font-size:26px;color:#FFF}
 #go.on{background:var(--flag);border-color:rgba(226,87,76,.32)}
 #go.wait{background:var(--gold);border-color:rgba(233,180,76,.32)}
 #grid{width:62px;height:62px;border-radius:14px;background:var(--panel);border:1px solid var(--line);
@@ -150,8 +163,11 @@ body{margin:0;background:#000;color:var(--text);font-family:var(--body);
 /* ── le chevron, et le tiroir qu'il ouvre ── */
 /* 44 px de haut : le chevron est un vrai bouton, pas une décoration —
    26 px se manquait au pouce, comme le bouton Aide avant lui */
+/* `justify-self` ne veut rien dire dans un conteneur en FLEX : depuis que le
+   chevron vit dans #cote et non plus directement dans la grille, il faut
+   `align-self` — sans quoi il se colle à gauche au lieu d'être centré. */
 #chev{background:none;border:0;color:#4E5C64;font-size:22px;line-height:1;cursor:pointer;
-  padding:0;justify-self:center;min-height:44px;width:96px}
+  padding:0;align-self:center;min-height:44px;width:96px}
 #tiroir{position:fixed;left:0;right:0;bottom:0;z-index:80;max-height:82vh;overflow-y:auto;
   background:#0D141A;border-top:1px solid var(--line);border-radius:18px 18px 0 0;
   padding:6px 18px calc(env(safe-area-inset-bottom, 0px) + 24px);
@@ -252,7 +268,7 @@ body{margin:0;background:#000;color:var(--text);font-family:var(--body);
 }
 
 </style>
-<link rel="stylesheet" href="/ghost-box/lib/ambiance.css?v=26">
+<link rel="stylesheet" href="/ghost-box/lib/ambiance.css?v=27">
 </head>
 <body>
 <div id="app">
@@ -290,7 +306,7 @@ body{margin:0;background:#000;color:var(--text);font-family:var(--body);
 
 <div id="bottom">
   <button id="vign" type="button" aria-label="Dernier enregistrement"><span>VIDE</span></button>
-  <button id="go" type="button" aria-label="Démarrer la séance"></button>
+  <button id="go" type="button" aria-label="Démarrer la séance"><span id="goIco">▶</span></button>
   <button id="grid" type="button" aria-label="Bibliothèque"><i></i><i></i><i></i><i></i></button>
 </div>
 
@@ -367,17 +383,17 @@ body{margin:0;background:#000;color:var(--text);font-family:var(--body);
 <div id="voile"></div>
 </div><!-- #app -->
 
-<script src="/ghost-box/lib/nuit.js?v=26"></script>
-<script src="/ghost-box/lib/wakelock.js?v=26"></script>
-<script src="/ghost-box/lib/media.js?v=26"></script>
-<script src="/ghost-box/lib/moteur.js?v=26"></script>
-<script src="/ghost-box/lib/capteurs.js?v=26"></script>
-<script src="/ghost-box/lib/mur.js?v=26"></script>
-<script src="/ghost-box/lib/voix.js?v=26"></script>
-<script src="/ghost-box/lib/historique.js?v=26"></script>
-<script src="/ghost-box/lib/tampon.js?v=26"></script>
-<script src="/ghost-box/lib/secours.js?v=26"></script>
-<script src="/ghost-box/lib/capture.js?v=26"></script>
+<script src="/ghost-box/lib/nuit.js?v=27"></script>
+<script src="/ghost-box/lib/wakelock.js?v=27"></script>
+<script src="/ghost-box/lib/media.js?v=27"></script>
+<script src="/ghost-box/lib/moteur.js?v=27"></script>
+<script src="/ghost-box/lib/capteurs.js?v=27"></script>
+<script src="/ghost-box/lib/mur.js?v=27"></script>
+<script src="/ghost-box/lib/voix.js?v=27"></script>
+<script src="/ghost-box/lib/historique.js?v=27"></script>
+<script src="/ghost-box/lib/tampon.js?v=27"></script>
+<script src="/ghost-box/lib/secours.js?v=27"></script>
+<script src="/ghost-box/lib/capture.js?v=27"></script>
 <script>
 /* ═══════════════════════════════════════════════════════════════════════
    Séance simple — un écran, un bouton.
@@ -411,7 +427,7 @@ let phase='arret', tPhase=0, tPret=0, armees=0, nMots=0, lastMot=-1e9;
    Déclaré ICI, avec le reste de l'état : la boucle de mesure démarre avant la
    fin du script, et une déclaration plus bas la ferait échouer. */
 const JOURNAL=[];
-let declencheur=null, chipOccupe=false;
+let declencheur=null, chipOccupe=false, gArret=false;
 let vue='mots';
 let murMode = (()=>{ try{ return localStorage.getItem('gb-simple-mode')==='escalier'?'escalier':'instant'; }catch(e){ return 'instant'; } })();
 let sens = (()=>{ try{ return localStorage.getItem('gb-simple-sens')==='permissive'?'permissive':'prudente'; }catch(e){ return 'prudente'; } })();
@@ -441,7 +457,7 @@ $('go').onclick=async ()=>{
 };
 
 async function demarrer(){
-  phase='ouverture'; $('go').className='wait'; dire('');
+  phase='ouverture'; majGo(); dire('');
   $('legend').textContent='ouverture des capteurs…';
   try{ GBWake.on(); }catch(e){}
 
@@ -453,7 +469,7 @@ async function demarrer(){
   }
   const vivantes=B.voies().filter(v=>v.vivante);
   if(!vivantes.length){
-    phase='arret'; $('go').className='';
+    phase='arret'; majGo();
     dire('<b class="ko">Aucun capteur ne répond.</b><p>Le micro est le minimum nécessaire. '
       +'Vérifie que tu as autorisé l\'accès, et qu\'aucune autre application ne l\'utilise.</p>');
     return;
@@ -489,11 +505,16 @@ async function demarrer(){
   try{ H=GBHistorique.ouvrir({mode:'séance simple'}); }catch(e){ H=null; }
   if(H) H.noter('veille', vivantes.length+' voie(s)');
   phase='apprentissage'; tPhase=performance.now();
-  $('go').className='wait';
+  majGo();
   $('legend').textContent='apprentissage du lieu — ne touche à rien';
 }
 
 async function arreter(){
+  // PIÈGE VÉCU : la fin d'une prise vidéo peut demander plusieurs secondes
+  // (écriture du fichier). Le bouton ne changeait qu'APRÈS — donc « j'appuie
+  // et rien ne se passe ». On répond d'abord, on travaille ensuite.
+  gArret=true; $('go').disabled=true; majGo();
+  $('legend').textContent='arrêt en cours…';
   if(videoEnCours) await stopVideoAuto('séance terminée');
   if(TAMP){ TAMP.arreter(); TAMP=null; }
   $('recPt').classList.remove('on');
@@ -504,7 +525,7 @@ async function arreter(){
   silOn=false; visOn=false;
   $('squelette').classList.remove('on'); $('nbPers').classList.remove('on');
   $('objChip').classList.remove('on');
-  $('go').className='';
+  gArret=false; $('go').disabled=false; majGo();
   $('legend').textContent='séance terminée — appuie pour recommencer';
   poserMur();
 }
@@ -519,12 +540,12 @@ function mesure(){
       armees=0;
       Object.keys(W).forEach(k=>{ if(M.seal(W[k])) armees++; });
       if(!armees){
-        phase='arret'; $('go').className='';
+        phase='arret'; majGo();
         dire('<b class="ko">Aucun capteur n\'a pu être réglé.</b>'
           +'<p>Les capteurs n\'ont rien mesuré du tout pendant l\'apprentissage — micro couvert, '
           +'ou pris par une autre application. Ce n\'est pas une panne de l\'appareil.</p>');
       } else {
-        phase='veille'; tPret=now; $('go').className='on';
+        phase='veille'; tPret=now; majGo();
         monterTampon();
         $('legend').textContent = autoOn
           ? 'en veille — ce qui compte sera gardé tout seul'
@@ -583,6 +604,24 @@ function motSorti(d){
     setTimeout(()=>stopVideoAuto('fin de séquence'), 8000); }
 }
 
+/* l'aspect du bouton est décidé À UN SEUL ENDROIT : trois états, trois signes,
+   et le texte d'accessibilité qui suit. Éparpillé, il finissait toujours par
+   mentir dans un cas sur trois. */
+function majGo(reste){
+  const g=$('go'), i=$('goIco');
+  if(gArret){ g.className='wait'; i.textContent='…';
+    g.setAttribute('aria-label','arrêt en cours'); return; }
+  if(phase==='arret'){ g.className=''; i.textContent='▶';
+    g.setAttribute('aria-label','Démarrer la séance'); }
+  else if(phase==='ouverture'){ g.className='wait'; i.textContent='…';
+    g.setAttribute('aria-label','ouverture des capteurs'); }
+  else if(phase==='apprentissage'){ g.className='wait';
+    i.textContent = (reste!=null? reste : '…');
+    g.setAttribute('aria-label','apprentissage du lieu, '+(reste!=null?reste+' secondes':'en cours')); }
+  else { g.className='on'; i.textContent='■';
+    g.setAttribute('aria-label','Arrêter la séance'); }
+}
+
 function majInfos(now){
   const etat = phase==='arret' ? 'à l\'arrêt'
              : phase==='ouverture' ? 'ouverture…'
@@ -593,6 +632,7 @@ function majInfos(now){
 
   if(phase==='apprentissage'){
     const reste=Math.ceil((APPREND-(now-tPhase))/1000);
+    majGo(reste);
     $('i2').innerHTML='Reste : <b>'+reste+' s</b>'; $('i2').className='ln al';
     $('legend').textContent='apprentissage du lieu — ne touche à rien ('+reste+' s)';
   } else if(phase==='veille'){
@@ -989,10 +1029,10 @@ async function allumerDetection(quoi, silencieux){
   if(!silencieux) $('silAide').textContent='Chargement du modèle (une seule fois)…';
   try{
     if(quoi==='sil'){
-      if(!POSE) POSE = await import('/ghost-box/lib/pose.js?v=26');
+      if(!POSE) POSE = await import('/ghost-box/lib/pose.js?v=27');
       await POSE.load(); silOn=true; silVoulu=true; appliquerSeverite();
     } else {
-      if(!VIS) VIS = await import('/ghost-box/lib/visage.js?v=26');
+      if(!VIS) VIS = await import('/ghost-box/lib/visage.js?v=27');
       await VIS.load(); visOn=true; visVoulu=true; appliquerSeverite();
     }
     $('squelette').classList.add('on'); $('nbPers').classList.add('on');
