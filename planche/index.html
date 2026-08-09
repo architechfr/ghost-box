@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<meta name="theme-color" content="#0A0F12">
+<meta name="theme-color" content="#05080A">
 <title>La planche — une lettre désignée</title>
 <link rel="icon" type="image/png" href="/ghost-box/favicon.png">
 <link rel="apple-touch-icon" href="/ghost-box/apple-touch-icon.png">
@@ -12,222 +12,437 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="Ghost Box">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<link rel="stylesheet" href="/ghost-box/lib/fonts.css?v=36">
+<link rel="stylesheet" href="/ghost-box/lib/fonts.css?v=37">
 <style>
+/* ═══════════════════════════════════════════════════════════════════════
+   La planche — habillage.
+
+   Le reste de l'application est un INSTRUMENT : Barlow Condensed, angles
+   vifs, vert de signal. Cette page-ci est un OBJET : Cinzel gravé, laiton
+   sur ardoise, cadre à écoinçons. C'est volontaire et c'est limité à ce
+   mode — la planche est la seule pièce de l'appareil qui imite un objet
+   réel, et elle doit en avoir le poids. Les mesures, elles, gardent la
+   typographie de l'instrument : ce qui est mesuré ne se déguise pas.
+
+   Tout l'ornement est en SVG en ligne ou en dégradé CSS : aucune image,
+   aucune dépendance, rien à télécharger. L'appareil doit s'ouvrir dans une
+   cave sans réseau.
+   ═══════════════════════════════════════════════════════════════════════ */
 :root{
-  --bench:#0A0F12;--panel:#1D262B;--sunk:#0A0F12;--line:#2C383F;--hair:#212B31;
-  --signal:#5FD3A6;--gold:#E9B44C;--flag:#E2574C;--paper:#CFC6B4;--dim:#78868E;--text:#DDE6EA;
-  --legend:"Barlow Condensed","Arial Narrow",sans-serif;
-  --body:"IBM Plex Sans",system-ui,sans-serif;--mono:"IBM Plex Mono",ui-monospace,monospace;
+  --nuit:#05080A;--ardoise:#0D1216;--panneau:#141A1E;--creux:#090D10;
+  --trait:#26313A;--filet:#1A222A;
+  --laiton:#C9A24A;--or:#E9B44C;--or-pale:#E4D3AE;--braise:#8A6D2F;
+  --signal:#5FD3A6;--alerte:#E2574C;--papier:#CFC6B4;--pale:#78868E;--texte:#DDE6EA;
+  --grave:"Cinzel",Georgia,"Times New Roman",serif;
+  --legende:"Barlow Condensed","Arial Narrow",sans-serif;
+  --corps:"IBM Plex Sans",system-ui,sans-serif;--mono:"IBM Plex Mono",ui-monospace,monospace;
 }
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
-html,body{margin:0;background:var(--bench);color:var(--text);font-family:var(--body);-webkit-font-smoothing:antialiased}
-body{padding:0 0 calc(env(safe-area-inset-bottom, 0px) + 24px)}
-.wrap{max-width:660px;margin:0 auto;padding:0 12px}
+html,body{margin:0;background:var(--nuit);color:var(--texte);font-family:var(--corps);-webkit-font-smoothing:antialiased}
+body{padding:0 0 calc(env(safe-area-inset-bottom, 0px) + 20px);
+  background:radial-gradient(900px 520px at 50% -10%, rgba(201,162,74,.045), transparent 62%), var(--nuit)}
+.wrap{max-width:760px;margin:0 auto;padding:0 12px}
 .wrap>*{min-width:0}
-.top{position:sticky;top:0;z-index:20;background:rgba(10,15,18,.96);backdrop-filter:blur(8px);
-  border-bottom:1px solid var(--line);padding:env(safe-area-inset-top, 0px) 0 0}
-.topin{max-width:660px;margin:0 auto;padding:10px 12px;display:flex;align-items:center;gap:10px}
+
+/* ── bandeau ── */
+.top{position:sticky;top:0;z-index:20;background:rgba(5,8,10,.97);backdrop-filter:blur(8px);
+  border-bottom:1px solid var(--filet);padding:env(safe-area-inset-top, 0px) 0 0}
+.topin{max-width:760px;margin:0 auto;padding:9px 12px;display:flex;align-items:center;
+  gap:8px;flex-wrap:wrap}
 .topin>*{min-width:0}
-.topin a{color:var(--dim);text-decoration:none;font-family:var(--mono);font-size:16px}
-.topin h1{font-family:var(--legend);text-transform:uppercase;letter-spacing:.18em;font-size:15px;font-weight:600;margin:0;flex:1}
-.lg{font-family:var(--legend);text-transform:uppercase;letter-spacing:.15em;font-size:12px;color:var(--dim);font-weight:600}
-.ex{font-size:12.5px;color:var(--dim);line-height:1.55;margin:6px 0 0}
-.ex b{color:var(--paper);font-weight:500}
-.step{margin-top:18px;border-top:1px solid var(--line);padding-top:12px}
-button{font-family:var(--legend);text-transform:uppercase;letter-spacing:.13em;font-weight:600;
-  border:1px solid var(--line);background:var(--panel);color:var(--text);border-radius:3px;
-  padding:11px 12px;font-size:13px;cursor:pointer}
-button:active{transform:translateY(1px)}
-button:disabled{opacity:.35;cursor:default}
-button.act{border-color:var(--signal);color:var(--signal)}
-button.or{border-color:var(--gold);color:var(--gold)}
-button.dg{border-color:#3a2b29;color:var(--flag)}
-.row{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}.row>button{flex:1;min-width:118px}
-.fld{display:flex;align-items:center;gap:10px;margin-top:12px}
-.fld .lg{min-width:96px}
-input[type=range]{flex:1;min-width:0;touch-action:pan-y;accent-color:var(--gold)}
-.stat{font-family:var(--mono);font-size:12px;color:var(--dim);margin-top:8px;line-height:1.65}
-.stat b{color:var(--signal)}
-.card{border:1px solid var(--line);background:var(--panel);border-radius:3px;padding:12px 13px;margin-top:12px}
-.note{border-left:2px solid var(--gold);background:#1A1710;padding:11px 13px;font-size:12.5px;
-  line-height:1.6;color:#E4D3AE;margin-top:14px}
-.note.rouge{border-left-color:var(--flag);background:#1A0F0E;color:#E8B5AF}
-.note.vert{border-left-color:var(--signal);background:#0E1A17;color:#A8D9C6}
-table{width:100%;border-collapse:collapse;margin-top:8px}
-th{font-family:var(--legend);text-transform:uppercase;letter-spacing:.12em;font-size:10px;color:var(--dim);
-  text-align:left;font-weight:600;padding:0 6px 6px 0;border-bottom:1px solid var(--line)}
-td{padding:7px 6px 7px 0;border-bottom:1px solid var(--hair);font-family:var(--mono);font-size:12px;vertical-align:top}
-td.w{font-family:var(--legend);font-size:15px;color:var(--gold);letter-spacing:.1em}
-.empty{color:var(--dim);font-size:13px;padding:12px 0}
-/* ── voies et verdicts de finesse ── */
-.voie{display:flex;align-items:baseline;gap:8px;padding:7px 0;border-bottom:1px solid var(--hair)}
-.voie>*{min-width:0}
-.voie .n{font-family:var(--body);font-size:13px;color:var(--text);flex:1}
-.voie .v{font-family:var(--mono);font-size:12px;color:var(--signal);white-space:nowrap}
-.voie .why{font-family:var(--body);font-size:11.5px;color:var(--dim);line-height:1.45;
-  flex-basis:100%;margin-top:2px}
-.voie.ko .n{color:var(--dim)}
-.voie.ko .v{color:var(--dim)}
-.pin{font-family:var(--mono);font-size:9.5px;letter-spacing:.08em;text-transform:uppercase;
-  padding:2px 6px;border-radius:2px;border:1px solid var(--line);color:var(--dim);white-space:nowrap}
-.pin.ok{border-color:var(--signal);color:var(--signal)}
-.pin.no{border-color:#3a2b29;color:var(--flag)}
+/* Deux rangs, pas trois : les commandes et l'état se partagent le premier,
+   le titre prend le second. Un titre centré ENTRE deux groupes de boutons ne
+   tient pas dans 412 px — il fabriquait un troisième rang et mangeait la
+   planche. Au-delà de 700 px, tout rentre sur une ligne. */
+.marque{order:3;flex:1 0 100%;text-align:center;line-height:1.05;margin-top:4px}
+.marque .nom{font-family:var(--grave);font-weight:600;font-size:20px;letter-spacing:.20em;
+  color:var(--or-pale);text-shadow:0 0 22px rgba(201,162,74,.28)}
+.marque .sous{display:flex;align-items:center;justify-content:center;gap:8px;margin-top:2px}
+.marque .sous span{font-family:var(--mono);font-size:9.5px;letter-spacing:.22em;color:var(--braise)}
+.marque .sous svg{opacity:.75}
+.gauche{order:1;display:flex;gap:7px}
+.droite{order:2;display:flex;gap:7px;align-items:center;margin-left:auto}
+@media (min-width:700px){
+  .marque{order:2;flex:1 1 auto;margin-top:0}
+  .gauche{order:1}.droite{order:3}
+}
+/* le bouton d'aide est posé par lib/aide.js : on l'habille comme les nôtres
+   au lieu d'en ajouter un second qui ferait double emploi */
+#gbAide,.gb-aide,button[data-aide]{font-family:var(--legende)!important;font-weight:600!important;
+  text-transform:uppercase!important;letter-spacing:.14em!important;font-size:11px!important;
+  color:var(--or-pale)!important;border:1px solid var(--trait)!important;
+  background:linear-gradient(#151C21,#0E1418)!important;border-radius:3px!important;
+  padding:8px 11px!important}
+.bt{display:inline-flex;align-items:center;gap:6px;font-family:var(--legende);font-weight:600;
+  text-transform:uppercase;letter-spacing:.14em;font-size:11px;color:var(--or-pale);
+  border:1px solid var(--trait);background:linear-gradient(#151C21,#0E1418);border-radius:3px;
+  padding:8px 11px;cursor:pointer;text-decoration:none;white-space:nowrap}
+.bt:active{transform:translateY(1px)}
+.bt svg{opacity:.8}
+.veilleuse{display:inline-flex;align-items:center;gap:6px;font-family:var(--legende);font-weight:600;
+  text-transform:uppercase;letter-spacing:.14em;font-size:10px;color:var(--pale);white-space:nowrap}
+.veilleuse i{width:7px;height:7px;border-radius:50%;background:var(--signal);
+  box-shadow:0 0 9px rgba(95,211,166,.9);animation:souffle 2.6s ease-in-out infinite}
+@keyframes souffle{0%,100%{opacity:.35}50%{opacity:1}}
+
+/* ── ligne d'état ── */
+.jauge{display:flex;align-items:center;justify-content:space-between;gap:10px;
+  padding:10px 2px 0;font-family:var(--mono);font-size:12px;color:var(--pale)}
+.jauge>*{min-width:0}
+.jauge .bloc{display:flex;align-items:center;gap:6px;white-space:nowrap}
+.jauge #nbEmis{font-family:var(--legende);font-weight:600;text-transform:uppercase;letter-spacing:.16em;font-size:11px}
+#etatPill{font-family:var(--legende);font-weight:600;text-transform:uppercase;letter-spacing:.16em;
+  font-size:11px;padding:5px 14px;border:1px solid var(--trait);border-radius:2px;
+  color:var(--pale);background:var(--creux);white-space:nowrap}
+#etatPill.chaud{border-color:var(--or);color:var(--or);box-shadow:0 0 18px -6px rgba(233,180,76,.7)}
+
 /* ── la planche ── */
-#board{position:relative;width:100%;aspect-ratio:1.30/1;margin-top:10px;border-radius:4px;
-  border:1px solid var(--line);overflow:hidden;
-  background:radial-gradient(120% 90% at 50% 15%, rgba(233,180,76,.055), transparent 62%),
-             linear-gradient(#141a1d,#0b1114);
-  box-shadow:inset 0 0 60px -30px rgba(95,211,166,.35), 0 12px 34px -28px #000}
-#board svg{position:absolute;inset:0;width:100%;height:100%;overflow:visible}
-.gly{position:absolute;transform:translate(-50%,-50%);font-family:var(--legend);font-weight:600;
-  color:var(--paper);opacity:.62;white-space:nowrap;pointer-events:none;letter-spacing:.06em;
-  transition:color .18s linear,opacity .18s linear,text-shadow .18s linear}
-.gly.d{font-size:12px;color:var(--dim)}
-.gly.l{font-size:16px}
-.gly.r{font-size:11px;letter-spacing:.10em}
-.gly.pres{opacity:.95;color:#E4D3AE;text-shadow:0 0 12px rgba(233,180,76,.35)}
-.gly.vise{opacity:1;color:var(--gold);text-shadow:0 0 20px rgba(233,180,76,.95)}
-#plan{position:absolute;width:52px;height:52px;margin:-26px 0 0 -26px;pointer-events:none;z-index:3}
-#plan .oeil{position:absolute;inset:0;border-radius:50%;border:1.5px solid var(--gold);
-  background:radial-gradient(circle at 50% 40%, rgba(233,180,76,.16), rgba(10,15,18,.55) 62%);
-  box-shadow:0 0 30px -4px rgba(233,180,76,.75), inset 0 0 20px -8px rgba(233,180,76,.9)}
-#plan .fl{position:absolute;left:50%;top:-9px;width:11px;height:11px;margin-left:-5.5px;
-  background:var(--gold);opacity:.85;clip-path:polygon(50% 0,100% 100%,0 100%)}
-#plan .pt{position:absolute;left:50%;top:50%;width:5px;height:5px;margin:-2.5px 0 0 -2.5px;
-  border-radius:50%;background:var(--gold);box-shadow:0 0 12px rgba(233,180,76,.9)}
-#plan.arret .oeil{border-width:2.5px}
-#bandeau{display:flex;align-items:center;justify-content:space-between;gap:8px;
-  font-family:var(--mono);font-size:11px;color:var(--dim);margin-top:2px}
-#bandeau>*{min-width:0}
-#etatPill{padding:3px 8px;border-radius:2px;border:1px solid var(--line);letter-spacing:.06em;white-space:nowrap}
-#etatPill.chaud{border-color:var(--gold);color:var(--gold)}
-#motBox{margin-top:12px;min-height:52px;border:1px solid var(--line);background:var(--panel);
-  border-radius:3px;padding:10px 12px}
-#mot{margin-top:6px;font:500 26px/1.15 var(--mono);letter-spacing:.16em;color:var(--line);min-height:30px;
-  word-break:break-all}
-#mot.plein{color:#E4D3AE;text-shadow:0 0 34px rgba(233,180,76,.45)}
-.barre{height:3px;background:var(--sunk);border-radius:2px;overflow:hidden;margin-top:9px}
-.barre>i{display:block;height:100%;background:var(--gold);transition:width .12s linear}
-.mini{display:flex;gap:5px;margin-top:12px}
-.mini>div{flex:1;min-width:0;height:26px;background:var(--sunk);border:1px solid var(--hair);
-  border-radius:2px;position:relative;overflow:hidden}
-.mini i{position:absolute;left:0;bottom:0;width:100%;background:rgba(95,211,166,.22);transition:height .12s linear}
-.mini i.chaud{background:rgba(233,180,76,.55)}
-.mini span{position:absolute;left:3px;top:2px;font:400 8px/1 var(--mono);color:#4E5C64}
+#board{container-type:inline-size;position:relative;width:100%;aspect-ratio:1.55/1;margin-top:10px;border-radius:5px;
+  overflow:hidden;border:1px solid var(--braise);
+  background:
+    radial-gradient(120% 80% at 50% 8%, rgba(201,162,74,.07), transparent 60%),
+    radial-gradient(90% 70% at 20% 95%, rgba(90,110,130,.05), transparent 60%),
+    linear-gradient(#161C21, #0A0F13 60%, #070B0E);
+  box-shadow:inset 0 0 90px -34px rgba(201,162,74,.30), 0 18px 46px -30px #000}
+/* grain d'ardoise : bruit SVG, aucune image à télécharger */
+#board::before{content:"";position:absolute;inset:0;pointer-events:none;opacity:.30;
+  background-image:url("data:image/svg+xml;utf8,\
+<svg xmlns='http://www.w3.org/2000/svg' width='180' height='180'>\
+<filter id='n'><feTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='3'/>\
+<feColorMatrix type='saturate' values='0'/></filter>\
+<rect width='180' height='180' filter='url(%23n)' opacity='.5'/></svg>");
+  mix-blend-mode:overlay}
+#cadre{position:absolute;inset:0;width:100%;height:100%;pointer-events:none;z-index:2}
+#trace{position:absolute;inset:0;width:100%;height:100%;pointer-events:none;z-index:1;overflow:visible}
+#glyphes{position:absolute;inset:0;z-index:2}
+.gly{position:absolute;font-family:var(--grave);font-weight:600;color:var(--laiton);
+  white-space:nowrap;pointer-events:none;line-height:1;
+  text-shadow:0 1px 0 rgba(0,0,0,.85), 0 0 1px rgba(0,0,0,.6);
+  transition:color .2s linear,text-shadow .2s linear,filter .2s linear}
+.gly.l{font-size:clamp(15px,4.6vw,34px)}
+.gly.d{font-size:clamp(12px,3.5vw,26px);color:#B59544}
+.gly.r{font-size:clamp(9px,2.5vw,17px);letter-spacing:.18em;color:#B59544}
+/* La lettre se dimensionne sur LE PLATEAU, pas sur la fenêtre. En paysage le
+   plateau est bridé par la hauteur : il est bien plus étroit que l'écran, et
+   des lettres calées en `vw` s'y chevauchaient. Les unités de conteneur (cqw)
+   règlent ça. Les règles en `vw` ci-dessus restent au-dessus dans la cascade :
+   un navigateur qui ignore `cqw` jette ces trois lignes-ci et garde celles-là. */
+.gly.l{font-size:clamp(13px,4.4cqw,34px)}
+.gly.d{font-size:clamp(11px,3.4cqw,26px)}
+.gly.r{font-size:clamp(8px,2.4cqw,17px)}
+.gly.pres{color:var(--or-pale);text-shadow:0 1px 0 rgba(0,0,0,.85), 0 0 14px rgba(233,180,76,.45)}
+.gly.vise{color:#FFE9B0;text-shadow:0 1px 0 rgba(0,0,0,.85), 0 0 26px rgba(233,180,76,1)}
+#plan{position:absolute;z-index:3;pointer-events:none;
+  width:clamp(52px,15%,104px);aspect-ratio:1/1.14;transform:translate(-50%,-52%)}
+#plan svg{width:100%;height:100%;overflow:visible;
+  filter:drop-shadow(0 6px 14px rgba(0,0,0,.75))}
+#plan .lueur{transition:opacity .25s linear}
+#plan.arret .lueur{opacity:1}
+
+/* En PAYSAGE, la planche se règle sur la HAUTEUR, pas sur la largeur.
+   Sans ça, un écran de 915×412 donnait un plateau de 890×574 : plus haut que
+   la fenêtre, donc à faire défiler — alors que tourner le téléphone sert
+   justement à voir la planche entière d'un coup. `width:auto` + `aspect-ratio`
+   laisse la largeur suivre la hauteur imposée. La ligne en `vh` reste pour les
+   navigateurs qui ignorent `dvh` : sinon toute la règle est jetée. */
+@media (orientation:landscape) and (max-height:620px){
+  #board{height:calc(100vh - 150px);height:calc(100dvh - 150px);
+         width:auto;max-width:100%;margin-left:auto;margin-right:auto}
+  .jauge{padding-top:6px}
+}
+
+/* ── cartes ── */
+.carte{position:relative;margin-top:12px;border:1px solid var(--filet);border-radius:4px;
+  background:linear-gradient(#12181C,#0C1114);padding:14px 15px}
+.carte.attend{display:flex;gap:14px;align-items:flex-start}
+.medaille{flex:none;width:74px;height:74px;border-radius:50%;border:1px solid var(--braise);
+  background:radial-gradient(circle at 50% 42%, rgba(233,180,76,.16), rgba(6,10,12,.9) 66%);
+  display:flex;align-items:center;justify-content:center;
+  box-shadow:inset 0 0 22px -8px rgba(233,180,76,.7)}
+.carte.attend h3{margin:0;font-family:var(--grave);font-weight:600;font-size:14px;
+  letter-spacing:.14em;color:var(--or);text-transform:uppercase}
+.carte.attend p{margin:7px 0 0;font-size:13px;line-height:1.6;color:var(--pale)}
+.etiq{font-family:var(--legende);font-weight:600;text-transform:uppercase;letter-spacing:.18em;
+  font-size:11px;color:var(--pale)}
+#mot{margin-top:8px;font:600 27px/1.15 var(--grave);letter-spacing:.20em;color:var(--trait);
+  min-height:32px;word-break:break-all}
+#mot.plein{color:var(--or-pale);text-shadow:0 0 32px rgba(233,180,76,.5)}
+
+/* ── boutons de commande ── */
+.commandes{display:flex;gap:9px;margin-top:12px;flex-wrap:wrap}
+.cmd{flex:1 1 46%;min-width:132px;display:inline-flex;align-items:center;justify-content:center;
+  gap:9px;font-family:var(--legende);font-weight:600;text-transform:uppercase;letter-spacing:.16em;
+  font-size:13px;padding:15px 12px;border-radius:3px;cursor:pointer;
+  border:1px solid var(--trait);background:linear-gradient(#161D22,#0D1317);color:var(--texte)}
+.cmd:active{transform:translateY(1px)}
+.cmd:disabled{opacity:.4;cursor:default}
+.cmd.maitre{border-color:var(--braise);color:#2A200C;
+  background:linear-gradient(#E3C169,#B98F33 55%,#8E6B22);
+  box-shadow:inset 0 1px 0 rgba(255,238,190,.65), 0 0 26px -10px rgba(233,180,76,.9)}
+.cmd.maitre svg{opacity:.85}
+.cmd.fin{flex:1 1 100%;border-color:#4A2320;color:var(--alerte);
+  background:linear-gradient(#1E1211,#140C0B)}
+
+/* ── pied ── */
+.devise{margin-top:20px;display:flex;align-items:center;justify-content:center;gap:12px;
+  font-family:var(--mono);font-size:9.5px;letter-spacing:.30em;text-transform:uppercase;
+  color:#4A5761}
+.devise svg{opacity:.6}
+
+/* ── parties « instrument » : mesures, réglages, verdicts ── */
+.section{margin-top:22px;border-top:1px solid var(--filet);padding-top:13px}
+.ex{font-size:12.5px;color:var(--pale);line-height:1.55;margin:6px 0 0}
+.ex b{color:var(--papier);font-weight:500}
+.stat{font-family:var(--mono);font-size:12px;color:var(--pale);margin-top:8px;line-height:1.65}
+.stat b{color:var(--signal)}
+button.plat{font-family:var(--legende);text-transform:uppercase;letter-spacing:.13em;font-weight:600;
+  border:1px solid var(--trait);background:var(--panneau);color:var(--texte);border-radius:3px;
+  padding:11px 12px;font-size:13px;cursor:pointer}
+button.plat:disabled{opacity:.35;cursor:default}
+button.plat.act{border-color:var(--signal);color:var(--signal)}
+button.plat.dg{border-color:#4A2320;color:var(--alerte)}
+.rang{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}.rang>button{flex:1;min-width:120px}
+.fld{display:flex;align-items:center;gap:10px;margin-top:12px}
+.fld .etiq{min-width:98px}
+input[type=range]{flex:1;min-width:0;touch-action:pan-y;accent-color:var(--or)}
+.val{font:500 13px/1 var(--mono);color:var(--or);width:56px;text-align:right}
+.barre{height:3px;background:var(--creux);border-radius:2px;overflow:hidden;margin-top:9px}
+.barre>i{display:block;height:100%;background:var(--or);transition:width .12s linear}
+table{width:100%;border-collapse:collapse;margin-top:8px}
+th{font-family:var(--legende);text-transform:uppercase;letter-spacing:.12em;font-size:10px;
+  color:var(--pale);text-align:left;font-weight:600;padding:0 6px 6px 0;border-bottom:1px solid var(--trait)}
+td{padding:7px 6px 7px 0;border-bottom:1px solid var(--filet);font-family:var(--mono);
+  font-size:12px;vertical-align:top}
+td.w{font-family:var(--grave);font-size:15px;color:var(--or);letter-spacing:.1em}
+.vide{color:var(--pale);font-size:13px;padding:12px 0}
+.voie{display:flex;align-items:baseline;gap:8px;padding:7px 0;border-bottom:1px solid var(--filet);flex-wrap:wrap}
+.voie>*{min-width:0}
+.voie .n{font-size:13px;color:var(--texte);flex:1}
+.voie .v{font-family:var(--mono);font-size:12px;color:var(--signal);white-space:nowrap}
+.voie .why{font-size:11.5px;color:var(--pale);line-height:1.45;flex-basis:100%;margin-top:2px}
+.voie.ko .n,.voie.ko .v{color:var(--pale)}
+.pin{font-family:var(--mono);font-size:9.5px;letter-spacing:.08em;text-transform:uppercase;
+  padding:2px 6px;border-radius:2px;border:1px solid var(--trait);color:var(--pale);white-space:nowrap}
+.pin.ok{border-color:var(--signal);color:var(--signal)}
+.pin.no{border-color:#4A2320;color:var(--alerte)}
+.note{border-left:2px solid var(--or);background:#16120A;padding:11px 13px;font-size:12.5px;
+  line-height:1.6;color:var(--or-pale);margin-top:14px}
+.note.rouge{border-left-color:var(--alerte);background:#170D0C;color:#E8B5AF}
+.note.vert{border-left-color:var(--signal);background:#0B1714;color:#A8D9C6}
 .masque{display:none}
 </style>
 </head>
 <body>
 
 <div class="top"><div class="topin">
-  <a href="../" aria-label="Retour">←</a><h1>La planche <span style="font-size:10px;color:var(--signal)">v1</span></h1>
-  <span class="lg" id="phase">à préparer</span>
+  <div class="gauche">
+    <a class="bt" href="../"><svg width="11" height="11" viewBox="0 0 11 11" fill="none"><path d="M7 1L2.5 5.5L7 10" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/></svg>Menu</a>
+  </div>
+  <div class="marque">
+    <div class="nom">La planche</div>
+    <div class="sous">
+      <svg width="34" height="7" viewBox="0 0 34 7" fill="none"><path d="M33 3.5c-5 0-5-2.5-9-2.5s-4 2.5-8 2.5-4-2.5-8-2.5S4 3.5 1 3.5" stroke="#8A6D2F" stroke-width="1"/></svg>
+      <span>v1</span>
+      <svg width="34" height="7" viewBox="0 0 34 7" fill="none"><path d="M1 3.5c5 0 5-2.5 9-2.5s4 2.5 8 2.5 4-2.5 8-2.5 4 2.5 7 2.5" stroke="#8A6D2F" stroke-width="1"/></svg>
+    </div>
+  </div>
+  <div class="droite">
+    <span class="veilleuse" id="phase"><i></i>à préparer</span>
+  </div>
 </div></div>
 
 <div class="wrap">
 
 <!-- ══════════ RITUEL ══════════ -->
 <div id="ecRituel">
-  <div class="step" style="border-top:0">
-    <div class="lg">Rituel de préparation</div>
+  <div class="section" style="border-top:0;margin-top:14px">
+    <div class="etiq">Rituel de préparation</div>
     <p class="ex">L'appareil apprend d'abord ce que le lieu sait produire tout seul, puis il éprouve
     chaque capteur sur sa <b>finesse</b> — sa capacité à désigner une lettre plutôt qu'à toujours
     retomber sur la même. Tant qu'il n'a pas de seuil, <b>aucune lettre ne peut sortir</b>.
     Pose le téléphone à plat, planche vers le haut, et laisse la pièce telle qu'elle est.</p>
   </div>
 
-  <div class="card">
+  <div class="carte">
     <div style="display:flex;align-items:baseline;justify-content:space-between;gap:8px">
-      <span class="lg">Apprentissage du lieu</span>
+      <span class="etiq">Apprentissage du lieu</span>
       <span id="calibPct" style="font:500 13px/1 var(--mono);color:var(--signal)">0 %</span>
     </div>
     <div class="barre"><i id="calibBar" style="width:0"></i></div>
     <div id="calibTxt" class="stat">en attente</div>
   </div>
 
-  <div class="step">
-    <div class="lg">Capteurs sondés</div>
+  <div class="section">
+    <div class="etiq">Capteurs sondés</div>
     <div id="voies"></div>
   </div>
 
   <div class="note">Les doigts posés sur l'écran sont <b>exigés mais jamais mappés</b> : la pression
   du doigt piloterait la sortie. Ils servent uniquement à confirmer que quelqu'un est là.</div>
 
-  <button id="btnOuvrir" style="width:100%;margin-top:18px;padding:15px 12px;font-size:14px" disabled>Apprentissage en cours…</button>
+  <button class="cmd" id="btnOuvrir" style="width:100%;margin-top:16px" disabled>Apprentissage en cours…</button>
   <div class="stat" style="text-align:center" id="ritSous">durée du rituel : <b id="dureeAppr">60</b> s · seuil recalculé à chaque séance</div>
 </div>
 
 <!-- ══════════ SÉANCE ══════════ -->
 <div id="ecSeance" class="masque">
-  <div id="bandeau">
-    <span id="chrono">00:00</span>
+
+  <div class="jauge">
+    <span class="bloc"><svg width="13" height="13" viewBox="0 0 13 13" fill="none"><circle cx="6.5" cy="7.3" r="4.9" stroke="#78868E" stroke-width="1.1"/><path d="M6.5 4.8v2.7l1.8 1.1M4.7 1.3h3.6" stroke="#78868E" stroke-width="1.1" stroke-linecap="round"/></svg><span id="chrono">00:00</span></span>
     <span id="etatPill">veille</span>
-    <span id="nbEmis">0 émis</span>
+    <span class="bloc" id="nbEmis">0 lettre</span>
   </div>
 
   <div id="board">
-    <svg viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true">
-      <path id="arc1" fill="none" stroke="#E9B44C" stroke-opacity=".30" stroke-width=".35"></path>
-      <path id="arc2" fill="none" stroke="#E9B44C" stroke-opacity=".22" stroke-width=".35"></path>
-      <line x1="14" y1="91" x2="86" y2="91" stroke="#E9B44C" stroke-opacity=".18" stroke-width=".35"></line>
+    <!-- filets gravés sous les lettres -->
+    <svg id="trace" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true">
+      <path id="filet1" fill="none" stroke="#8A6D2F" stroke-opacity=".38" stroke-width=".28"/>
+      <path id="filet2" fill="none" stroke="#8A6D2F" stroke-opacity=".30" stroke-width=".28"/>
+      <line x1="12" y1="78.5" x2="88" y2="78.5" stroke="#8A6D2F" stroke-opacity=".22" stroke-width=".22" stroke-dasharray="1.2 1.4"/>
+      <line x1="16" y1="89.5" x2="84" y2="89.5" stroke="#8A6D2F" stroke-opacity=".22" stroke-width=".22" stroke-dasharray="1.2 1.4"/>
     </svg>
+
+    <!-- cadre, écoinçons, médaillons soleil et lune, motifs des filets -->
+    <svg id="cadre" viewBox="0 0 155 100" preserveAspectRatio="none" aria-hidden="true">
+      <rect x="1.2" y="1.2" width="152.6" height="97.6" rx="1.4" fill="none" stroke="#8A6D2F" stroke-opacity=".55" stroke-width=".7"/>
+      <rect x="3.4" y="3.4" width="148.2" height="93.2" rx="1" fill="none" stroke="#8A6D2F" stroke-opacity=".28" stroke-width=".35"/>
+    </svg>
+    <svg id="orn" viewBox="0 0 155 100" preserveAspectRatio="none" aria-hidden="true"
+         style="position:absolute;inset:0;width:100%;height:100%;pointer-events:none;z-index:2">
+      <defs>
+        <g id="ecoincon">
+          <path d="M0 9c0-5 4-9 9-9M1.8 9c0-4 3.2-7.2 7.2-7.2" fill="none" stroke="#8A6D2F" stroke-opacity=".75" stroke-width=".6"/>
+          <circle cx="4.4" cy="4.4" r="1.05" fill="none" stroke="#8A6D2F" stroke-opacity=".85" stroke-width=".5"/>
+        </g>
+      </defs>
+      <use href="#ecoincon" x="4"   y="4"/>
+      <use href="#ecoincon" x="151" y="4"   transform="scale(-1,1) translate(-302,0)"/>
+      <use href="#ecoincon" x="4"   y="96"  transform="scale(1,-1) translate(0,-192)"/>
+      <use href="#ecoincon" x="151" y="96"  transform="scale(-1,-1) translate(-302,-192)"/>
+      <!-- fleurons au centre des filets -->
+      <g stroke="#8A6D2F" stroke-opacity=".8" fill="none" stroke-width=".45">
+        <circle cx="77.5" cy="78.5" r="1.5"/>
+        <path d="M77.5 75.6v-1.1M77.5 82.5v-1.1M74.6 78.5h-1.1M81.5 78.5h-1.1M75.4 76.4l-.8-.8M80.4 81.4l-.8-.8M79.6 76.4l.8-.8M74.6 81.4l.8-.8"/>
+        <path d="M74 89.5h-1.6M83.6 89.5H82M77.5 88.7l1.1.8-1.1.8-1.1-.8z"/>
+      </g>
+      <!-- soleil, à gauche de OUI -->
+      <g transform="translate(12,25)" stroke="#B59544" stroke-opacity=".9" fill="none" stroke-width=".55">
+        <circle cx="0" cy="0" r="4"/>
+        <path d="M0-6.6v-1.4M0 6.6v1.4M-6.6 0h-1.4M6.6 0h1.4M-4.7-4.7l-1-1M4.7 4.7l1 1M4.7-4.7l1-1M-4.7 4.7l-1 1"/>
+        <path d="M-1.5-.9a1.6 1.6 0 0 1 0-.2M1.5-.9a1.6 1.6 0 0 0 0-.2M-1.7 1.3c.9 1 2.5 1 3.4 0" stroke-width=".5"/>
+      </g>
+      <!-- lune, à droite de NON -->
+      <g transform="translate(143,25)" stroke="#B59544" stroke-opacity=".9" fill="none" stroke-width=".55">
+        <path d="M2.2-4.4a5 5 0 1 0 0 8.8 5.6 5.6 0 0 1 0-8.8Z"/>
+        <circle cx="5.4" cy="-4.6" r=".45"/><circle cx="6.6" cy="-1.4" r=".35"/><circle cx="4.6" cy="1.6" r=".3"/>
+      </g>
+    </svg>
+
     <div id="glyphes"></div>
-    <div id="plan"><div class="oeil"></div><div class="fl"></div><div class="pt"></div></div>
+
+    <div id="plan">
+      <svg viewBox="0 0 100 114" aria-hidden="true">
+        <defs>
+          <radialGradient id="pcorps" cx="50%" cy="34%" r="70%">
+            <stop offset="0%" stop-color="#2A2318"/><stop offset="62%" stop-color="#14110B"/>
+            <stop offset="100%" stop-color="#0A0906"/>
+          </radialGradient>
+          <radialGradient id="poeil" cx="50%" cy="40%" r="60%">
+            <stop offset="0%" stop-color="#FFE7A8"/><stop offset="46%" stop-color="#E9B44C"/>
+            <stop offset="100%" stop-color="#6B4E17"/>
+          </radialGradient>
+        </defs>
+        <!-- corps en goutte : pointe en haut, épaules basses -->
+        <path d="M50 2 C64 20 92 44 92 70 C92 94 73 111 50 111 C27 111 8 94 8 70 C8 44 36 20 50 2Z"
+              fill="url(#pcorps)" stroke="#B08A34" stroke-width="2.2"/>
+        <path d="M50 9 C62.5 25.5 86 47 86 70 C86 90.5 69 105 50 105 C31 105 14 90.5 14 70 C14 47 37.5 25.5 50 9Z"
+              fill="none" stroke="#8A6D2F" stroke-opacity=".7" stroke-width="1"/>
+        <!-- petites gravures -->
+        <g stroke="#8A6D2F" stroke-opacity=".65" fill="none" stroke-width="1">
+          <path d="M28 86l3-3M72 86l-3-3M50 100v-4"/>
+        </g>
+        <!-- lunette : on lit la lettre à travers -->
+        <circle cx="50" cy="60" r="22" fill="#05080A" stroke="#B08A34" stroke-width="2.4"/>
+        <circle class="lueur" cx="50" cy="60" r="15" fill="url(#poeil)" opacity=".9"/>
+        <circle cx="50" cy="60" r="22" fill="none" stroke="#FFE7A8" stroke-opacity=".35" stroke-width=".8"/>
+      </svg>
+    </div>
   </div>
 
-  <div id="gardeBox" class="note">La planche attend : le témoin de bruit relève encore les seuils.
-  Tant que le lieu n'est pas appris, une lettre ne voudrait rien dire.</div>
+  <div id="gardeBox" class="carte attend">
+    <div class="medaille">
+      <svg width="34" height="42" viewBox="0 0 34 42" fill="none" aria-hidden="true">
+        <ellipse cx="17" cy="9" rx="3.4" ry="5.4" fill="#E9B44C" opacity=".9"/>
+        <ellipse cx="17" cy="10" rx="1.6" ry="2.8" fill="#FFF3D0"/>
+        <path d="M17 14.5v2.2" stroke="#7A6528" stroke-width="1.2" stroke-linecap="round"/>
+        <rect x="11" y="17" width="12" height="18" rx="1.4" fill="#D9CBA6"/>
+        <path d="M11 17h12l-1.2 18h-9.6z" fill="#C2B189"/>
+        <path d="M11.6 20c1.6 1.4 3.6 1.4 5.2 0M17 24c1.6 1.4 3.6 1.4 5.2 0" stroke="#B0A07C" stroke-width=".8" fill="none"/>
+        <ellipse cx="17" cy="36" rx="9" ry="2.4" fill="#8A6D2F" opacity=".55"/>
+      </svg>
+    </div>
+    <div>
+      <h3>La planche attend</h3>
+      <p id="gardeTxt">Le témoin de bruit relève encore les seuils.<br>
+      Tant que le lieu n'est pas appris, une lettre ne voudrait rien dire.</p>
+    </div>
+  </div>
 
-  <div id="motBox">
-    <div class="lg">Retenu</div>
+  <div class="carte">
+    <div class="etiq">Retenu</div>
     <div id="mot">—</div>
   </div>
 
-  <div class="row">
-    <button id="btnGarder" class="or">Garder le mot</button>
-    <button id="btnEffacer">Effacer</button>
-    <button id="btnFin" class="dg">Terminer</button>
+  <div class="commandes">
+    <button class="cmd maitre" id="btnGarder">
+      <svg width="16" height="14" viewBox="0 0 16 14" fill="none"><path d="M1 2.2C3 1 6 1 8 2.4 10 1 13 1 15 2.2v9.4c-2-1.2-5-1.2-7 .2-2-1.4-5-1.4-7-.2z" stroke="currentColor" stroke-width="1.2" stroke-linejoin="round"/><path d="M8 2.4v9.6" stroke="currentColor" stroke-width="1.2"/></svg>
+      Garder le mot</button>
+    <button class="cmd" id="btnEffacer">
+      <svg width="15" height="15" viewBox="0 0 15 15" fill="none"><path d="M9.6 1.4l4 4M11.6 3.4L5 10a3 3 0 0 1-1.4.8L1 11.5l.7-2.6A3 3 0 0 1 2.5 7.5z" stroke="currentColor" stroke-width="1.2" stroke-linejoin="round"/></svg>
+      Effacer</button>
+    <button class="cmd fin" id="btnFin">
+      <svg width="14" height="15" viewBox="0 0 14 15" fill="none"><path d="M8.6 1H12v13H8.6M8.6 1L2 2.4v10.2L8.6 14z" stroke="currentColor" stroke-width="1.2" stroke-linejoin="round"/><circle cx="6.6" cy="7.6" r=".9" fill="currentColor"/></svg>
+      Terminer</button>
   </div>
 
-  <div class="step">
-    <div class="lg">Trace des émissions</div>
-    <div id="trace"></div>
+  <div class="section">
+    <div class="etiq">Trace des émissions</div>
+    <div id="traceTab"></div>
   </div>
 
-  <div class="step">
-    <div class="lg">Ce que la planche a refusé</div>
+  <div class="section">
+    <div class="etiq">Ce que la planche a refusé</div>
     <p class="ex">Une anomalie retenue par le moteur qui n'a <b>pas</b> abouti à une lettre, et pourquoi.
     Un refus est un résultat : c'est ce qui distingue une planche muette d'une planche cassée.</p>
     <div id="refus"></div>
   </div>
 
-  <div class="mini" id="mini"></div>
+  <div class="rang" id="mini" style="gap:5px"></div>
 </div>
 
 <!-- ══════════ FIN ══════════ -->
 <div id="ecFin" class="masque">
-  <div class="step" style="border-top:0">
-    <div class="lg">Séance terminée</div>
+  <div class="section" style="border-top:0;margin-top:14px">
+    <div class="etiq">Séance terminée</div>
     <div id="finTemoin" class="note vert"></div>
   </div>
-  <div class="row" style="margin-top:14px">
-    <div class="card" style="flex:1;margin:0">
-      <div class="lg">Durée</div>
+  <div class="rang" style="margin-top:14px">
+    <div class="carte" style="flex:1;margin:0">
+      <div class="etiq">Durée</div>
       <div style="margin-top:6px;font:500 19px/1 var(--mono)" id="finDuree">00:00</div>
     </div>
-    <div class="card" style="flex:1;margin:0">
-      <div class="lg">Lettres</div>
-      <div style="margin-top:6px;font:500 19px/1 var(--mono);color:var(--gold)" id="finNb">0</div>
+    <div class="carte" style="flex:1;margin:0">
+      <div class="etiq">Lettres</div>
+      <div style="margin-top:6px;font:600 19px/1 var(--grave);color:var(--or)" id="finNb">0</div>
     </div>
   </div>
-  <div class="step">
-    <div class="lg">Mots gardés</div>
+  <div class="section">
+    <div class="etiq">Mots gardés</div>
     <div id="finMots"></div>
   </div>
-  <div class="row">
-    <button id="btnRejouer" class="or">Nouvelle séance</button>
-    <button id="btnCsv">Export CSV</button>
+  <div class="rang">
+    <button class="plat act" id="btnRejouer">Nouvelle séance</button>
+    <button class="plat" id="btnCsv">Export CSV</button>
   </div>
   <p class="ex">La trace complète — valeur brute, capteur, index calculé, horodatage, verdict de finesse
   de chaque voie — part avec l'export. Sans elle, une séance ne vaut rien : personne ne peut la refaire
@@ -235,44 +450,49 @@ td.w{font-family:var(--legend);font-size:15px;color:var(--gold);letter-spacing:.
 </div>
 
 <!-- ══════════ RÉGLAGES ══════════ -->
-<div class="step" id="ecReglages">
-  <div class="lg">Réglages de la planche</div>
+<div class="section" id="ecReglages">
+  <div class="etiq">Réglages de la planche</div>
 
-  <div class="fld"><span class="lg">Arrêt exigé</span>
+  <div class="fld"><span class="etiq">Arrêt exigé</span>
     <input type="range" id="rArret" min="0.8" max="2.4" step="0.1" value="1.5">
-    <span id="vArret" style="font:500 13px/1 var(--mono);color:var(--gold);width:52px;text-align:right">1,5 s</span></div>
+    <span class="val" id="vArret">1,5 s</span></div>
   <p class="ex">Une lettre n'est retenue que si la planchette reste immobile dessus. En dessous d'une
   seconde, l'appareil bavarde et devient inexploitable.</p>
 
-  <div class="fld"><span class="lg">Coïncidence</span>
+  <div class="fld"><span class="etiq">Coïncidence</span>
     <input type="range" id="rCoinc" min="1" max="3" step="1" value="2">
-    <span id="vCoinc" style="font:500 13px/1 var(--mono);color:var(--gold);width:52px;text-align:right">2 voies</span></div>
+    <span class="val" id="vCoinc">2 voies</span></div>
   <p class="ex" id="coincEx"></p>
 
-  <div class="lg" style="margin-top:20px">Mode témoin</div>
+  <div class="etiq" style="margin-top:20px">Mode témoin</div>
   <p class="ex">Les capteurs sont ignorés : les lettres viennent d'un générateur à graine fixe —
   <b>le déclenchement comme la lettre</b>, si bien qu'une séance témoin est rejouable à l'identique
   depuis sa graine, qui part dans l'export. Si tu ne fais pas la différence en séance, tu viens
   d'apprendre quelque chose de réel sur ton montage.</p>
-  <button id="btnTemoin" style="width:100%;margin-top:10px">Passer en mode témoin</button>
+  <button class="plat" id="btnTemoin" style="width:100%;margin-top:10px">Passer en mode témoin</button>
 
   <div class="note rouge">Ce module <b>fabrique</b> des lettres à partir de nombres. Le vocabulaire vient
   de la planche, la grammaire de nos gabarits, le sens de la personne qui lit. Le capteur ne fournit
   qu'un nombre — et le plus souvent, il n'en fournit aucun qui compte.</div>
 </div>
 
+<div class="devise">
+  <svg width="26" height="7" viewBox="0 0 26 7" fill="none"><path d="M25 3.5c-4 0-4-2.5-7-2.5S14 3.5 11 3.5 7 1 4 1 1 3.5 1 3.5" stroke="#4A5761" stroke-width=".9"/></svg>
+  Écouter. Patienter. Comprendre.
+  <svg width="26" height="7" viewBox="0 0 26 7" fill="none"><path d="M1 3.5c4 0 4-2.5 7-2.5s4 2.5 7 2.5 4-2.5 7-2.5 3 2.5 3 2.5" stroke="#4A5761" stroke-width=".9"/></svg>
 </div>
 
-<script src="/ghost-box/lib/wakelock.js?v=36"></script>
-<script src="/ghost-box/lib/historique.js?v=36"></script>
-<script src="/ghost-box/lib/retour.js?v=36"></script>
-<script src="/ghost-box/lib/aide.js?v=36"></script>
-<script src="/ghost-box/lib/action.js?v=36"></script>
-<script src="/ghost-box/lib/moteur.js?v=36"></script>
-<script src="/ghost-box/lib/capteurs.js?v=36"></script>
-<script src="/ghost-box/lib/objectif.js?v=36"></script>
-<script src="/ghost-box/lib/planche.js?v=36"></script>
-<script src="/ghost-box/lib/fixe.js?v=36"></script>
+</div>
+<script src="/ghost-box/lib/wakelock.js?v=37"></script>
+<script src="/ghost-box/lib/historique.js?v=37"></script>
+<script src="/ghost-box/lib/retour.js?v=37"></script>
+<script src="/ghost-box/lib/aide.js?v=37"></script>
+<script src="/ghost-box/lib/action.js?v=37"></script>
+<script src="/ghost-box/lib/moteur.js?v=37"></script>
+<script src="/ghost-box/lib/capteurs.js?v=37"></script>
+<script src="/ghost-box/lib/objectif.js?v=37"></script>
+<script src="/ghost-box/lib/planche.js?v=37"></script>
+<script src="/ghost-box/lib/fixe.js?v=37"></script>
 <script>
 "use strict";
 /* ═══════ La planche — câblage de la page ═══════
@@ -302,12 +522,16 @@ function lourdDu(dt){ tLourd += dt; if(tLourd < 0.5) return false; tLourd = 0; r
 /* ── la planche dessinée : glyphes posés une seule fois ── */
 const POS = GBPlanche.positions();
 (function poserPlanche(){
-  $('arc1').setAttribute('d', GBPlanche.cheminArc(43, 1.06, 1.94));
-  $('arc2').setAttribute('d', GBPlanche.cheminArc(27, 1.12, 1.88));
-  const h = POS.map((p,i) =>
-    '<div class="gly '+p.k+'" data-i="'+i+'" style="left:'+p.x.toFixed(2)+'%;top:'+p.y.toFixed(2)+'%">'+
+  /* les filets gravés suivent les MÊMES arcs que les lettres, décalés vers le
+     bas : une planche où le trait et la lettre ne coïncident pas se voit tout
+     de suite. Ils viennent donc du module, pas de valeurs recopiées ici. */
+  const A = GBPlanche.arcs();
+  $('filet1').setAttribute('d', GBPlanche.cheminArc(A.un, 7.5));
+  $('filet2').setAttribute('d', GBPlanche.cheminArc(A.deux, 6.5));
+  $('glyphes').innerHTML = POS.map((p,i) =>
+    '<div class="gly '+p.k+'" data-i="'+i+'" style="left:'+p.x.toFixed(2)+'%;top:'+p.y.toFixed(2)+
+    '%;transform:translate(-50%,-50%) rotate('+(p.rot||0).toFixed(1)+'deg)">'+
     esc(p.ch)+'</div>').join('');
-  $('glyphes').innerHTML = h;
 })();
 const GLY = Array.prototype.slice.call($('glyphes').children);
 
@@ -454,7 +678,7 @@ function sceller(voies){
   } else {
     b.textContent = 'Ouvrir la planche';
     b.disabled = false;
-    b.classList.add('act');
+    b.classList.add('maitre');
   }
 }
 
@@ -463,20 +687,24 @@ function majSeance(voies){
   const e = PL.etat();
   $('chrono').textContent = mmss(chrono);
   $('nbEmis').textContent = PL.nb() + (PL.nb() > 1 ? ' lettres' : ' lettre');
+  $('gardeTxt').innerHTML = PL.stable() ? '' :
+    'Le témoin de bruit relève encore les seuils.<br>Tant que le lieu n\'est pas appris, '+
+    'une lettre ne voudrait rien dire. <b style="color:var(--or)">Encore '+
+    Math.ceil(PL.resteGarde())+' s.</b>';
   const chaud = voies.filter(v => W[v.code] && W[v.code].ready && Math.abs(W[v.code].z) > W[v.code].thr*0.6).length;
   const pill = $('etatPill');
   pill.textContent = !PL.stable() ? 'garde ' + Math.ceil(PL.resteGarde()) + ' s'
     : e.cible !== null ? (e.phase === 'arret' ? 'arrêt sur ' + e.ch : 'déplacement')
     : chaud ? 'perturbation' : 'veille';
   pill.classList.toggle('chaud', e.cible !== null);
-  $('gardeBox').style.display = PL.stable() ? 'none' : 'block';
+  $('gardeBox').style.display = PL.stable() ? 'none' : 'flex';
 
   const m = PL.courant();
   $('mot').textContent = m || '—';
   $('mot').classList.toggle('plein', !!m);
 
   const j = PL.journal().slice(0, 5);
-  $('trace').innerHTML = j.length
+  $('traceTab').innerHTML = j.length
     ? '<table><thead><tr><th>lettre</th><th>capteur</th><th>brut</th><th>σ</th><th>idx</th></tr></thead><tbody>' +
       j.map(x => '<tr><td class="w">' + esc(x.ch) + '</td><td>' + esc(x.label) + '</td><td>' +
         esc(x.brut) + ' ' + esc(x.unite) + '</td><td>' + x.sigma + '</td><td>' + x.idx + '</td></tr>').join('') +
@@ -519,8 +747,12 @@ function montrer(quoi){
   $('ecSeance').classList.toggle('masque', quoi !== 'seance');
   $('ecFin').classList.toggle('masque', quoi !== 'fin');
   $('ecReglages').classList.toggle('masque', quoi === 'seance');
-  $('phase').textContent = quoi === 'rituel' ? (scelle ? 'prête' : 'à préparer')
+  /* la pastille lumineuse est un enfant du bandeau d'état : écrire dans
+     textContent l'effacerait. On ne remplace que le texte qui la suit. */
+  const ph = $('phase'), mot = quoi === 'rituel' ? (scelle ? 'prête' : 'à préparer')
     : quoi === 'seance' ? 'en séance' : 'terminée';
+  ph.lastChild && ph.lastChild.nodeType === 3 ? (ph.lastChild.nodeValue = mot)
+                                              : ph.appendChild(document.createTextNode(mot));
 }
 
 $('btnOuvrir').addEventListener('click', () => { if(!$('btnOuvrir').disabled) montrer('seance'); });
@@ -532,6 +764,7 @@ $('btnGarder').addEventListener('click', () => {
 $('btnEffacer').addEventListener('click', () => { PL.effacer(); majSeance(CAP.voies().filter(v => v.dispo && v.vivante)); });
 $('btnFin').addEventListener('click', terminer);
 $('btnRejouer').addEventListener('click', () => location.reload());
+
 $('btnTemoin').addEventListener('click', () => {
   temoin = !temoin;
   if(PL) PL.temoin(temoin);

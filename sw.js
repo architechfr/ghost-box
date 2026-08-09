@@ -22,7 +22,7 @@
    À CHAQUE LIVRAISON : incrémenter VERSION ci-dessous en même temps que les
    ?v= des pages — c'est elle qui jette l'ancien cache.
    ═══════════════════════════════════════════════════════════════════════ */
-const VERSION = 'v36';
+const VERSION = 'v37';
 const CACHE   = 'ghostbox-' + VERSION;
 const RACINE  = '/ghost-box/';
 
@@ -48,7 +48,9 @@ const ENVELOPPE = [
     .map(m => RACINE + 'lib/' + m + '.js?v=' + VERSION.slice(1)),
   ...['ambiance','fonts'].map(m => RACINE + 'lib/' + m + '.css?v=' + VERSION.slice(1)),
   // polices : sans elles, l'application change de visage hors ligne
-  ...['barlow-condensed-latin-500','barlow-condensed-latin-600',
+  // Cinzel n'est demandée que par la planche, mais elle doit être là hors ligne
+  ...['cinzel-latin-400','cinzel-latin-600','cinzel-latin-ext-400','cinzel-latin-ext-600',
+      'barlow-condensed-latin-500','barlow-condensed-latin-600',
       'barlow-condensed-latin-ext-500','barlow-condensed-latin-ext-600',
       'ibm-plex-mono-latin-400','ibm-plex-mono-latin-500',
       'ibm-plex-mono-latin-ext-400','ibm-plex-mono-latin-ext-500',
