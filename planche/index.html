@@ -12,7 +12,7 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="Ghost Box">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<link rel="stylesheet" href="/ghost-box/lib/fonts.css?v=39">
+<link rel="stylesheet" href="/ghost-box/lib/fonts.css?v=40">
 <style>
 /* ═══════════════════════════════════════════════════════════════════════
    La planche — habillage.
@@ -95,6 +95,9 @@ body{padding:0 0 calc(env(safe-area-inset-bottom, 0px) + 20px);
   font-size:11px;padding:5px 14px;border:1px solid var(--trait);border-radius:2px;
   color:var(--pale);background:var(--creux);white-space:nowrap}
 #etatPill.chaud{border-color:var(--or);color:var(--or);box-shadow:0 0 18px -6px rgba(233,180,76,.7)}
+#etatPill.main{border-color:#6E7C84;color:#9BAAB3;background:#11171B}
+#board.enMain{cursor:grabbing}
+#board.enMain #plan{filter:drop-shadow(0 0 18px rgba(155,170,179,.55))}
 
 /* ── la planche ── */
 #board{container-type:inline-size;position:relative;width:100%;aspect-ratio:1.55/1;margin-top:10px;border-radius:5px;
@@ -176,6 +179,13 @@ body{padding:0 0 calc(env(safe-area-inset-bottom, 0px) + 20px);
 #loupeTxt{font-family:var(--grave);font-weight:600;color:#FFE7A8;line-height:1;
   white-space:nowrap;text-shadow:0 0 16px rgba(233,180,76,.85);
   font-size:clamp(20px,7.2cqw,54px);will-change:transform}
+/* OUI, NON, AU REVOIR ne se grossissent pas comme un A : à la taille d'une
+   lettre unique ils débordaient du verre, qui ne fait que ~26 px de large sur
+   un téléphone. Des tailles fixes par longueur ne suffisent pas non plus —
+   mesuré, « NON » débordait encore de 10 px et « AU REVOIR » de 15. La taille
+   est donc CALCULÉE : on écrit, on mesure, on réduit jusqu'à ce que ça tienne.
+   Une seule mesure par changement de glyphe, soit environ une par seconde. */
+#loupeTxt{max-width:none}
 #plan.arret .verre{box-shadow:inset 0 2px 10px -3px rgba(255,231,168,.5),
              inset 0 -6px 14px -8px #000, 0 0 34px -4px rgba(233,180,76,.95)}
 
@@ -282,7 +292,7 @@ td.w{font-family:var(--grave);font-size:15px;color:var(--or);letter-spacing:.1em
     <div class="nom">La planche</div>
     <div class="sous">
       <svg width="34" height="7" viewBox="0 0 34 7" fill="none"><path d="M33 3.5c-5 0-5-2.5-9-2.5s-4 2.5-8 2.5-4-2.5-8-2.5S4 3.5 1 3.5" stroke="#8A6D2F" stroke-width="1"/></svg>
-      <span>v1</span>
+      <span data-gb-version>v–</span>
       <svg width="34" height="7" viewBox="0 0 34 7" fill="none"><path d="M1 3.5c5 0 5-2.5 9-2.5s4 2.5 8 2.5 4-2.5 8-2.5 4 2.5 7 2.5" stroke="#8A6D2F" stroke-width="1"/></svg>
     </div>
   </div>
@@ -540,18 +550,19 @@ td.w{font-family:var(--grave);font-size:15px;color:var(--or);letter-spacing:.1em
 </div>
 
 </div>
-<script src="/ghost-box/lib/wakelock.js?v=39"></script>
-<script src="/ghost-box/lib/historique.js?v=39"></script>
-<script src="/ghost-box/lib/retour.js?v=39"></script>
-<script src="/ghost-box/lib/aide.js?v=39"></script>
-<script src="/ghost-box/lib/action.js?v=39"></script>
-<script src="/ghost-box/lib/moteur.js?v=39"></script>
-<script src="/ghost-box/lib/capteurs.js?v=39"></script>
-<script src="/ghost-box/lib/objectif.js?v=39"></script>
-<script src="/ghost-box/lib/voix.js?v=39"></script>
-<script src="/ghost-box/lib/lettres.js?v=39"></script>
-<script src="/ghost-box/lib/planche.js?v=39"></script>
-<script src="/ghost-box/lib/fixe.js?v=39"></script>
+<script src="/ghost-box/lib/version.js?v=40"></script>
+<script src="/ghost-box/lib/wakelock.js?v=40"></script>
+<script src="/ghost-box/lib/historique.js?v=40"></script>
+<script src="/ghost-box/lib/retour.js?v=40"></script>
+<script src="/ghost-box/lib/aide.js?v=40"></script>
+<script src="/ghost-box/lib/action.js?v=40"></script>
+<script src="/ghost-box/lib/moteur.js?v=40"></script>
+<script src="/ghost-box/lib/capteurs.js?v=40"></script>
+<script src="/ghost-box/lib/objectif.js?v=40"></script>
+<script src="/ghost-box/lib/voix.js?v=40"></script>
+<script src="/ghost-box/lib/lettres.js?v=40"></script>
+<script src="/ghost-box/lib/planche.js?v=40"></script>
+<script src="/ghost-box/lib/fixe.js?v=40"></script>
 <script>
 "use strict";
 /* ═══════ La planche — câblage de la page ═══════
@@ -779,7 +790,8 @@ function majSeance(voies){
      parle. Sans cette priorité, la planchette allait sur la lettre pendant que
      la pastille continuait d'égrener ses secondes — l'écran contredisait ce
      que l'appareil était en train de faire. */
-  pill.textContent = (e.origine === 'entendue' && e.cible !== null)
+  pill.textContent = e.main ? 'à la main — rien n\'est enregistré'
+    : (e.origine === 'entendue' && e.cible !== null)
       ? (e.phase === 'arret' ? 'entendu : ' + e.ch : 'entendu, la planchette y va')
     : !PL.stable() ? 'garde ' + Math.ceil(PL.resteGarde()) + ' s'
     : e.cible !== null
@@ -787,7 +799,8 @@ function majSeance(voies){
           ? (e.origine === 'entendue' ? 'entendu : ' + e.ch : 'arrêt sur ' + e.ch)
           : 'la planchette se déplace')
     : chaud ? 'perturbation' : 'à l\'écoute · tour ' + PL.tours();
-  pill.classList.toggle('chaud', e.cible !== null);
+  pill.classList.toggle('chaud', e.cible !== null && !e.main);
+  pill.classList.toggle('main', !!e.main);
   pill.classList.toggle('voix', e.origine === 'entendue');
   $('gardeBox').style.display = PL.stable() ? 'none' : 'flex';
 
@@ -869,7 +882,28 @@ function dessiner(){
   if(i >= 0 && Math.sqrt(meilleur) < rayon * 2.2){
     const pos = POS[i];
     const dx = (pos.x - e.x)/100*boardW*LOUPE, dy = (pos.y - e.y)/100*boardH*LOUPE;
-    if(lt._t !== pos.ch){ lt.textContent = pos.ch; lt._t = pos.ch; }
+    if(lt._t !== pos.ch){
+      lt.textContent = pos.ch; lt._t = pos.ch;
+      /* on remet la taille de base, on mesure, on réduit si ça déborde. Le
+         verre est rond : on ne vise pas sa largeur mais 84 % de sa corde,
+         sinon les extrémités du mot sortent par les côtés arrondis. */
+      lt.style.fontSize = '';
+      /* « AU REVOIR » sur une ligne dans un disque de 26 px tombait sous la
+         taille plancher et restait rogné. Un mot à espace passe donc sur deux
+         lignes : dans un cercle, deux lignes courtes tiennent bien mieux
+         qu'une longue. On n'abrège jamais — la loupe doit montrer ce qui est
+         écrit sur la planche, pas un raccourci. */
+      const coupe = pos.ch.indexOf(' ') > 0;
+      lt.style.whiteSpace = coupe ? 'normal' : 'nowrap';
+      lt.style.textAlign = 'center';
+      lt.style.lineHeight = coupe ? '1.05' : '1';
+      const verre = lt.parentNode, place = verre.clientWidth * (coupe ? 0.90 : 0.84);
+      const large = lt.scrollWidth;
+      if(large > place && place > 4){
+        const base = parseFloat(getComputedStyle(lt).fontSize) || 20;
+        lt.style.fontSize = Math.max(5, base * place / large).toFixed(1) + 'px';
+      }
+    }
     lt.style.transform = 'translate(' + dx.toFixed(1) + 'px,' + dy.toFixed(1) + 'px) rotate(' +
       (pos.rot || 0).toFixed(1) + 'deg)';
     lt.classList.toggle('voix', e.origine === 'entendue');
@@ -878,6 +912,44 @@ function dessiner(){
     lt.textContent = ''; lt._t = ''; lt.style.opacity = '0';
   }
 }
+
+/* ── LE DOIGT ──
+   On peut pousser la planchette à la main. Ça n'enregistre rien et ça ne peut
+   rien désigner — le module relâche la cible dès qu'une main se pose — mais
+   une planche qu'on ne peut pas toucher n'est pas une planche. L'écran dit
+   clairement ce qui se passe pour que le geste ne soit jamais confondu avec
+   une réponse. Les événements pointeur couvrent doigt, stylet et souris d'un
+   seul jeu de code, et `setPointerCapture` évite de perdre le contact quand le
+   doigt sort du cadre en glissant. */
+(function doigt(){
+  const bd = $('board');
+  function pct(ev){
+    const r = bd.getBoundingClientRect();
+    return { x: Math.max(0, Math.min(100, (ev.clientX - r.left)/r.width*100)),
+             y: Math.max(0, Math.min(100, (ev.clientY - r.top)/r.height*100)) };
+  }
+  bd.style.touchAction = 'none';
+  bd.addEventListener('pointerdown', ev => {
+    if(!PL || ecran !== 'seance') return;
+    const p = pct(ev);
+    PL.saisir(p.x, p.y);
+    bd.classList.add('enMain');
+    try{ bd.setPointerCapture(ev.pointerId); }catch(e){}
+    ev.preventDefault();
+  });
+  bd.addEventListener('pointermove', ev => {
+    if(!PL || !PL.enMain()) return;
+    const p = pct(ev); PL.deplacer(p.x, p.y); ev.preventDefault();
+  });
+  const lacher = ev => {
+    if(!PL || !PL.enMain()) return;
+    PL.lacher(); bd.classList.remove('enMain');
+    try{ bd.releasePointerCapture(ev.pointerId); }catch(e){}
+  };
+  bd.addEventListener('pointerup', lacher);
+  bd.addEventListener('pointercancel', lacher);
+  bd.addEventListener('pointerleave', lacher);
+})();
 
 /* ── navigation ── */
 /* L'écran ne s'éteint pas en séance. Le verrou de réveil n'était posé que
