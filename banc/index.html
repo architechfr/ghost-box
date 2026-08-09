@@ -343,6 +343,14 @@ video{display:none}
   <div id="blindNote"></div>
 </div>
 
+<div class="step" id="qrStep">
+  <div class="stepnum"><span class="n" id="nQ">Q</span><h2>Questions / réponses</h2><span class="r" id="qrTally"></span></div>
+  <p class="ex">Pose ta question à voix haute et appuie <b>au même moment</b> : l'appareil note l'instant et ouvre une <b>fenêtre de réponse de 20&nbsp;s</b> — fixe et déclarée d'avance, car choisir sa fenêtre après coup, c'est choisir son résultat. Pour chaque question, une <b>fenêtre témoin</b> de la même durée est placée plus tard, au hasard, sans te le dire. À la fin, deux chiffres comparables : les mots sortis pendant tes questions, et les mots sortis pendant les fenêtres témoin — <b>à nombre égal, rien au-dessus du hasard</b>. Aucun seuil n'est baissé : la fenêtre ne fait que classer les mots que le moteur a retenus tout seul, anti-rafale compris.</p>
+  <button id="qBtn" disabled style="width:100%;margin-top:10px;padding:15px 0;font-size:14px;letter-spacing:.18em">Poser une question</button>
+  <p id="qrState" class="ex">Lance la veille pour poser des questions.</p>
+  <div id="qrJournal"></div>
+</div>
+
 <div class="step">
   <div class="stepnum"><span class="n" id="nRec">R</span><h2>Enregistrement box radio</h2><span class="r" id="recT"></span></div>
   <p class="ex">Le micro enregistre le <b>son</b> qui sort de ta box (le « bruit de neige radio »). C'est <b>indépendant</b> de la veille : enregistre seul, écoute les capteurs seuls, ou les deux en même temps — les deux partagent la même horloge de séance. Le téléphone ne reçoit pas les ondes radio ; il enregistre ce que le micro entend.</p>
@@ -385,6 +393,7 @@ video{display:none}
 <script src="/ghost-box/lib/action.js?v=35"></script>
 <script>addEventListener('load',function(){ try{ GBAction.init(['#run']); }catch(e){} });</script>
 <script src="/ghost-box/lib/mur.js?v=35"></script>
+<script src="/ghost-box/lib/questions.js?v=35"></script>
 <script src="/ghost-box/lib/objectif.js?v=35"></script>
 <script src="/ghost-box/lib/fixe.js?v=35"></script>
 <script>
@@ -759,6 +768,9 @@ function etatCapteurs(){
       ecart_type:+w.sd.toFixed(4), seuil_sigma:+w.thr.toFixed(2), relevages_temoin:w.raises})),
     mots_emis: trace.filter(t=>!t.est_temoin).length,
     phrase: (MUR? MUR.phrase() : trace.filter(t=>!t.est_temoin).map(t=>t.mot).reverse()),
+    // les compteurs q/r seulement : stats() ne révèle jamais l'emplacement
+    // d'une fenêtre témoin pas encore écoulée
+    questions: (QR? QR.stats(performance.now()) : null),
     aveugle: blind, veille_depuis_ms: running? Math.round(performance.now()-t0) : null
   };
 }
@@ -931,6 +943,7 @@ function start(){
   try{ H=GBHistorique.ouvrir({ mode:'séance capteurs ('+(indep?'indépendants':coinc?'coïncidence':'simple')+(blind?' · à l\'aveugle':'')+')' }); }catch(e){ H=null; }
   if(H) H.noter('veille','capteurs : '+list.join(' + '));
   running=true; phase='learn'; lastEmit=-1e9; recentIdx=[];
+  QR=null; qrMaj(performance.now());   // chaque séance repart avec son propre protocole q/r
   t0=performance.now(); tPhase=t0; tWatch=0;
   $('run').textContent='Arrêter'; $('run').classList.add('on'); $('run').disabled=false;
   $('word').textContent='···'; $('word').className='q';
@@ -942,8 +955,10 @@ function start(){
 function stop(){
   if(H){ const nm=trace.filter(x=>!x.est_temoin).length;
     H.fermer({ mots:nm, seuils:W.map(w=>({code:w.code, seuil:+(w.thr||0).toFixed(2), relevages:w.raises||0})),
+               questions:(QR? QR.stats(performance.now()) : null),
                phrase:(MUR? MUR.phrase(): []) }); H=null; }
   running=false; phase='idle'; clearInterval(timer);
+  qrMaj(performance.now());   // les compteurs q/r restent lisibles, le bouton se ferme
   $('run').textContent='Lancer la veille'; $('run').classList.remove('on');
   $('state').textContent="à l'arrêt"; $('upt').textContent='';
   $('stage').classList.remove('alert'); checkReady();
@@ -1030,6 +1045,7 @@ function tick(){
     if(z>maxz){ maxz=z; primary=w; }
   }
   lastZ=maxz; drawZ(maxz); majHud(now,maxz);
+  if(now-qrTickLast>400){ qrTickLast=now; qrMaj(now); }
   $('upt').textContent='veille · '+dureeLisible((now-t0)/1000);
   $('zNow').textContent=maxz.toFixed(1).replace('.',',')+' σ';
   /* ── état vivant : depuis quand ça tourne, et ce que ça a donné ──
@@ -1143,6 +1159,11 @@ function majHud(now,maxz){
         : thrMin.toFixed(1)+'–'+thrMax.toFixed(1))+' σ' : '—','')
     + chip('voies', W.length, W.length?'on':'')
     + chip('mots', nMots, nMots?'alerte':'');
+  // q/r : la fenêtre de réponse ouverte se voit, une fenêtre témoin JAMAIS
+  if(QR){ const sq=QR.stats(now);
+    if(sq.ouverte) h += chip('question', Math.ceil(sq.ouverte.reste_ms/1000)+' s', 'alerte');
+    else if(sq.questions) h += chip('q/r', sq.questions+' q · '+sq.reponses+' rép · '+sq.temoins+' tém', '');
+  }
   // sans la bande capteurs, on remet le détail : il faut bien le lire quelque part
   if(!capsOn) W.forEach(w=> h += chip(w.label.slice(0,14), (w.v!=null? (+w.v).toFixed(2):'—')+(w.unit?' '+w.unit:''), ''));
   if(phase==='learn') h += chip('apprentissage','en cours','alerte');
@@ -1232,6 +1253,12 @@ GBFixe.installer({
     // passe à l'objectif suivant et porte le nom de celui qui tourne
     {cle:'obj', label:()=>GBObjectif.nom(), action:()=>GBObjectif.suivant(), delai:1400,
       visible:()=>!!vstream},
+    // poser une question sans quitter la position de travail : le bouton
+    // porte le décompte de la fenêtre ouverte, comme l'objectif porte son nom
+    {cle:'question', label:()=>{ if(!QR) return 'Question';
+        const sq=QR.stats(performance.now());
+        return sq.ouverte? 'Q · '+Math.ceil(sq.ouverte.reste_ms/1000)+' s' : 'Question'; },
+      action:()=>$('qBtn').click(), visible:()=>running && phase==='watch'},
     {cle:'voix',    label:'Voix',  actif:()=>!!(window.GBVoix&&GBVoix.actif()), basculer:()=>{ if(window.GBVoix) GBVoix.basculer(); }},
     {cle:'nuit',    label:'Nuit',  actif:()=>!!(window.GBNuit&&GBNuit.actif()), basculer:()=>{ if(window.GBNuit) GBNuit.basculer(); }}
   ],
@@ -1283,6 +1310,49 @@ addEventListener('load',()=>{
 /* sortie, plein écran et blocage du défilement : lib/fixe.js s'en charge pour
    les quatre modes — un seul endroit à corriger le jour où l'un d'eux échoue */
 addEventListener('pagehide',()=>{ try{ if(H){ H.fermer({ mots:trace.filter(x=>!x.est_temoin).length, interrompue:true }); H=null; } }catch(e){} });
+
+/* ═══════ questions / réponses — lib/questions.js compte, la page affiche ═══════
+   Le module ne déclenche RIEN : il classe les mots que le moteur a retenus
+   tout seul, dans la fenêtre de réponse ou dans une fenêtre témoin placée au
+   hasard. Les fenêtres témoin en cours ne sont jamais montrées en direct. */
+let QR=null, qrTickLast=0;
+$('qBtn').onclick=()=>{
+  if(!running || phase!=='watch'){ $('qrState').textContent='La veille doit tourner (apprentissage terminé) pour poser une question.'; return; }
+  if(!QR) QR=GBQuestions.creer();
+  const r=QR.poser(performance.now());
+  if(!r.ok){ $('qrState').textContent='Attends la fin de la fenêtre en cours — '+r.motif+'.'; return; }
+  if(H) H.noter('question','n°'+r.n);
+  if(navigator.vibrate) navigator.vibrate(25);
+  qrMaj(performance.now());
+};
+function qrMaj(now){
+  const b=$('qBtn'), pret = running && phase==='watch';
+  b.disabled=!pret;
+  if(!QR){
+    $('qrTally').textContent=''; $('qrJournal').innerHTML='';
+    b.textContent='Poser une question';
+    $('qrState').textContent = pret? 'Prêt — pose ta question à voix haute et appuie au même moment.'
+                                   : 'Lance la veille pour poser des questions.';
+    return;
+  }
+  const s=QR.stats(now);
+  b.textContent = s.ouverte? 'Fenêtre ouverte · '+Math.ceil(s.ouverte.reste_ms/1000)+' s' : 'Poser une question';
+  $('qrTally').textContent = s.questions? s.questions+' question'+(s.questions>1?'s':'') : '';
+  $('nQ').className = s.questions? 'n done':'n';
+  if(s.questions)
+    $('qrState').innerHTML='Mots pendant tes questions : <b>'+s.reponses+'</b> · pendant les fenêtres témoin écoulées ('
+      +s.temoins_ecoules+') : <b>'+s.temoins+'</b>'+(s.hors? ' · hors fenêtre : '+s.hors : '')
+      +'. À nombre égal, rien au-dessus du hasard.';
+  const j=QR.journal(now);
+  if(!j.length){ $('qrJournal').innerHTML=''; return; }
+  const rows=j.map(q=>'<tr><td>'+q.n+'</td><td>'+fmt(Math.max(0,q.t_ms-t0)/1000)+'</td>'
+    +'<td class="w">'+(q.reponses.length? q.reponses.map(m=>esc(m)).join(', '):'—')+'</td>'
+    +'<td>'+(q.temoin_ecoule
+        ? (q.temoin.length? '<span class="tm">'+q.temoin.map(m=>esc(m)).join(', ')+'</span>':'—')
+        : '<span style="color:var(--dim)">pas encore écoulée</span>')+'</td></tr>').join('');
+  $('qrJournal').innerHTML='<table style="margin-top:10px"><thead><tr><th>n°</th><th>posée à</th>'
+    +'<th>fenêtre de réponse</th><th>fenêtre témoin</th></tr></thead><tbody>'+rows+'</tbody></table>';
+}
 
 let MUR=null;
 $('murBtn').onclick=async ()=>{
@@ -1344,8 +1414,19 @@ function emit(now, contribs){
       ? esc(label)+' · écart <b>'+zc.toFixed(2).replace('.',',')+' σ</b> → index <b>'+idx+'</b> / '+pool.length
       : 'générateur aléatoire · graine <b>'+seed+'</b> · écart <b>'+zc.toFixed(2).replace('.',',')+' σ</b> → index <b>'+idx+'</b>';
 
+  // questions/réponses : le mot est CLASSÉ dans sa fenêtre — le moteur a déjà
+  // décidé seul, le protocole ne fait que compter
+  let qrCls=null;
+  if(QR && realMode){
+    qrCls=QR.evenement(now, mot);
+    if(H && qrCls.type!=='hors')
+      H.noter(qrCls.type==='reponse'?'réponse':'mot en fenêtre témoin', mot+' · question n°'+qrCls.question);
+    qrMaj(now);
+  }
+
   const preuve=grabEvidence();
   trace.unshift({ t_ms:Math.round(now-t0), mot:mot, pos:m.pos,
+    question: qrCls? {type:qrCls.type, n:qrCls.question} : null,
     // quand le mur est allumé, le mot vient de la case de lecture à l'instant du
     // dépassement : colonne, index et décalage sont notés pour pouvoir le refaire
     mur: viaMur? {colonne:viaMur.colonne, index:viaMur.index, taille:viaMur.taille,
@@ -1402,6 +1483,8 @@ $('expJson').onclick=()=>dl(JSON.stringify({banc:'poste-de-terrain',date:new Dat
     seuil_auto_sigma:+w.thr.toFixed(2), relevages_temoin:w.raises})),
   audio_enregistre:!!recBlob,
   audio_offset_ms:(recStartPerf&&t0)?Math.round(t0-recStartPerf):null,
+  questions: QR? { fenetre_ms:QR.fenetre_ms, stats:QR.stats(performance.now()),
+                   journal:QR.journal(performance.now()) } : null,
   emissions:[...trace].reverse()},null,1),'emissions-'+stamp()+'.json','application/json');
 
 
