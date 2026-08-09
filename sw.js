@@ -22,7 +22,7 @@
    À CHAQUE LIVRAISON : incrémenter VERSION ci-dessous en même temps que les
    ?v= des pages — c'est elle qui jette l'ancien cache.
    ═══════════════════════════════════════════════════════════════════════ */
-const VERSION = 'v40';
+const VERSION = 'v42';
 const CACHE   = 'ghostbox-' + VERSION;
 const RACINE  = '/ghost-box/';
 
@@ -43,6 +43,10 @@ const ENVELOPPE = [
   RACINE + 'assets/wordmark.png',
   RACINE + 'assets/icone-192.png',
   RACINE + 'assets/icone-512.png',
+  /* bandeaux du menu : `Promise.allSettled` tolère les absents, on peut donc
+     les lister avant qu'ils existent et les ajouter un par un sans toucher ici */
+  ...['simple','seance','banc','mur','planche','bibliotheque','enregistreur','reglages','manuel']
+    .map(n => RACINE + 'assets/menu/' + n + '.webp'),
   // modules et feuilles, avec leur numéro : ce sont ces URL-là que les pages demandent
   ...['moteur','mur','tampon','secours','pose','capture','wakelock','media','fullscreen','retour','aide','action','qr','spectre','capteurs','nuit','voix','historique','demarrage','visage','fixe','objectif','croise','questions','planche','lettres','version']
     .map(m => RACINE + 'lib/' + m + '.js?v=' + VERSION.slice(1)),

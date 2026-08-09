@@ -12,7 +12,7 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="Ghost Box">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<link rel="stylesheet" href="/ghost-box/lib/fonts.css?v=40">
+<link rel="stylesheet" href="/ghost-box/lib/fonts.css?v=42">
 <style>
 :root{
   --night:#0A0F12; --bench:#141A1E; --panel:#1D262B; --sunk:#080C0E;
@@ -164,7 +164,7 @@ body.gbx #mark{display:block;position:fixed;left:10px;right:10px;
   bottom:calc(14px + env(safe-area-inset-bottom, 0px));
   z-index:60;margin:0;padding:22px 0;font-size:17px;opacity:.96}
 </style>
-<link rel="stylesheet" href="/ghost-box/lib/ambiance.css?v=40">
+<link rel="stylesheet" href="/ghost-box/lib/ambiance.css?v=42">
 </head>
 <body>
 <div class="wrap">
@@ -300,8 +300,8 @@ body.gbx #mark{display:block;position:fixed;left:10px;right:10px;
 <!-- l'écran fixe est monté PENDANT le script de la page, pas après : ce module
      doit donc exister avant lui. Les autres modules ne sont appelés que dans
      des gestionnaires d'événement, ils peuvent rester en fin de page. -->
-<script src="/ghost-box/lib/version.js?v=40"></script>
-<script src="/ghost-box/lib/fixe.js?v=40"></script>
+<script src="/ghost-box/lib/version.js?v=42"></script>
+<script src="/ghost-box/lib/fixe.js?v=42"></script>
 <script>
 (() => {
 "use strict";
@@ -973,16 +973,16 @@ if(!navigator.mediaDevices||!navigator.mediaDevices.getUserMedia)
 })();
 </script>
 <script>if('serviceWorker' in navigator){window.addEventListener('load',function(){navigator.serviceWorker.register('/ghost-box/sw.js').catch(function(){});});}</script>
-<script src="/ghost-box/lib/nuit.js?v=40"></script>
-<script src="/ghost-box/lib/demarrage.js?v=40"></script>
-<script src="/ghost-box/lib/secours.js?v=40"></script>
-<script src="/ghost-box/lib/retour.js?v=40"></script>
-<script src="/ghost-box/lib/aide.js?v=40"></script>
-<script src="/ghost-box/lib/action.js?v=40"></script>
+<script src="/ghost-box/lib/nuit.js?v=42"></script>
+<script src="/ghost-box/lib/demarrage.js?v=42"></script>
+<script src="/ghost-box/lib/secours.js?v=42"></script>
+<script src="/ghost-box/lib/retour.js?v=42"></script>
+<script src="/ghost-box/lib/aide.js?v=42"></script>
+<script src="/ghost-box/lib/action.js?v=42"></script>
 <script>addEventListener('load',function(){ try{ GBAction.init(['#halt','#go']); }catch(e){} });</script>
-<script src="/ghost-box/lib/moteur.js?v=40"></script>
-<script src="/ghost-box/lib/mur.js?v=40"></script>
-<script src="/ghost-box/lib/wakelock.js?v=40"></script>
-<script src="/ghost-box/lib/fullscreen.js?v=40"></script>
+<script src="/ghost-box/lib/moteur.js?v=42"></script>
+<script src="/ghost-box/lib/mur.js?v=42"></script>
+<script src="/ghost-box/lib/wakelock.js?v=42"></script>
+<script src="/ghost-box/lib/fullscreen.js?v=42"></script>
 </body>
 </html>

@@ -12,7 +12,7 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="Ghost Box">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<link rel="stylesheet" href="/ghost-box/lib/fonts.css?v=40">
+<link rel="stylesheet" href="/ghost-box/lib/fonts.css?v=42">
 <style>
 /* ═══════════════════════════════════════════════════════════════════════
    La planche — habillage.
@@ -205,6 +205,14 @@ body{padding:0 0 calc(env(safe-area-inset-bottom, 0px) + 20px);
 .carte{position:relative;margin-top:12px;border:1px solid var(--filet);border-radius:4px;
   background:linear-gradient(#12181C,#0C1114);padding:14px 15px}
 .carte.attend{display:flex;gap:14px;align-items:flex-start}
+#gardeBox{margin-top:10px;padding:9px 11px;border:1px solid var(--filet);border-radius:3px;
+  background:linear-gradient(#12181C,#0C1114)}
+#gardeBox .ligne{display:flex;align-items:baseline;justify-content:space-between;gap:10px;
+  font-size:12px;line-height:1.45;color:var(--pale)}
+#gardeBox .ligne>*{min-width:0}
+#gardeBox b{font-family:var(--mono);font-size:13px;color:var(--or);white-space:nowrap}
+#gardeBox .barre{margin-top:7px}
+#gardeBox .barre>i{background:linear-gradient(90deg,var(--braise),var(--or))}
 .medaille{flex:none;width:74px;height:74px;border-radius:50%;border:1px solid var(--braise);
   background:radial-gradient(circle at 50% 42%, rgba(233,180,76,.16), rgba(6,10,12,.9) 66%);
   display:flex;align-items:center;justify-content:center;
@@ -279,6 +287,28 @@ td.w{font-family:var(--grave);font-size:15px;color:var(--or);letter-spacing:.1em
   line-height:1.6;color:var(--or-pale);margin-top:14px}
 .note.rouge{border-left-color:var(--alerte);background:#170D0C;color:#E8B5AF}
 .note.vert{border-left-color:var(--signal);background:#0B1714;color:#A8D9C6}
+/* ── ÉCRAN FIXE ──
+   Position de travail : téléphone posé à plat, planche vers le haut. On garde
+   ce qu'on regarde — le plateau, la ligne d'apprentissage, le mot retenu — et
+   on retire tout ce qui se lit assis : trace, refus, réglages, devise, et la
+   barre de la page (le bandeau de `lib/fixe.js` la remplace, sinon les deux se
+   superposent, ce qu'on voyait au premier essai).
+   `--gbx-bar` est la hauteur RÉELLE du bandeau, mesurée par le module : s'en
+   servir plutôt que d'une valeur en dur, qui serait fausse dès qu'un bouton
+   passe à la ligne. */
+body.gbx .top{display:none}
+body.gbx .section,body.gbx .devise,body.gbx #ecReglages,
+body.gbx .commandes,body.gbx .mini,body.gbx .jauge{display:none}
+/* la jauge disparaît en écran fixe : chrono, lettres et garde sont déjà dans
+   le bandeau. Trois fois la même information sur un écran qu'on regarde de
+   loin, c'est deux de trop. */
+body.gbx .wrap{padding-top:calc(var(--gbx-bar, 46px) + 6px)}
+body.gbx #board{margin-top:6px}
+/* en paysage, écran fixe : la planche prend toute la hauteur disponible */
+@media (orientation:landscape) and (max-height:620px){
+  body.gbx #board{height:calc(100vh - var(--gbx-bar, 46px) - 96px);
+                  height:calc(100dvh - var(--gbx-bar, 46px) - 96px)}
+}
 .masque{display:none}
 </style>
 </head>
@@ -287,6 +317,7 @@ td.w{font-family:var(--grave);font-size:15px;color:var(--or);letter-spacing:.1em
 <div class="top"><div class="topin">
   <div class="gauche">
     <a class="bt" href="../"><svg width="11" height="11" viewBox="0 0 11 11" fill="none"><path d="M7 1L2.5 5.5L7 10" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/></svg>Menu</a>
+    <button class="bt" id="btnFixe" type="button">Écran fixe</button>
   </div>
   <div class="marque">
     <div class="nom">La planche</div>
@@ -416,23 +447,15 @@ td.w{font-family:var(--grave);font-size:15px;color:var(--or);letter-spacing:.1em
     </div>
   </div>
 
-  <div id="gardeBox" class="carte attend">
-    <div class="medaille">
-      <svg width="34" height="42" viewBox="0 0 34 42" fill="none" aria-hidden="true">
-        <ellipse cx="17" cy="9" rx="3.4" ry="5.4" fill="#E9B44C" opacity=".9"/>
-        <ellipse cx="17" cy="10" rx="1.6" ry="2.8" fill="#FFF3D0"/>
-        <path d="M17 14.5v2.2" stroke="#7A6528" stroke-width="1.2" stroke-linecap="round"/>
-        <rect x="11" y="17" width="12" height="18" rx="1.4" fill="#D9CBA6"/>
-        <path d="M11 17h12l-1.2 18h-9.6z" fill="#C2B189"/>
-        <path d="M11.6 20c1.6 1.4 3.6 1.4 5.2 0M17 24c1.6 1.4 3.6 1.4 5.2 0" stroke="#B0A07C" stroke-width=".8" fill="none"/>
-        <ellipse cx="17" cy="36" rx="9" ry="2.4" fill="#8A6D2F" opacity=".55"/>
-      </svg>
-    </div>
-    <div>
-      <h3>La planche attend</h3>
-      <p id="gardeTxt">Le témoin de bruit relève encore les seuils.<br>
-      Tant que le lieu n'est pas appris, une lettre ne voudrait rien dire.</p>
-    </div>
+  <!-- La garde n'est PAS une attente : la séance tourne, les capteurs mesurent,
+       la ronde tourne. Seule l'ÉCRITURE est retenue le temps que le témoin de
+       bruit ait fini de caler les seuils. La première version affichait une
+       grande carte « LA PLANCHE ATTEND » avec une bougie — en pleine séance,
+       ça se lisait comme « il ne se passe rien », alors que tout se passe. -->
+  <div id="gardeBox">
+    <div class="ligne"><span>Le lieu s'apprend — la planche observe, elle n'écrit pas encore</span>
+      <b id="gardeReste">—</b></div>
+    <div class="barre"><i id="gardeBar" style="width:0"></i></div>
   </div>
 
   <div class="carte">
@@ -550,19 +573,19 @@ td.w{font-family:var(--grave);font-size:15px;color:var(--or);letter-spacing:.1em
 </div>
 
 </div>
-<script src="/ghost-box/lib/version.js?v=40"></script>
-<script src="/ghost-box/lib/wakelock.js?v=40"></script>
-<script src="/ghost-box/lib/historique.js?v=40"></script>
-<script src="/ghost-box/lib/retour.js?v=40"></script>
-<script src="/ghost-box/lib/aide.js?v=40"></script>
-<script src="/ghost-box/lib/action.js?v=40"></script>
-<script src="/ghost-box/lib/moteur.js?v=40"></script>
-<script src="/ghost-box/lib/capteurs.js?v=40"></script>
-<script src="/ghost-box/lib/objectif.js?v=40"></script>
-<script src="/ghost-box/lib/voix.js?v=40"></script>
-<script src="/ghost-box/lib/lettres.js?v=40"></script>
-<script src="/ghost-box/lib/planche.js?v=40"></script>
-<script src="/ghost-box/lib/fixe.js?v=40"></script>
+<script src="/ghost-box/lib/version.js?v=42"></script>
+<script src="/ghost-box/lib/wakelock.js?v=42"></script>
+<script src="/ghost-box/lib/historique.js?v=42"></script>
+<script src="/ghost-box/lib/retour.js?v=42"></script>
+<script src="/ghost-box/lib/aide.js?v=42"></script>
+<script src="/ghost-box/lib/action.js?v=42"></script>
+<script src="/ghost-box/lib/moteur.js?v=42"></script>
+<script src="/ghost-box/lib/capteurs.js?v=42"></script>
+<script src="/ghost-box/lib/objectif.js?v=42"></script>
+<script src="/ghost-box/lib/voix.js?v=42"></script>
+<script src="/ghost-box/lib/lettres.js?v=42"></script>
+<script src="/ghost-box/lib/planche.js?v=42"></script>
+<script src="/ghost-box/lib/fixe.js?v=42"></script>
 <script>
 "use strict";
 /* ═══════ La planche — câblage de la page ═══════
@@ -775,10 +798,7 @@ function majSeance(voies){
   const e = PL.etat();
   $('chrono').textContent = mmss(chrono);
   $('nbEmis').textContent = PL.nb() + (PL.nb() > 1 ? ' lettres' : ' lettre');
-  $('gardeTxt').innerHTML = PL.stable() ? '' :
-    'Le témoin de bruit relève encore les seuils.<br>Tant que le lieu n\'est pas appris, '+
-    'une lettre ne voudrait rien dire. <b style="color:var(--or)">Encore '+
-    Math.ceil(PL.resteGarde())+' s.</b>';
+
   const chaud = voies.filter(v => W[v.code] && W[v.code].ready && Math.abs(W[v.code].z) > W[v.code].thr*0.6).length;
   /* « veille » n'a rien à faire là : une séance en cours n'est pas une veille,
      et le mot laissait croire que l'appareil s'était arrêté. Pendant la ronde
@@ -802,7 +822,14 @@ function majSeance(voies){
   pill.classList.toggle('chaud', e.cible !== null && !e.main);
   pill.classList.toggle('main', !!e.main);
   pill.classList.toggle('voix', e.origine === 'entendue');
-  $('gardeBox').style.display = PL.stable() ? 'none' : 'flex';
+  const gb = $('gardeBox');
+  if(PL.stable()) gb.style.display = 'none';
+  else {
+    gb.style.display = 'block';
+    const reste = PL.resteGarde(), total = PL.garde();
+    $('gardeReste').textContent = mmss(reste);
+    $('gardeBar').style.width = Math.round(Math.max(0, Math.min(1, 1 - reste/total))*100) + '%';
+  }
 
   const m = PL.courant();
   $('mot').textContent = m || '—';
@@ -1094,12 +1121,24 @@ $('btnCsv').addEventListener('click', () => {
 /* ── écran fixe : la position de travail, téléphone posé à plat ── */
 GBFixe.installer({
   page:'planche',
+  bouton:'#btnFixe',
+  /* `infos()` doit rendre un TABLEAU de pastilles {k, v, ton}, jamais une
+     chaîne : `lib/fixe.js` fait un `forEach` dessus. La première version
+     rendait une phrase — le bandeau levait une exception deux fois par
+     seconde, et personne ne l'a vu parce qu'AUCUN BOUTON ne permettait
+     d'entrer en écran fixe. Le module était livré, le geste manquait : la
+     panne ne pouvait pas se produire, donc elle ne pouvait pas se voir. */
   infos: () => {
-    if(!PL) return 'planche · en préparation';
-    const e = PL.etat();
-    return 'planche · ' + (ecran === 'seance' ? mmss(chrono) : 'prête') + ' · ' +
-           PL.nb() + ' lettre' + (PL.nb()>1?'s':'') +
-           (PL.stable() ? '' : ' · garde ' + Math.ceil(PL.resteGarde()) + ' s');
+    if(!PL) return [{ k:'planche', v:'en préparation' }];
+    const e = PL.etat(), n = PL.nb();
+    const l = [{ k:'séance', v: ecran === 'seance' ? mmss(chrono) : 'prête' },
+               { k:'lettres', v: String(n), ton: n ? 'on' : '' }];
+    if(!PL.stable()) l.push({ k:'garde', v: mmss(PL.resteGarde()), ton:'alerte' });
+    else l.push({ k:'état', v: e.main ? 'à la main'
+                        : e.cible !== null ? (e.phase === 'arret' ? 'arrêt ' + e.ch : 'trajet')
+                        : 'ronde ' + PL.tours() });
+    if(PL.courant()) l.push({ k:'retenu', v: PL.courant(), ton:'on' });
+    return l;
   },
   modules: [
     { cle:'obj', label: () => (window.GBObjectif ? GBObjectif.nom() : 'Objectif'),

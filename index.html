@@ -12,7 +12,7 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="Ghost Box">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<link rel="stylesheet" href="/ghost-box/lib/fonts.css?v=40">
+<link rel="stylesheet" href="/ghost-box/lib/fonts.css?v=42">
 <style>
 :root{--night:#0A0F12;--panel:#1D262B;--sunk:#0A0F12;--line:#2C383F;--hair:#212B31;
   --signal:#5FD3A6;--gold:#E9B44C;--flag:#E2574C;--paper:#CFC6B4;--dim:#78868E;--text:#DDE6EA;
@@ -54,8 +54,46 @@ footer{margin-top:30px;font-size:12px;color:#4E5C64}
 footer a{color:var(--dim)}
   .card .det{color:#6E7C84;font-size:12.5px;line-height:1.6;margin-top:8px;
     padding-top:8px;border-top:1px solid rgba(95,211,166,.12)}
+
+/* ── BANDEAUX DES CARTES ──
+   Chaque mode porte une image en haut de sa carte. Deux exigences.
+   1. TANT QU'UNE IMAGE MANQUE, la carte doit rester belle : le fond est un
+      dégradé qui se suffit, et l'image se superpose PAR-DESSUS en background.
+      Un `<img>` aurait donné une icône cassée et un saut de mise en page à
+      chaque fichier absent ; là, on peut ajouter les neuf images une par une
+      sans que l'accueil soit jamais dégradé.
+   2. Le texte passe devant : un fondu vers la couleur du panneau ferme le bas
+      du bandeau, sinon le titre se perd sur une zone claire de la photo. */
+a.card{overflow:hidden}
+a.card .vign{display:block;position:relative;margin:-16px -16px 13px;
+  aspect-ratio:2.38/1;background-color:#0C1216;background-size:cover;
+  background-position:center;background-repeat:no-repeat;
+  border-bottom:1px solid var(--hair)}
+/* Les quatre outils d'APRÈS la séance sont des utilitaires, pas des modes :
+   ils reçoivent un bandeau plus bas. Neuf bandeaux de même hauteur faisaient
+   un accueil qu'on parcourt à la molette au lieu de le lire d'un coup — et
+   dans le noir, on cherche un mode, on ne contemple pas la page. */
+a.card.util .vign{aspect-ratio:3.9/1}
+a.card .vign::after{content:"";position:absolute;inset:0;
+  background:linear-gradient(to bottom, rgba(10,15,18,.15) 0 46%, rgba(29,38,43,.55) 78%, var(--panel) 100%)}
+/* L'image arrive par la VARIABLE `--img`, jamais par la propriété : un style
+   en ligne `background-image:url(...)` écraserait le dégradé de repli, et une
+   image absente laisserait un aplat mort. En couche 1 l'image si elle existe,
+   en couches 2 et 3 la matière — qui reste visible tant que le fichier n'est
+   pas là, et sous les zones transparentes de l'image quand il y est.
+   (Premier jet : `var(--repli)` dans le style en ligne. Une variable non
+   définie rend TOUTE la déclaration invalide — le repli sautait avec.) */
+a.card .vign{background-image:var(--img, none),
+  radial-gradient(120% 150% at 20% 0%, rgba(95,211,166,.13), transparent 62%),
+  linear-gradient(150deg,#131A1F,#0A0F12 70%)}
+a.card.g .vign{background-image:var(--img, none),
+  radial-gradient(120% 150% at 20% 0%, rgba(233,180,76,.13), transparent 62%),
+  linear-gradient(150deg,#171712,#0A0F12 70%)}
+a.card.f .vign{background-image:var(--img, none),
+  radial-gradient(120% 150% at 20% 0%, rgba(226,87,76,.12), transparent 62%),
+  linear-gradient(150deg,#1A1211,#0A0F12 70%)}
 </style>
-<link rel="stylesheet" href="/ghost-box/lib/ambiance.css?v=40">
+<link rel="stylesheet" href="/ghost-box/lib/ambiance.css?v=42">
 </head>
 <body>
 <div class="wrap">
@@ -72,12 +110,14 @@ footer a{color:var(--dim)}
 <div class="sect">pendant la séance</div>
 
 <a class="card" href="simple/">
+  <span class="vign" style="--img:url(assets/menu/simple.webp)"></span>
   <h2>Séance simple <span class="arrow">→</span></h2>
   <p>Un écran, <b>un bouton</b>. L'appareil allume tout ce que le téléphone possède, apprend le lieu et attend. Aucun réglage à comprendre.</p>
   <span class="when">→ pour commencer, ou quand on veut juste poser le téléphone et voir</span>
 </a>
 
 <a class="card" href="seance/">
+  <span class="vign" style="--img:url(assets/menu/seance.webp)"></span>
   <h2>Séance caméra <span class="arrow">→</span></h2>
   <p>Jusqu'à <b>quatre caméras à la fois</b>, composées dans une seule image, avec le son de la box. Détection de personne sur chaque vue, cadre du mouvement, mur de mots à côté de l'image.</p>
   <p class="det">Incrustation du lieu, de l'heure et des mots dans la vidéo — ou image brute, au choix. Mémoire tampon : les secondes d'<b>avant</b> ton geste sont gardées. Écran fixe pour poser le téléphone.</p>
@@ -85,6 +125,7 @@ footer a{color:var(--dim)}
 </a>
 
 <a class="card g" href="banc/">
+  <span class="vign" style="--img:url(assets/menu/banc.webp)"></span>
   <h2>Séance capteurs <span class="arrow">→</span></h2>
   <p>Les capteurs de l'appareil sondés en direct. Un mot ne sort que si une mesure dépasse <b>tout ce que le bruit du lieu sait produire</b>.</p>
   <p class="det">Seuil auto-calibré, coïncidence entre capteurs, mode témoin à l'aveugle, trace exportable. Le mur de mots peut y montrer le vocabulaire pendant toute la veille.</p>
@@ -92,6 +133,7 @@ footer a{color:var(--dim)}
 </a>
 
 <a class="card g" href="mur/">
+  <span class="vign" style="--img:url(assets/menu/mur.webp)"></span>
   <h2>Le mur <span class="arrow">→</span></h2>
   <p>Le vocabulaire entier, <b>montré</b> : cinq colonnes qui tombent dans le noir. Écran tourné vers la pièce, et <b>tous les capteurs de l'appareil</b> en écoute — micro, mouvement, champ magnétique, caméra.</p>
   <p class="det">Deux manières de désigner un mot. <b>Instant simple</b> : un événement, un mot — l'instant est vrai, mais le mot reste un tirage. <b>Escalier</b> : trois événements pour un mot — la famille, puis la page, puis le mot — cibles assez larges pour être visées, et aucun seuil baissé. Séquence interrompue, rien n'est écrit.</p>
@@ -99,6 +141,7 @@ footer a{color:var(--dim)}
 </a>
 
 <a class="card g" href="planche/">
+  <span class="vign" style="--img:url(assets/menu/planche.webp)"></span>
   <h2>La planche <span class="arrow">→</span></h2>
   <p>La même chaîne que le reste — capteur, valeur brute, index, glyphe — mais la sortie est une <b>lettre désignée dans l'espace</b>, une à la fois, avec un déplacement qu'on peut regarder venir.</p>
   <p class="det">Chaque capteur est éprouvé sur sa <b>finesse</b> avant d'avoir le droit de désigner : sur beaucoup de téléphones, l'accéléromètre est quantifié et retomberait toujours sur la même lettre — il est alors écarté, et l'écran le dit. Même plancher que les mots (6,5 σ), coïncidence exigée sur deux voies, garde d'entrée le temps que le lieu soit appris. Mesuré : <b>zéro lettre sur 300 h de bruit simulé</b>.</p>
@@ -107,25 +150,29 @@ footer a{color:var(--dim)}
 
 <div class="sect">après la séance</div>
 
-<a class="card" href="bibliotheque/">
+<a class="card util" href="bibliotheque/">
+  <span class="vign" style="--img:url(assets/menu/bibliotheque.webp)"></span>
   <h2>Bibliothèque <span class="arrow">→</span></h2>
   <p>Tout ce qui a été gardé, de n'importe quel mode : vidéos, photos instantanées, prises venues de la mémoire tampon. Relecture avec le journal de séance, envoi vers les téléchargements du téléphone, suppression.</p>
   <span class="when">→ pour revoir, trier, faire de la place</span>
 </a>
 
-<a class="card" href="enregistreur/">
+<a class="card util" href="enregistreur/">
+  <span class="vign" style="--img:url(assets/menu/enregistreur.webp)"></span>
   <h2>Écoute <span class="arrow">→</span></h2>
   <p>Micro sans traitement, spectrogramme, marqueurs, détection de pics. Relecture avec boucle, rognage, filtres réglables. Export WAV.</p>
   <span class="when">→ pour capter et réécouter le son de la box radio</span>
 </a>
 
-<a class="card" href="reglages/">
+<a class="card util" href="reglages/">
+  <span class="vign" style="--img:url(assets/menu/reglages.webp)"></span>
   <h2>Réglages <span class="arrow">→</span></h2>
   <p>Partager l'application par <b>QR code</b>, vérifier que le hors-ligne est prêt avant de partir, voir l'état de l'appareil, remettre les préférences à neuf.</p>
   <span class="when">→ avant de partir sur le terrain, ou pour équiper un autre téléphone</span>
 </a>
 
-<a class="card g" href="manuel/">
+<a class="card g util" href="manuel/">
+  <span class="vign" style="--img:url(assets/menu/manuel.webp)"></span>
   <h2>Mode d'emploi <span class="arrow">→</span></h2>
   <p>Tout ce que fait l'appareil, expliqué en entier : chaque mode, comment le seuil est appris, ce qu'un mot veut dire et ce qu'il ne veut pas dire, comment conduire une séance, où vont les enregistrements.</p>
   <span class="when">→ à lire une fois posément ; il fonctionne aussi sans réseau</span>
@@ -175,8 +222,8 @@ document.getElementById('ctx').innerHTML = ios
 })();
 </script>
 <script>if('serviceWorker' in navigator){window.addEventListener('load',function(){navigator.serviceWorker.register('/ghost-box/sw.js').catch(function(){});});}</script>
-<script src="/ghost-box/lib/version.js?v=40"></script>
-<script src="/ghost-box/lib/nuit.js?v=40"></script>
-<script src="/ghost-box/lib/fullscreen.js?v=40"></script>
+<script src="/ghost-box/lib/version.js?v=42"></script>
+<script src="/ghost-box/lib/nuit.js?v=42"></script>
+<script src="/ghost-box/lib/fullscreen.js?v=42"></script>
 </body>
 </html>
