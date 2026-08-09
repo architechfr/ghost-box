@@ -12,7 +12,7 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="Ghost Box">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<link rel="stylesheet" href="/ghost-box/lib/fonts.css?v=37">
+<link rel="stylesheet" href="/ghost-box/lib/fonts.css?v=38">
 <style>
 /* ═══════════════════════════════════════════════════════════════════════
    La planche — habillage.
@@ -134,10 +134,29 @@ body{padding:0 0 calc(env(safe-area-inset-bottom, 0px) + 20px);
 .gly.vise{color:#FFE9B0;text-shadow:0 1px 0 rgba(0,0,0,.85), 0 0 26px rgba(233,180,76,1)}
 #plan{position:absolute;z-index:3;pointer-events:none;
   width:clamp(52px,15%,104px);aspect-ratio:1/1.14;transform:translate(-50%,-52%)}
-#plan svg{width:100%;height:100%;overflow:visible;
+#plan svg.corps{position:absolute;inset:0;width:100%;height:100%;overflow:visible;
   filter:drop-shadow(0 6px 14px rgba(0,0,0,.75))}
-#plan .lueur{transition:opacity .25s linear}
-#plan.arret .lueur{opacity:1}
+/* ── LE VERRE ──
+   La planchette d'une vraie planche est percée : on lit la lettre À TRAVERS.
+   Première version : un disque d'or plein au centre — il masquait justement
+   la lettre qu'il désignait. Le verre est donc une fenêtre ronde qui montre
+   le glyphe le plus proche, AGRANDI et décalé comme sous une loupe. Le texte
+   y est recopié depuis la planche à chaque image : rien n'est inventé, c'est
+   la même lettre au même endroit, seulement grossie. */
+#plan .verre{position:absolute;left:50%;top:52.6%;width:44%;aspect-ratio:1/1;
+  transform:translate(-50%,-50%);border-radius:50%;overflow:hidden;
+  display:flex;align-items:center;justify-content:center;
+  background:radial-gradient(circle at 50% 38%, rgba(28,35,41,.92), rgba(7,11,14,.97) 72%);
+  box-shadow:inset 0 2px 10px -3px rgba(255,231,168,.35),
+             inset 0 -6px 14px -8px #000, 0 0 22px -6px rgba(233,180,76,.55)}
+#plan .verre::after{content:"";position:absolute;inset:0;border-radius:50%;
+  background:linear-gradient(150deg, rgba(255,240,200,.13) 0 32%, transparent 46%);
+  pointer-events:none}
+#loupeTxt{font-family:var(--grave);font-weight:600;color:#FFE7A8;line-height:1;
+  white-space:nowrap;text-shadow:0 0 16px rgba(233,180,76,.85);
+  font-size:clamp(20px,7.2cqw,54px);will-change:transform}
+#plan.arret .verre{box-shadow:inset 0 2px 10px -3px rgba(255,231,168,.5),
+             inset 0 -6px 14px -8px #000, 0 0 34px -4px rgba(233,180,76,.95)}
 
 /* En PAYSAGE, la planche se règle sur la HAUTEUR, pas sur la largeur.
    Sans ça, un écran de 915×412 donnait un plateau de 890×574 : plus haut que
@@ -341,15 +360,11 @@ td.w{font-family:var(--grave);font-size:15px;color:var(--or);letter-spacing:.1em
     <div id="glyphes"></div>
 
     <div id="plan">
-      <svg viewBox="0 0 100 114" aria-hidden="true">
+      <svg class="corps" viewBox="0 0 100 114" aria-hidden="true">
         <defs>
           <radialGradient id="pcorps" cx="50%" cy="34%" r="70%">
             <stop offset="0%" stop-color="#2A2318"/><stop offset="62%" stop-color="#14110B"/>
             <stop offset="100%" stop-color="#0A0906"/>
-          </radialGradient>
-          <radialGradient id="poeil" cx="50%" cy="40%" r="60%">
-            <stop offset="0%" stop-color="#FFE7A8"/><stop offset="46%" stop-color="#E9B44C"/>
-            <stop offset="100%" stop-color="#6B4E17"/>
           </radialGradient>
         </defs>
         <!-- corps en goutte : pointe en haut, épaules basses -->
@@ -361,11 +376,12 @@ td.w{font-family:var(--grave);font-size:15px;color:var(--or);letter-spacing:.1em
         <g stroke="#8A6D2F" stroke-opacity=".65" fill="none" stroke-width="1">
           <path d="M28 86l3-3M72 86l-3-3M50 100v-4"/>
         </g>
-        <!-- lunette : on lit la lettre à travers -->
-        <circle cx="50" cy="60" r="22" fill="#05080A" stroke="#B08A34" stroke-width="2.4"/>
-        <circle class="lueur" cx="50" cy="60" r="15" fill="url(#poeil)" opacity=".9"/>
-        <circle cx="50" cy="60" r="22" fill="none" stroke="#FFE7A8" stroke-opacity=".35" stroke-width=".8"/>
+        <!-- la monture seule : le verre est un élément à part, au-dessus -->
+        <circle cx="50" cy="60" r="24.5" fill="none" stroke="#B08A34" stroke-width="2.6"/>
+        <circle cx="50" cy="60" r="26.5" fill="none" stroke="#8A6D2F" stroke-opacity=".55" stroke-width=".9"/>
+        <circle cx="50" cy="60" r="22.4" fill="none" stroke="#FFE7A8" stroke-opacity=".30" stroke-width=".7"/>
       </svg>
+      <div class="verre"><span id="loupeTxt"></span></div>
     </div>
   </div>
 
@@ -483,16 +499,16 @@ td.w{font-family:var(--grave);font-size:15px;color:var(--or);letter-spacing:.1em
 </div>
 
 </div>
-<script src="/ghost-box/lib/wakelock.js?v=37"></script>
-<script src="/ghost-box/lib/historique.js?v=37"></script>
-<script src="/ghost-box/lib/retour.js?v=37"></script>
-<script src="/ghost-box/lib/aide.js?v=37"></script>
-<script src="/ghost-box/lib/action.js?v=37"></script>
-<script src="/ghost-box/lib/moteur.js?v=37"></script>
-<script src="/ghost-box/lib/capteurs.js?v=37"></script>
-<script src="/ghost-box/lib/objectif.js?v=37"></script>
-<script src="/ghost-box/lib/planche.js?v=37"></script>
-<script src="/ghost-box/lib/fixe.js?v=37"></script>
+<script src="/ghost-box/lib/wakelock.js?v=38"></script>
+<script src="/ghost-box/lib/historique.js?v=38"></script>
+<script src="/ghost-box/lib/retour.js?v=38"></script>
+<script src="/ghost-box/lib/aide.js?v=38"></script>
+<script src="/ghost-box/lib/action.js?v=38"></script>
+<script src="/ghost-box/lib/moteur.js?v=38"></script>
+<script src="/ghost-box/lib/capteurs.js?v=38"></script>
+<script src="/ghost-box/lib/objectif.js?v=38"></script>
+<script src="/ghost-box/lib/planche.js?v=38"></script>
+<script src="/ghost-box/lib/fixe.js?v=38"></script>
 <script>
 "use strict";
 /* ═══════ La planche — câblage de la page ═══════
@@ -725,18 +741,57 @@ function majSeance(voies){
   }).join('');
 }
 
+/* la taille du plateau en pixels : relue au redimensionnement seulement.
+   La loupe travaille en pixels — un décalage exprimé en pourcentages serait
+   faux, la largeur et la hauteur du cadre n'ayant pas la même échelle. */
+let boardW = 0, boardH = 0;
+function mesurerBoard(){
+  const r = $('board').getBoundingClientRect();
+  boardW = r.width; boardH = r.height;
+}
+addEventListener('resize', () => setTimeout(mesurerBoard, 60));
+addEventListener('orientationchange', () => setTimeout(mesurerBoard, 250));
+
+const LOUPE = 1.75;          // grossissement du verre
+
 function dessiner(){
   if(!PL || ecran !== 'seance') return;
   const e = PL.etat(), p = $('plan');
   p.style.left = e.x.toFixed(2) + '%';
   p.style.top  = e.y.toFixed(2) + '%';
   p.classList.toggle('arret', e.phase === 'arret');
+
+  let proche = -1, meilleur = 1e9;
   for(let i = 0; i < GLY.length; i++){
     const g = GLY[i], pos = POS[i];
     const vise = e.cible === i;
     const pres = Math.abs(pos.x - e.x) < 3.4 && Math.abs(pos.y - e.y) < 4.4;
     if(g._v !== vise){ g.classList.toggle('vise', vise); g._v = vise; }
     if(g._p !== pres){ g.classList.toggle('pres', pres); g._p = pres; }
+    /* distance en PIXELS, pas en pourcentages : sinon la lettre choisie serait
+       celle qui est proche « en pourcentage », pas celle qu'on voit sous le verre */
+    const dx = (pos.x - e.x)/100*boardW, dy = (pos.y - e.y)/100*boardH;
+    const d = dx*dx + dy*dy;
+    if(d < meilleur){ meilleur = d; proche = i; }
+  }
+
+  /* Ce que montre le verre : la lettre visée si elle existe, sinon la plus
+     proche — et seulement si elle est réellement sous la lunette. Le décalage
+     est multiplié par le grossissement, ce qui donne le glissement d'une vraie
+     loupe : la lettre entre par le bord et grandit en arrivant au centre. */
+  const lt = $('loupeTxt');
+  if(!boardW) mesurerBoard();
+  const i = e.cible !== null ? e.cible : proche;
+  const rayon = Math.min(boardW, boardH) * 0.085;
+  if(i >= 0 && Math.sqrt(meilleur) < rayon * 2.2){
+    const pos = POS[i];
+    const dx = (pos.x - e.x)/100*boardW*LOUPE, dy = (pos.y - e.y)/100*boardH*LOUPE;
+    if(lt._t !== pos.ch){ lt.textContent = pos.ch; lt._t = pos.ch; }
+    lt.style.transform = 'translate(' + dx.toFixed(1) + 'px,' + dy.toFixed(1) + 'px) rotate(' +
+      (pos.rot || 0).toFixed(1) + 'deg)';
+    lt.style.opacity = String(Math.max(0, Math.min(1, 1.6 - Math.sqrt(meilleur)/(rayon*1.6))));
+  } else if(lt._t !== ''){
+    lt.textContent = ''; lt._t = ''; lt.style.opacity = '0';
   }
 }
 
@@ -832,6 +887,7 @@ GBFixe.installer({
 });
 
 $('dureeAppr').textContent = APPREND;
+setTimeout(mesurerBoard, 80);
 demarrer();
 </script>
 </body>
