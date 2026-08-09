@@ -1,0 +1,605 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#0A0F12">
+<title>La planche — une lettre désignée</title>
+<link rel="icon" type="image/png" href="/ghost-box/favicon.png">
+<link rel="apple-touch-icon" href="/ghost-box/apple-touch-icon.png">
+<link rel="manifest" href="/ghost-box/manifest.json">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Ghost Box">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<link rel="stylesheet" href="/ghost-box/lib/fonts.css?v=36">
+<style>
+:root{
+  --bench:#0A0F12;--panel:#1D262B;--sunk:#0A0F12;--line:#2C383F;--hair:#212B31;
+  --signal:#5FD3A6;--gold:#E9B44C;--flag:#E2574C;--paper:#CFC6B4;--dim:#78868E;--text:#DDE6EA;
+  --legend:"Barlow Condensed","Arial Narrow",sans-serif;
+  --body:"IBM Plex Sans",system-ui,sans-serif;--mono:"IBM Plex Mono",ui-monospace,monospace;
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;background:var(--bench);color:var(--text);font-family:var(--body);-webkit-font-smoothing:antialiased}
+body{padding:0 0 calc(env(safe-area-inset-bottom, 0px) + 24px)}
+.wrap{max-width:660px;margin:0 auto;padding:0 12px}
+.wrap>*{min-width:0}
+.top{position:sticky;top:0;z-index:20;background:rgba(10,15,18,.96);backdrop-filter:blur(8px);
+  border-bottom:1px solid var(--line);padding:env(safe-area-inset-top, 0px) 0 0}
+.topin{max-width:660px;margin:0 auto;padding:10px 12px;display:flex;align-items:center;gap:10px}
+.topin>*{min-width:0}
+.topin a{color:var(--dim);text-decoration:none;font-family:var(--mono);font-size:16px}
+.topin h1{font-family:var(--legend);text-transform:uppercase;letter-spacing:.18em;font-size:15px;font-weight:600;margin:0;flex:1}
+.lg{font-family:var(--legend);text-transform:uppercase;letter-spacing:.15em;font-size:12px;color:var(--dim);font-weight:600}
+.ex{font-size:12.5px;color:var(--dim);line-height:1.55;margin:6px 0 0}
+.ex b{color:var(--paper);font-weight:500}
+.step{margin-top:18px;border-top:1px solid var(--line);padding-top:12px}
+button{font-family:var(--legend);text-transform:uppercase;letter-spacing:.13em;font-weight:600;
+  border:1px solid var(--line);background:var(--panel);color:var(--text);border-radius:3px;
+  padding:11px 12px;font-size:13px;cursor:pointer}
+button:active{transform:translateY(1px)}
+button:disabled{opacity:.35;cursor:default}
+button.act{border-color:var(--signal);color:var(--signal)}
+button.or{border-color:var(--gold);color:var(--gold)}
+button.dg{border-color:#3a2b29;color:var(--flag)}
+.row{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}.row>button{flex:1;min-width:118px}
+.fld{display:flex;align-items:center;gap:10px;margin-top:12px}
+.fld .lg{min-width:96px}
+input[type=range]{flex:1;min-width:0;touch-action:pan-y;accent-color:var(--gold)}
+.stat{font-family:var(--mono);font-size:12px;color:var(--dim);margin-top:8px;line-height:1.65}
+.stat b{color:var(--signal)}
+.card{border:1px solid var(--line);background:var(--panel);border-radius:3px;padding:12px 13px;margin-top:12px}
+.note{border-left:2px solid var(--gold);background:#1A1710;padding:11px 13px;font-size:12.5px;
+  line-height:1.6;color:#E4D3AE;margin-top:14px}
+.note.rouge{border-left-color:var(--flag);background:#1A0F0E;color:#E8B5AF}
+.note.vert{border-left-color:var(--signal);background:#0E1A17;color:#A8D9C6}
+table{width:100%;border-collapse:collapse;margin-top:8px}
+th{font-family:var(--legend);text-transform:uppercase;letter-spacing:.12em;font-size:10px;color:var(--dim);
+  text-align:left;font-weight:600;padding:0 6px 6px 0;border-bottom:1px solid var(--line)}
+td{padding:7px 6px 7px 0;border-bottom:1px solid var(--hair);font-family:var(--mono);font-size:12px;vertical-align:top}
+td.w{font-family:var(--legend);font-size:15px;color:var(--gold);letter-spacing:.1em}
+.empty{color:var(--dim);font-size:13px;padding:12px 0}
+/* ── voies et verdicts de finesse ── */
+.voie{display:flex;align-items:baseline;gap:8px;padding:7px 0;border-bottom:1px solid var(--hair)}
+.voie>*{min-width:0}
+.voie .n{font-family:var(--body);font-size:13px;color:var(--text);flex:1}
+.voie .v{font-family:var(--mono);font-size:12px;color:var(--signal);white-space:nowrap}
+.voie .why{font-family:var(--body);font-size:11.5px;color:var(--dim);line-height:1.45;
+  flex-basis:100%;margin-top:2px}
+.voie.ko .n{color:var(--dim)}
+.voie.ko .v{color:var(--dim)}
+.pin{font-family:var(--mono);font-size:9.5px;letter-spacing:.08em;text-transform:uppercase;
+  padding:2px 6px;border-radius:2px;border:1px solid var(--line);color:var(--dim);white-space:nowrap}
+.pin.ok{border-color:var(--signal);color:var(--signal)}
+.pin.no{border-color:#3a2b29;color:var(--flag)}
+/* ── la planche ── */
+#board{position:relative;width:100%;aspect-ratio:1.30/1;margin-top:10px;border-radius:4px;
+  border:1px solid var(--line);overflow:hidden;
+  background:radial-gradient(120% 90% at 50% 15%, rgba(233,180,76,.055), transparent 62%),
+             linear-gradient(#141a1d,#0b1114);
+  box-shadow:inset 0 0 60px -30px rgba(95,211,166,.35), 0 12px 34px -28px #000}
+#board svg{position:absolute;inset:0;width:100%;height:100%;overflow:visible}
+.gly{position:absolute;transform:translate(-50%,-50%);font-family:var(--legend);font-weight:600;
+  color:var(--paper);opacity:.62;white-space:nowrap;pointer-events:none;letter-spacing:.06em;
+  transition:color .18s linear,opacity .18s linear,text-shadow .18s linear}
+.gly.d{font-size:12px;color:var(--dim)}
+.gly.l{font-size:16px}
+.gly.r{font-size:11px;letter-spacing:.10em}
+.gly.pres{opacity:.95;color:#E4D3AE;text-shadow:0 0 12px rgba(233,180,76,.35)}
+.gly.vise{opacity:1;color:var(--gold);text-shadow:0 0 20px rgba(233,180,76,.95)}
+#plan{position:absolute;width:52px;height:52px;margin:-26px 0 0 -26px;pointer-events:none;z-index:3}
+#plan .oeil{position:absolute;inset:0;border-radius:50%;border:1.5px solid var(--gold);
+  background:radial-gradient(circle at 50% 40%, rgba(233,180,76,.16), rgba(10,15,18,.55) 62%);
+  box-shadow:0 0 30px -4px rgba(233,180,76,.75), inset 0 0 20px -8px rgba(233,180,76,.9)}
+#plan .fl{position:absolute;left:50%;top:-9px;width:11px;height:11px;margin-left:-5.5px;
+  background:var(--gold);opacity:.85;clip-path:polygon(50% 0,100% 100%,0 100%)}
+#plan .pt{position:absolute;left:50%;top:50%;width:5px;height:5px;margin:-2.5px 0 0 -2.5px;
+  border-radius:50%;background:var(--gold);box-shadow:0 0 12px rgba(233,180,76,.9)}
+#plan.arret .oeil{border-width:2.5px}
+#bandeau{display:flex;align-items:center;justify-content:space-between;gap:8px;
+  font-family:var(--mono);font-size:11px;color:var(--dim);margin-top:2px}
+#bandeau>*{min-width:0}
+#etatPill{padding:3px 8px;border-radius:2px;border:1px solid var(--line);letter-spacing:.06em;white-space:nowrap}
+#etatPill.chaud{border-color:var(--gold);color:var(--gold)}
+#motBox{margin-top:12px;min-height:52px;border:1px solid var(--line);background:var(--panel);
+  border-radius:3px;padding:10px 12px}
+#mot{margin-top:6px;font:500 26px/1.15 var(--mono);letter-spacing:.16em;color:var(--line);min-height:30px;
+  word-break:break-all}
+#mot.plein{color:#E4D3AE;text-shadow:0 0 34px rgba(233,180,76,.45)}
+.barre{height:3px;background:var(--sunk);border-radius:2px;overflow:hidden;margin-top:9px}
+.barre>i{display:block;height:100%;background:var(--gold);transition:width .12s linear}
+.mini{display:flex;gap:5px;margin-top:12px}
+.mini>div{flex:1;min-width:0;height:26px;background:var(--sunk);border:1px solid var(--hair);
+  border-radius:2px;position:relative;overflow:hidden}
+.mini i{position:absolute;left:0;bottom:0;width:100%;background:rgba(95,211,166,.22);transition:height .12s linear}
+.mini i.chaud{background:rgba(233,180,76,.55)}
+.mini span{position:absolute;left:3px;top:2px;font:400 8px/1 var(--mono);color:#4E5C64}
+.masque{display:none}
+</style>
+</head>
+<body>
+
+<div class="top"><div class="topin">
+  <a href="../" aria-label="Retour">←</a><h1>La planche <span style="font-size:10px;color:var(--signal)">v1</span></h1>
+  <span class="lg" id="phase">à préparer</span>
+</div></div>
+
+<div class="wrap">
+
+<!-- ══════════ RITUEL ══════════ -->
+<div id="ecRituel">
+  <div class="step" style="border-top:0">
+    <div class="lg">Rituel de préparation</div>
+    <p class="ex">L'appareil apprend d'abord ce que le lieu sait produire tout seul, puis il éprouve
+    chaque capteur sur sa <b>finesse</b> — sa capacité à désigner une lettre plutôt qu'à toujours
+    retomber sur la même. Tant qu'il n'a pas de seuil, <b>aucune lettre ne peut sortir</b>.
+    Pose le téléphone à plat, planche vers le haut, et laisse la pièce telle qu'elle est.</p>
+  </div>
+
+  <div class="card">
+    <div style="display:flex;align-items:baseline;justify-content:space-between;gap:8px">
+      <span class="lg">Apprentissage du lieu</span>
+      <span id="calibPct" style="font:500 13px/1 var(--mono);color:var(--signal)">0 %</span>
+    </div>
+    <div class="barre"><i id="calibBar" style="width:0"></i></div>
+    <div id="calibTxt" class="stat">en attente</div>
+  </div>
+
+  <div class="step">
+    <div class="lg">Capteurs sondés</div>
+    <div id="voies"></div>
+  </div>
+
+  <div class="note">Les doigts posés sur l'écran sont <b>exigés mais jamais mappés</b> : la pression
+  du doigt piloterait la sortie. Ils servent uniquement à confirmer que quelqu'un est là.</div>
+
+  <button id="btnOuvrir" style="width:100%;margin-top:18px;padding:15px 12px;font-size:14px" disabled>Apprentissage en cours…</button>
+  <div class="stat" style="text-align:center" id="ritSous">durée du rituel : <b id="dureeAppr">60</b> s · seuil recalculé à chaque séance</div>
+</div>
+
+<!-- ══════════ SÉANCE ══════════ -->
+<div id="ecSeance" class="masque">
+  <div id="bandeau">
+    <span id="chrono">00:00</span>
+    <span id="etatPill">veille</span>
+    <span id="nbEmis">0 émis</span>
+  </div>
+
+  <div id="board">
+    <svg viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true">
+      <path id="arc1" fill="none" stroke="#E9B44C" stroke-opacity=".30" stroke-width=".35"></path>
+      <path id="arc2" fill="none" stroke="#E9B44C" stroke-opacity=".22" stroke-width=".35"></path>
+      <line x1="14" y1="91" x2="86" y2="91" stroke="#E9B44C" stroke-opacity=".18" stroke-width=".35"></line>
+    </svg>
+    <div id="glyphes"></div>
+    <div id="plan"><div class="oeil"></div><div class="fl"></div><div class="pt"></div></div>
+  </div>
+
+  <div id="gardeBox" class="note">La planche attend : le témoin de bruit relève encore les seuils.
+  Tant que le lieu n'est pas appris, une lettre ne voudrait rien dire.</div>
+
+  <div id="motBox">
+    <div class="lg">Retenu</div>
+    <div id="mot">—</div>
+  </div>
+
+  <div class="row">
+    <button id="btnGarder" class="or">Garder le mot</button>
+    <button id="btnEffacer">Effacer</button>
+    <button id="btnFin" class="dg">Terminer</button>
+  </div>
+
+  <div class="step">
+    <div class="lg">Trace des émissions</div>
+    <div id="trace"></div>
+  </div>
+
+  <div class="step">
+    <div class="lg">Ce que la planche a refusé</div>
+    <p class="ex">Une anomalie retenue par le moteur qui n'a <b>pas</b> abouti à une lettre, et pourquoi.
+    Un refus est un résultat : c'est ce qui distingue une planche muette d'une planche cassée.</p>
+    <div id="refus"></div>
+  </div>
+
+  <div class="mini" id="mini"></div>
+</div>
+
+<!-- ══════════ FIN ══════════ -->
+<div id="ecFin" class="masque">
+  <div class="step" style="border-top:0">
+    <div class="lg">Séance terminée</div>
+    <div id="finTemoin" class="note vert"></div>
+  </div>
+  <div class="row" style="margin-top:14px">
+    <div class="card" style="flex:1;margin:0">
+      <div class="lg">Durée</div>
+      <div style="margin-top:6px;font:500 19px/1 var(--mono)" id="finDuree">00:00</div>
+    </div>
+    <div class="card" style="flex:1;margin:0">
+      <div class="lg">Lettres</div>
+      <div style="margin-top:6px;font:500 19px/1 var(--mono);color:var(--gold)" id="finNb">0</div>
+    </div>
+  </div>
+  <div class="step">
+    <div class="lg">Mots gardés</div>
+    <div id="finMots"></div>
+  </div>
+  <div class="row">
+    <button id="btnRejouer" class="or">Nouvelle séance</button>
+    <button id="btnCsv">Export CSV</button>
+  </div>
+  <p class="ex">La trace complète — valeur brute, capteur, index calculé, horodatage, verdict de finesse
+  de chaque voie — part avec l'export. Sans elle, une séance ne vaut rien : personne ne peut la refaire
+  à la main six mois plus tard.</p>
+</div>
+
+<!-- ══════════ RÉGLAGES ══════════ -->
+<div class="step" id="ecReglages">
+  <div class="lg">Réglages de la planche</div>
+
+  <div class="fld"><span class="lg">Arrêt exigé</span>
+    <input type="range" id="rArret" min="0.8" max="2.4" step="0.1" value="1.5">
+    <span id="vArret" style="font:500 13px/1 var(--mono);color:var(--gold);width:52px;text-align:right">1,5 s</span></div>
+  <p class="ex">Une lettre n'est retenue que si la planchette reste immobile dessus. En dessous d'une
+  seconde, l'appareil bavarde et devient inexploitable.</p>
+
+  <div class="fld"><span class="lg">Coïncidence</span>
+    <input type="range" id="rCoinc" min="1" max="3" step="1" value="2">
+    <span id="vCoinc" style="font:500 13px/1 var(--mono);color:var(--gold);width:52px;text-align:right">2 voies</span></div>
+  <p class="ex" id="coincEx"></p>
+
+  <div class="lg" style="margin-top:20px">Mode témoin</div>
+  <p class="ex">Les capteurs sont ignorés : les lettres viennent d'un générateur à graine fixe —
+  <b>le déclenchement comme la lettre</b>, si bien qu'une séance témoin est rejouable à l'identique
+  depuis sa graine, qui part dans l'export. Si tu ne fais pas la différence en séance, tu viens
+  d'apprendre quelque chose de réel sur ton montage.</p>
+  <button id="btnTemoin" style="width:100%;margin-top:10px">Passer en mode témoin</button>
+
+  <div class="note rouge">Ce module <b>fabrique</b> des lettres à partir de nombres. Le vocabulaire vient
+  de la planche, la grammaire de nos gabarits, le sens de la personne qui lit. Le capteur ne fournit
+  qu'un nombre — et le plus souvent, il n'en fournit aucun qui compte.</div>
+</div>
+
+</div>
+
+<script src="/ghost-box/lib/wakelock.js?v=36"></script>
+<script src="/ghost-box/lib/historique.js?v=36"></script>
+<script src="/ghost-box/lib/retour.js?v=36"></script>
+<script src="/ghost-box/lib/aide.js?v=36"></script>
+<script src="/ghost-box/lib/action.js?v=36"></script>
+<script src="/ghost-box/lib/moteur.js?v=36"></script>
+<script src="/ghost-box/lib/capteurs.js?v=36"></script>
+<script src="/ghost-box/lib/objectif.js?v=36"></script>
+<script src="/ghost-box/lib/planche.js?v=36"></script>
+<script src="/ghost-box/lib/fixe.js?v=36"></script>
+<script>
+"use strict";
+/* ═══════ La planche — câblage de la page ═══════
+   La page ne décide RIEN sur la détection : `lib/moteur.js` dit s'il s'est
+   passé quelque chose, `lib/planche.js` dit si ça peut devenir une lettre.
+   Ici on ne fait que lire les capteurs, afficher, et écrire la trace. */
+const $ = id => document.getElementById(id);
+const esc = s => String(s == null ? '' : s).replace(/[&<>]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;'}[c]));
+const mmss = s => { const m = Math.floor(s/60), r = Math.floor(s%60);
+  return (m<10?'0':'')+m+':'+(r<10?'0':'')+r; };
+
+const APPREND = 60;          // s d'apprentissage — il faut du monde pour juger la finesse
+const HZ = 10;
+
+let CAP = null, PL = null, H = null;
+let W = {};                  // code → témoin du moteur
+let ecran = 'rituel', tAppr = 0, chrono = 0, scelle = false;
+let dernier = 0, accum = 0, motsGardes = [], verdict = null;
+let temoin = false, tempsDebut = 0;
+/* Les listes (voies, trace, refus, mini) sont reconstruites en innerHTML : à
+   10 Hz, sur une veille d'une heure, c'est 36 000 reconstructions pour un
+   écran qui bouge à peine. Elles passent à 2 Hz. Ce qui doit rester fluide —
+   la planchette — ne coûte qu'une transformation, et reste à chaque image. */
+let tLourd = 0;
+function lourdDu(dt){ tLourd += dt; if(tLourd < 0.5) return false; tLourd = 0; return true; }
+
+/* ── la planche dessinée : glyphes posés une seule fois ── */
+const POS = GBPlanche.positions();
+(function poserPlanche(){
+  $('arc1').setAttribute('d', GBPlanche.cheminArc(43, 1.06, 1.94));
+  $('arc2').setAttribute('d', GBPlanche.cheminArc(27, 1.12, 1.88));
+  const h = POS.map((p,i) =>
+    '<div class="gly '+p.k+'" data-i="'+i+'" style="left:'+p.x.toFixed(2)+'%;top:'+p.y.toFixed(2)+'%">'+
+    esc(p.ch)+'</div>').join('');
+  $('glyphes').innerHTML = h;
+})();
+const GLY = Array.prototype.slice.call($('glyphes').children);
+
+/* ── réglages mémorisés : ce qui se règle ne s'oublie pas ── */
+function litNb(cle, def){ try{ const v = parseFloat(localStorage.getItem(cle)); return isFinite(v)? v : def; }catch(e){ return def; } }
+function ecritNb(cle, v){ try{ localStorage.setItem(cle, String(v)); }catch(e){} }
+let rArret = litNb('gb-planche-arret', 1.5);
+let rCoinc = litNb('gb-planche-coinc', 2);
+$('rArret').value = rArret; $('rCoinc').value = rCoinc;
+
+function majReglages(){
+  $('vArret').textContent = rArret.toFixed(1).replace('.', ',') + ' s';
+  $('vCoinc').textContent = rCoinc + (rCoinc > 1 ? ' voies' : ' voie');
+  $('coincEx').innerHTML = rCoinc > 1
+    ? 'Il faut <b>' + rCoinc + ' voies distinctes</b> au-dessus de leur seuil dans la même fenêtre de 1,5 s. '
+      + 'Un bruit d\'appareil ne touche qu\'une voie ; un événement physique en touche plusieurs. '
+      + 'Mesuré : avec 2 voies, <b>zéro lettre sur 300 h de bruit simulé</b> — avec 1 seule, il en passait une.'
+    : '<b>Une seule voie suffit.</b> Réglage déconseillé : sur 300 h de bruit simulé, une lettre est sortie '
+      + 'de cette façon. Une bouffée sur un capteur isolé ressemble à un événement sans en être un.';
+  if(PL){ PL.arret(rArret); }
+}
+majReglages();
+$('rArret').addEventListener('input', e => { rArret = parseFloat(e.target.value); ecritNb('gb-planche-arret', rArret); majReglages(); });
+$('rCoinc').addEventListener('input', e => { rCoinc = parseInt(e.target.value,10); ecritNb('gb-planche-coinc', rCoinc); majReglages(); });
+
+/* ── démarrage : capteurs, puis apprentissage ── */
+async function demarrer(){
+  CAP = GBCapteurs.creer();
+  const familles = ['micro','mouvement','magnetique','camera'];
+  for(const f of familles){ try{ await CAP.activer(f); }catch(e){} }
+  try{ if(window.GBObjectif) GBObjectif.installer({
+    hote:'.topin', avant:'#phase',
+    flux: () => CAP && CAP.fluxCamera(),
+    changer: id => CAP.changerCamera({video:{deviceId:{exact:id}}, audio:false})
+  }); }catch(e){}
+
+  PL = GBPlanche.creer({ arret:rArret, coincidence:rCoinc, temoin:temoin });
+  CAP.voies().forEach(v => { W[v.code] = GBMoteur.mk(v.code, v.label); });
+  H = GBHistorique ? GBHistorique.ouvrir({ mode:'planche' }) : null;
+  tempsDebut = Date.now();
+  dernier = performance.now();
+  requestAnimationFrame(boucle);
+}
+
+/* ── la boucle : mesure à 10 Hz, dessin à chaque image ──
+   Le dessin ne touche qu'une transformation : la planchette doit glisser
+   sans coûter une séance de batterie. */
+function boucle(now){
+  requestAnimationFrame(boucle);
+  const dt = Math.min(0.1, (now - dernier)/1000); dernier = now;
+  accum += dt;
+  if(accum >= 1/HZ){ mesurer(accum); accum = 0; }
+  dessiner();
+}
+
+function mesurer(dt){
+  if(!CAP || !PL) return;
+  const voies = CAP.voies().filter(v => v.dispo && v.vivante);
+  const lectures = {}, feux = [];
+
+  if(ecran === 'rituel' && !scelle){
+    tAppr += dt;
+    voies.forEach(v => { GBMoteur.feed(W[v.code], v.val, true); PL.apprendre(v.code, v.val); });
+    if(lourdDu(dt)) majRituel(voies);
+    if(tAppr >= APPREND) sceller(voies);
+    return;
+  }
+
+  voies.forEach(v => {
+    lectures[v.code] = v.val;
+    if(GBMoteur.feed(W[v.code], v.val, false)){
+      feux.push({ code:v.code, label:v.label, v:v.val, unite:v.unite, z:W[v.code].z });
+    }
+  });
+
+  if(ecran !== 'seance') return;
+  chrono += dt;
+
+  let relev = 0; for(const k in W) if(W[k]) relev += (W[k].raises || 0);
+  PL.jauger(dt, relev);
+
+  if(temoin && Math.random() < dt*0.02) feux.push({ code:'temoin', label:'témoin', v:0, unite:'', z:0 });
+
+  if(feux.length){
+    const d = PL.designer(feux);
+    if(!d.ok && d.raison && H) H.noter('refus planche', d.raison);
+  }
+
+  const pose = PL.deriver(lectures, dt);
+  if(pose){
+    if(H) H.noter('lettre', pose.ch + ' · ' + pose.label + ' · ' + pose.brut + ' ' + pose.unite +
+                            ' · ' + pose.sigma + ' σ · index ' + pose.idx);
+    if(navigator.vibrate) navigator.vibrate(30);
+  }
+  if(lourdDu(dt) || pose) majSeance(voies);
+}
+
+/* ── rituel ── */
+function majRituel(voies){
+  const pct = Math.min(100, Math.round(tAppr/APPREND*100));
+  $('calibPct').textContent = pct + ' %';
+  $('calibBar').style.width = pct + '%';
+  $('calibTxt').textContent = 'écoute du bruit de fond — ne touche à rien (' +
+    Math.max(0, Math.ceil(APPREND - tAppr)) + ' s)';
+  $('voies').innerHTML = CAP.voies().map(v => ligneVoie(v, null)).join('');
+}
+
+function ligneVoie(v, fin){
+  const dispo = v.dispo && v.vivante;
+  let pin = '<span class="pin">en écoute</span>';
+  if(!dispo) pin = '<span class="pin no">absent</span>';
+  else if(fin) pin = fin.apte ? '<span class="pin ok">désigne</span>' : '<span class="pin no">écarté</span>';
+  const val = dispo && isFinite(v.val) ? (+v.val).toFixed(2) + ' ' + esc(v.unite || '') : '—';
+  const why = !dispo ? esc(v.raison || 'non disponible sur cet appareil')
+            : fin ? esc(fin.raison) : '';
+  return '<div class="voie' + (dispo && (!fin || fin.apte) ? '' : ' ko') + '">' +
+    '<span class="n">' + esc(v.label) + '</span>' +
+    '<span class="v">' + val + '</span>' + pin +
+    (why ? '<span class="why">' + why + '</span>' : '') + '</div>';
+}
+
+function sceller(voies){
+  scelle = true;
+  let armes = 0;
+  voies.forEach(v => { if(GBMoteur.seal(W[v.code])) armes++; });
+  verdict = PL.sceller();
+  $('calibPct').textContent = '100 %';
+  $('calibBar').style.width = '100%';
+  $('calibBar').style.background = 'var(--signal)';
+  const fin = PL.finesse();
+  $('voies').innerHTML = CAP.voies().map(v => ligneVoie(v, fin[v.code])).join('');
+  const nApte = verdict.aptes.length;
+  $('calibTxt').innerHTML = 'Seuil appris sur <b>' + armes + '</b> voie' + (armes>1?'s':'') +
+    ' · <b>' + nApte + '</b> peu' + (nApte>1?'vent':'t') + ' désigner une lettre' +
+    (verdict.ecartes.length ? ' · ' + verdict.ecartes.length + ' écartée' + (verdict.ecartes.length>1?'s':'') +
+      ' faute de finesse' : '');
+  const b = $('btnOuvrir');
+  if(nApte === 0 && !temoin){
+    b.textContent = 'Aucune voie ne peut désigner';
+    b.disabled = true;
+    $('ritSous').innerHTML = '<b style="color:var(--flag)">Sur cet appareil, aucun capteur n\'a la finesse ' +
+      'nécessaire.</b> Ouvrir la planche donnerait une planchette qui dérive sans jamais rien écrire — ' +
+      'ce serait honnête, mais inutile. Le mode témoin reste disponible dans les réglages.';
+  } else {
+    b.textContent = 'Ouvrir la planche';
+    b.disabled = false;
+    b.classList.add('act');
+  }
+}
+
+/* ── séance ── */
+function majSeance(voies){
+  const e = PL.etat();
+  $('chrono').textContent = mmss(chrono);
+  $('nbEmis').textContent = PL.nb() + (PL.nb() > 1 ? ' lettres' : ' lettre');
+  const chaud = voies.filter(v => W[v.code] && W[v.code].ready && Math.abs(W[v.code].z) > W[v.code].thr*0.6).length;
+  const pill = $('etatPill');
+  pill.textContent = !PL.stable() ? 'garde ' + Math.ceil(PL.resteGarde()) + ' s'
+    : e.cible !== null ? (e.phase === 'arret' ? 'arrêt sur ' + e.ch : 'déplacement')
+    : chaud ? 'perturbation' : 'veille';
+  pill.classList.toggle('chaud', e.cible !== null);
+  $('gardeBox').style.display = PL.stable() ? 'none' : 'block';
+
+  const m = PL.courant();
+  $('mot').textContent = m || '—';
+  $('mot').classList.toggle('plein', !!m);
+
+  const j = PL.journal().slice(0, 5);
+  $('trace').innerHTML = j.length
+    ? '<table><thead><tr><th>lettre</th><th>capteur</th><th>brut</th><th>σ</th><th>idx</th></tr></thead><tbody>' +
+      j.map(x => '<tr><td class="w">' + esc(x.ch) + '</td><td>' + esc(x.label) + '</td><td>' +
+        esc(x.brut) + ' ' + esc(x.unite) + '</td><td>' + x.sigma + '</td><td>' + x.idx + '</td></tr>').join('') +
+      '</tbody></table>'
+    : '<div class="empty">Rien encore. Une planche muette est une planche qui fonctionne.</div>';
+
+  const r = PL.refus().slice(0, 4);
+  $('refus').innerHTML = r.length
+    ? r.map(x => '<div class="voie ko"><span class="why" style="flex-basis:auto;margin:0">' +
+        esc(x.voie) + ' — ' + esc(x.raison) + '</span></div>').join('')
+    : '<div class="empty">Aucun refus : le moteur n\'a rien retenu du tout.</div>';
+
+  const mp = voies.filter(v => W[v.code] && W[v.code].ready).slice(0, 6);
+  $('mini').innerHTML = mp.map(v => {
+    const w = W[v.code], z = Math.min(1, Math.abs(w.z)/(w.thr||1));
+    return '<div><i class="' + (Math.abs(w.z) > w.thr*0.6 ? 'chaud' : '') + '" style="height:' +
+      Math.round(Math.max(4, z*100)) + '%"></i><span>' + esc(v.code.slice(0,3).toUpperCase()) + '</span></div>';
+  }).join('');
+}
+
+function dessiner(){
+  if(!PL || ecran !== 'seance') return;
+  const e = PL.etat(), p = $('plan');
+  p.style.left = e.x.toFixed(2) + '%';
+  p.style.top  = e.y.toFixed(2) + '%';
+  p.classList.toggle('arret', e.phase === 'arret');
+  for(let i = 0; i < GLY.length; i++){
+    const g = GLY[i], pos = POS[i];
+    const vise = e.cible === i;
+    const pres = Math.abs(pos.x - e.x) < 3.4 && Math.abs(pos.y - e.y) < 4.4;
+    if(g._v !== vise){ g.classList.toggle('vise', vise); g._v = vise; }
+    if(g._p !== pres){ g.classList.toggle('pres', pres); g._p = pres; }
+  }
+}
+
+/* ── navigation ── */
+function montrer(quoi){
+  ecran = quoi;
+  $('ecRituel').classList.toggle('masque', quoi !== 'rituel');
+  $('ecSeance').classList.toggle('masque', quoi !== 'seance');
+  $('ecFin').classList.toggle('masque', quoi !== 'fin');
+  $('ecReglages').classList.toggle('masque', quoi === 'seance');
+  $('phase').textContent = quoi === 'rituel' ? (scelle ? 'prête' : 'à préparer')
+    : quoi === 'seance' ? 'en séance' : 'terminée';
+}
+
+$('btnOuvrir').addEventListener('click', () => { if(!$('btnOuvrir').disabled) montrer('seance'); });
+$('btnGarder').addEventListener('click', () => {
+  const m = PL.poserMot();
+  if(m){ motsGardes.unshift({ txt:m, quand:mmss(chrono) }); if(H) H.noter('mot gardé', m); }
+  majSeance(CAP.voies().filter(v => v.dispo && v.vivante));
+});
+$('btnEffacer').addEventListener('click', () => { PL.effacer(); majSeance(CAP.voies().filter(v => v.dispo && v.vivante)); });
+$('btnFin').addEventListener('click', terminer);
+$('btnRejouer').addEventListener('click', () => location.reload());
+$('btnTemoin').addEventListener('click', () => {
+  temoin = !temoin;
+  if(PL) PL.temoin(temoin);
+  $('btnTemoin').textContent = temoin ? 'Repasser en capteurs' : 'Passer en mode témoin';
+  $('btnTemoin').classList.toggle('dg', temoin);
+});
+
+function terminer(){
+  montrer('fin');
+  $('finDuree').textContent = mmss(chrono);
+  $('finNb').textContent = PL.nb();
+  const t = $('finTemoin');
+  t.className = 'note ' + (temoin ? 'rouge' : 'vert');
+  t.innerHTML = temoin
+    ? 'Cette séance tournait en <b>MODE TÉMOIN</b> — aucun capteur n\'a été lu. Graine : ' + PL.graine() + '.'
+    : 'Séance capteurs — plancher du moteur (6,5 σ, témoin de bruit éprouvé 16× par mesure), ' +
+      'coïncidence exigée sur ' + rCoinc + ' voie' + (rCoinc>1?'s':'') + '.';
+  $('finMots').innerHTML = motsGardes.length
+    ? motsGardes.map(m => '<div class="note" style="margin-top:8px"><div style="font:500 17px/1.2 var(--mono);' +
+        'letter-spacing:.08em">' + esc(m.txt) + '</div><div style="margin-top:4px;font:400 10.5px/1 var(--mono);' +
+        'color:#8a7a55">' + esc(m.quand) + '</div></div>').join('')
+    : '<div class="empty">Rien n\'a été gardé. Une séance sans mot est un résultat, pas un échec.</div>';
+  if(H) H.fermer({ lettres:PL.nb(), mots:motsGardes.map(m => m.txt), temoin:temoin });
+}
+
+/* ── export : sans la trace, une séance ne vaut rien ── */
+$('btnCsv').addEventListener('click', () => {
+  const fin = PL.finesse();
+  const l = ['# planche ghost-box · ' + new Date(tempsDebut).toISOString()];
+  l.push('# mode,' + (temoin ? 'temoin (graine ' + PL.graine() + ')' : 'capteurs'));
+  l.push('# plancher_moteur_sigma,' + GBMoteur.PLANCHER + ',coincidence_voies,' + rCoinc + ',arret_s,' + rArret);
+  l.push('# --- verdict de finesse par voie ---');
+  for(const k in fin) if(fin[k]) l.push('# ' + k + ',' + (fin[k].apte ? 'apte' : 'ecarte') + ',"' + fin[k].raison + '"');
+  l.push('horodatage,lettre,capteur,valeur_brute,unite,sigma,index');
+  PL.journal().slice().reverse().forEach(e => {
+    l.push([new Date(e.quand).toISOString(), e.ch, e.label, e.brut, e.unite, e.sigma, e.idx]
+      .map(x => '"' + String(x).replace(/"/g,'""') + '"').join(','));
+  });
+  const b = new Blob([l.join('\n')], {type:'text/csv'});
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(b);
+  a.download = 'planche-' + new Date(tempsDebut).toISOString().slice(0,19).replace(/[:T]/g,'-') + '.csv';
+  a.click();
+  setTimeout(() => URL.revokeObjectURL(a.href), 4000);
+});
+
+/* ── écran fixe : la position de travail, téléphone posé à plat ── */
+GBFixe.installer({
+  page:'planche',
+  infos: () => {
+    if(!PL) return 'planche · en préparation';
+    const e = PL.etat();
+    return 'planche · ' + (ecran === 'seance' ? mmss(chrono) : 'prête') + ' · ' +
+           PL.nb() + ' lettre' + (PL.nb()>1?'s':'') +
+           (PL.stable() ? '' : ' · garde ' + Math.ceil(PL.resteGarde()) + ' s');
+  },
+  modules: [
+    { cle:'obj', label: () => (window.GBObjectif ? GBObjectif.nom() : 'Objectif'),
+      action: () => GBObjectif.suivant(), delai:1400,
+      visible: () => !!(window.GBObjectif && CAP && CAP.fluxCamera()) },
+    { cle:'garder', label:'Garder', action: () => $('btnGarder').click(),
+      visible: () => ecran === 'seance' && !!PL && !!PL.courant() }
+  ],
+  rythme: 500
+});
+
+$('dureeAppr').textContent = APPREND;
+demarrer();
+</script>
+</body>
+</html>

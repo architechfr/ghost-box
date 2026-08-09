@@ -12,7 +12,7 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="Ghost Box">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<link rel="stylesheet" href="/ghost-box/lib/fonts.css?v=35">
+<link rel="stylesheet" href="/ghost-box/lib/fonts.css?v=36">
 <style>
 :root{--night:#0A0F12;--panel:#1D262B;--sunk:#0A0F12;--line:#2C383F;--hair:#212B31;
   --signal:#5FD3A6;--gold:#E9B44C;--flag:#E2574C;--paper:#CFC6B4;--dim:#78868E;--text:#DDE6EA;
@@ -55,7 +55,7 @@ footer a{color:var(--dim)}
   .card .det{color:#6E7C84;font-size:12.5px;line-height:1.6;margin-top:8px;
     padding-top:8px;border-top:1px solid rgba(95,211,166,.12)}
 </style>
-<link rel="stylesheet" href="/ghost-box/lib/ambiance.css?v=35">
+<link rel="stylesheet" href="/ghost-box/lib/ambiance.css?v=36">
 </head>
 <body>
 <div class="wrap">
@@ -96,6 +96,13 @@ footer a{color:var(--dim)}
   <p>Le vocabulaire entier, <b>montré</b> : cinq colonnes qui tombent dans le noir. Écran tourné vers la pièce, et <b>tous les capteurs de l'appareil</b> en écoute — micro, mouvement, champ magnétique, caméra.</p>
   <p class="det">Deux manières de désigner un mot. <b>Instant simple</b> : un événement, un mot — l'instant est vrai, mais le mot reste un tirage. <b>Escalier</b> : trois événements pour un mot — la famille, puis la page, puis le mot — cibles assez larges pour être visées, et aucun seuil baissé. Séquence interrompue, rien n'est écrit.</p>
   <span class="when">→ pour laisser une place à ce qui voudrait s'exprimer, sans rien inventer</span>
+</a>
+
+<a class="card g" href="planche/">
+  <h2>La planche <span class="arrow">→</span></h2>
+  <p>La même chaîne que le reste — capteur, valeur brute, index, glyphe — mais la sortie est une <b>lettre désignée dans l'espace</b>, une à la fois, avec un déplacement qu'on peut regarder venir.</p>
+  <p class="det">Chaque capteur est éprouvé sur sa <b>finesse</b> avant d'avoir le droit de désigner : sur beaucoup de téléphones, l'accéléromètre est quantifié et retomberait toujours sur la même lettre — il est alors écarté, et l'écran le dit. Même plancher que les mots (6,5 σ), coïncidence exigée sur deux voies, garde d'entrée le temps que le lieu soit appris. Mesuré : <b>zéro lettre sur 300 h de bruit simulé</b>.</p>
+  <span class="when">→ téléphone posé à plat, doigts sur l'écran, pour une longue veille</span>
 </a>
 
 <div class="sect">après la séance</div>
@@ -168,7 +175,7 @@ document.getElementById('ctx').innerHTML = ios
 })();
 </script>
 <script>if('serviceWorker' in navigator){window.addEventListener('load',function(){navigator.serviceWorker.register('/ghost-box/sw.js').catch(function(){});});}</script>
-<script src="/ghost-box/lib/nuit.js?v=35"></script>
-<script src="/ghost-box/lib/fullscreen.js?v=35"></script>
+<script src="/ghost-box/lib/nuit.js?v=36"></script>
+<script src="/ghost-box/lib/fullscreen.js?v=36"></script>
 </body>
 </html>
