@@ -22,7 +22,7 @@
    À CHAQUE LIVRAISON : incrémenter VERSION ci-dessous en même temps que les
    ?v= des pages — c'est elle qui jette l'ancien cache.
    ═══════════════════════════════════════════════════════════════════════ */
-const VERSION = 'v45';
+const VERSION = 'v46';
 const CACHE   = 'ghostbox-' + VERSION;
 const RACINE  = '/ghost-box/';
 
@@ -48,7 +48,7 @@ const ENVELOPPE = [
   ...['simple','seance','banc','mur','planche','bibliotheque','enregistreur','reglages','manuel']
     .map(n => RACINE + 'assets/menu/' + n + '.webp'),
   // modules et feuilles, avec leur numéro : ce sont ces URL-là que les pages demandent
-  ...['moteur','mur','tampon','secours','pose','capture','wakelock','media','fullscreen','retour','aide','action','qr','spectre','capteurs','nuit','voix','historique','demarrage','visage','fixe','objectif','croise','questions','planche','lettres','version','encodage','recit']
+  ...['moteur','mur','tampon','secours','pose','capture','wakelock','media','fullscreen','retour','aide','action','qr','spectre','capteurs','nuit','voix','historique','demarrage','visage','fixe','objectif','croise','questions','planche','lettres','version','encodage','recit','lexique','torche']
     .map(m => RACINE + 'lib/' + m + '.js?v=' + VERSION.slice(1)),
   ...['ambiance','fonts'].map(m => RACINE + 'lib/' + m + '.css?v=' + VERSION.slice(1)),
   // polices : sans elles, l'application change de visage hors ligne

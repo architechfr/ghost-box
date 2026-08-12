@@ -12,7 +12,7 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="Ghost Box">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<link rel="stylesheet" href="/ghost-box/lib/fonts.css?v=45">
+<link rel="stylesheet" href="/ghost-box/lib/fonts.css?v=46">
 <style>
 :root{
   --bench:#141A1E;--panel:#1D262B;--sunk:#0A0F12;--line:#2C383F;--hair:#212B31;
@@ -240,7 +240,7 @@ video{display:none}
   font-family:var(--mono);font-size:9px;color:var(--signal);
   background:rgba(10,15,18,.75);padding:1px 4px;border-radius:2px;pointer-events:none}
 </style>
-<link rel="stylesheet" href="/ghost-box/lib/ambiance.css?v=45">
+<link rel="stylesheet" href="/ghost-box/lib/ambiance.css?v=46">
 </head>
 <body>
 <div class="wrap">
@@ -258,7 +258,9 @@ video{display:none}
     <button id="pMag">Magnétomètre</button>
     <button id="pCam">Caméra</button>
     <button id="pGeo">Position</button>
+    <button id="pTorche">Torche</button>
   </div>
+  <p id="torcheAide" class="ex"></p>
   <div class="grid" id="caps"></div>
   <p id="camWatch" class="ex"></p>
   <canvas id="camView" width="320" height="240"></canvas>
@@ -309,7 +311,8 @@ video{display:none}
   <input type="hidden" id="ref" value="8">
 
   <div class="fld"><span class="lg">classe</span><select id="pos"></select></div>
-  <p class="ex">Restreindre le tirage à une catégorie : noms, verbes, prénoms, réponses… <b>Toutes classes</b> laisse les 567 mots disponibles.</p>
+  <p class="ex">Restreindre le tirage à une catégorie : noms, verbes, prénoms, réponses… <b>Toutes classes</b> laisse tous les mots offerts disponibles.</p>
+  <p class="ex" id="lexEtat">Lexique en cours de chargement…</p>
 
   <div class="row">
     <button id="tSpeak" class="tgl">Voix</button>
@@ -382,22 +385,24 @@ video{display:none}
 <video id="vid2" playsinline muted></video>
 </div>
 
-<script src="/ghost-box/lib/version.js?v=45"></script>
-<script src="/ghost-box/lib/nuit.js?v=45"></script>
-<script src="/ghost-box/lib/demarrage.js?v=45"></script>
-<script src="/ghost-box/lib/voix.js?v=45"></script>
-<script src="/ghost-box/lib/historique.js?v=45"></script>
-<script src="/ghost-box/lib/moteur.js?v=45"></script>
-<script src="/ghost-box/lib/recit.js?v=45"></script>
-<script src="/ghost-box/lib/spectre.js?v=45"></script>
-<script src="/ghost-box/lib/retour.js?v=45"></script>
-<script src="/ghost-box/lib/aide.js?v=45"></script>
-<script src="/ghost-box/lib/action.js?v=45"></script>
+<script src="/ghost-box/lib/version.js?v=46"></script>
+<script src="/ghost-box/lib/nuit.js?v=46"></script>
+<script src="/ghost-box/lib/demarrage.js?v=46"></script>
+<script src="/ghost-box/lib/voix.js?v=46"></script>
+<script src="/ghost-box/lib/historique.js?v=46"></script>
+<script src="/ghost-box/lib/moteur.js?v=46"></script>
+<script src="/ghost-box/lib/recit.js?v=46"></script>
+<script src="/ghost-box/lib/spectre.js?v=46"></script>
+<script src="/ghost-box/lib/retour.js?v=46"></script>
+<script src="/ghost-box/lib/aide.js?v=46"></script>
+<script src="/ghost-box/lib/action.js?v=46"></script>
 <script>addEventListener('load',function(){ try{ GBAction.init(['#run']); }catch(e){} });</script>
-<script src="/ghost-box/lib/mur.js?v=45"></script>
-<script src="/ghost-box/lib/questions.js?v=45"></script>
-<script src="/ghost-box/lib/objectif.js?v=45"></script>
-<script src="/ghost-box/lib/fixe.js?v=45"></script>
+<script src="/ghost-box/lib/torche.js?v=46"></script>
+<script src="/ghost-box/lib/lexique.js?v=46"></script>
+<script src="/ghost-box/lib/mur.js?v=46"></script>
+<script src="/ghost-box/lib/questions.js?v=46"></script>
+<script src="/ghost-box/lib/objectif.js?v=46"></script>
+<script src="/ghost-box/lib/fixe.js?v=46"></script>
 <script>
 (() => {
 "use strict";
@@ -406,13 +411,18 @@ video{display:none}
    maintenir, donc une divergence garantie tôt ou tard. */
 let MOTS = [], N = 0;
 const BY_POS = {};
-fetch('../data/lexique.json')
-  .then(r => r.json())
-  .then(j => {
-    MOTS = (j && j.mots) ? j.mots : (Array.isArray(j) ? j : []);
+GBLexique.charger('../data/lexique.json')
+  .then(() => {
+    MOTS = GBLexique.mots();          // mots porteurs — le tri est dans lib/lexique.js
     N = MOTS.length;
     MOTS.forEach(m => (BY_POS[m.pos] = BY_POS[m.pos] || []).push(m));
     remplirClasses();
+    const r = GBLexique.resume(), d = document.getElementById('lexEtat');
+    if(d) d.innerHTML = r.entier
+      ? '<b>'+r.offerts+'</b> mots offerts — <b>lexique entier</b>, mots-outils compris.'
+      : '<b>'+r.offerts+'</b> mots offerts sur '+r.total+' — '+r.outils+' mots-outils écartés '
+        +'(« parce », « te », « sur », « il »…) : ils ne disent rien seuls, et une anomalie est trop rare '
+        +'pour être dépensée sur eux. Le déclenchement, lui, est inchangé.';
   })
   .catch(() => {
     const d = document.getElementById('deriv');
@@ -637,6 +647,7 @@ $('pCam').onclick = async () => {
     camActive=true; camStart=performance.now(); camLiveHits=0; camCtrlHits=0; mark('pCam',true);
     try{GBWake.on();}catch(e){}
     curLens=(vstream.getVideoTracks()[0].getSettings()||{}).deviceId||null; listLenses();
+    try{ GBTorche.adopter(vstream); }catch(e){}   // la lampe se pose sur CETTE piste
     $('camView').style.display='block'; $('camHint').style.display='block';
     $('camTag').style.display=camHidden?'none':'block';
     (function loop(){
@@ -954,6 +965,44 @@ function start(){
     ? '<div class="warn">Mode masqué. Tu ne sais pas si les mots viennent du capteur ou du générateur. Note tes impressions maintenant, révèle à la fin.</div>' : '';
   timer=setInterval(tick,100);
 }
+/* ═══════ la torche ═══════
+   Le banc n'utilise pas les témoins de lib/moteur.js (il porte les siens, pour
+   pouvoir montrer chaque étape à l'écran) : GBTorche.honnete() ne s'applique
+   donc pas ici, et la règle est écrite à la main — mais c'est la MÊME règle.
+
+   Allumer la lampe change ce que la caméra voit. Si une voie caméra est en
+   veille, sa normale apprise dans le noir ne décrit plus rien : mesuré sur bruit
+   simulé (200 essais), un allumage sans précaution sortait entre 4 et 29 émissions
+   en 300 relevés — médiane 14, et JAMAIS zéro. Le
+   banc a un avantage sur les autres modes : il sait tout recommencer proprement.
+   Il RELANCE donc l'apprentissage complet, et le dit. */
+const VOIES_CAM = ['cam_lum','cam_diff','cam_forme'];
+GBTorche.brancher($('pTorche'));
+$('torcheAide').textContent = GBTorche.auRepos();
+GBTorche.surChangement((etat, info)=>{
+  if(etat) mark('pTorche', true);
+  else if(info && info.erreur) mark('pTorche', false);   // rouge : elle a refusé
+  else markOff('pTorche');
+  try{ if(vstream) GBTorche.adopter(vstream); }catch(e){}
+  let txt = (etat ? 'Torche allumée' : 'Torche éteinte')
+    + (info && info.erreur ? ' — ' + info.erreur : '') + '.';
+  const surCam = running && W.some(w => VOIES_CAM.indexOf(w.code) >= 0);
+  if(surCam){
+    W.forEach(w => { w.samples=[]; w.noise=[]; w.persist=0; w.cPersist=0;
+                     w.raises=0; w.thr=8; w.lastAbove=-1e9; });
+    phase='learn'; tPhase=performance.now(); tWatch=0;
+    txt += ' Une voie caméra est en veille : sa normale apprise ne décrit plus le lieu. '
+         + "L'apprentissage recommence en entier — se taire est la seule réponse honnête à "
+         + '« je ne connais plus cet endroit ».';
+  } else if(running){
+    txt += " Aucune voie caméra en veille : la mesure en cours n'est pas touchée.";
+  } else {
+    txt += ' ' + GBTorche.auRepos();
+  }
+  const e=$('torcheAide'); if(e) e.textContent=txt;
+  if(H) try{ H.noter('torche', txt); }catch(err){}
+});
+
 function stop(){
   if(H){ const nm=trace.filter(x=>!x.est_temoin).length;
     H.fermer({ mots:nm, seuils:W.map(w=>({code:w.code, seuil:+(w.thr||0).toFixed(2), relevages:w.raises||0})),
@@ -1535,7 +1584,7 @@ $('camAi').onclick=async ()=>{
   if(!camActive){ $('aiState').textContent="Active d'abord la caméra."; return; }
   $('aiState').textContent='Chargement du modèle (~5 Mo, une seule fois)…';
   try{
-    if(!POSE) POSE=await import('/ghost-box/lib/pose.js?v=45');
+    if(!POSE) POSE=await import('/ghost-box/lib/pose.js?v=46');
     await POSE.load();
     aiOn=true; $('camAi').className='act';
     $('aiState').innerHTML='Détection active — un squelette n\'apparaît que si une <b>personne réelle</b> est reconnue. Dans le noir, le modèle ne voit rien : c\'est normal.';
@@ -1744,9 +1793,9 @@ addEventListener('load',function(){ try{ GBCapture.init({label:'seance-capteurs'
 })();
 </script>
 <script>if('serviceWorker' in navigator){window.addEventListener('load',function(){navigator.serviceWorker.register('/ghost-box/sw.js').catch(function(){});});}</script>
-<script src="/ghost-box/lib/wakelock.js?v=45"></script>
-<script src="/ghost-box/lib/media.js?v=45"></script>
-<script src="/ghost-box/lib/capture.js?v=45"></script>
-<script src="/ghost-box/lib/fullscreen.js?v=45"></script>
+<script src="/ghost-box/lib/wakelock.js?v=46"></script>
+<script src="/ghost-box/lib/media.js?v=46"></script>
+<script src="/ghost-box/lib/capture.js?v=46"></script>
+<script src="/ghost-box/lib/fullscreen.js?v=46"></script>
 </body>
 </html>

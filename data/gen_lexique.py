@@ -89,6 +89,23 @@ for cat, (pos, blob) in BLOCS.items():
         rows.append({"idx": idx, "mot": mot, "pos": pos, "categorie": cat, "poids": poids})
         idx += 1
 
+# ── expressions en DEUX mots ──
+# Les blocs ci-dessus sont découpés sur les espaces : une expression comme
+# « quelque chose » y devient deux mots, et chacune de ses moitiés peut sortir
+# seule sans rien vouloir dire. lib/lexique.js écarte justement ces moitiés
+# (voir la liste OUTILS) ; les expressions entières, elles, sont ajoutées ici,
+# EN FIN DE LISTE pour ne déplacer aucun idx déjà existant.
+COMPOSES = [
+    ("quelque chose", "REPONSE", "reponse", 2),
+    ("bien sûr",      "REPONSE", "reponse", 1),
+]
+for mot, pos, cat, poids in COMPOSES:
+    if mot in seen:
+        continue
+    seen.add(mot)
+    rows.append({"idx": idx, "mot": mot, "pos": pos, "categorie": cat, "poids": poids})
+    idx += 1
+
 GABARITS = [
     ("{MOT}", 40, "mot seul — le mode par défaut, le moins fabriqué"),
     ("{PRON} {VERBE3}", 12, "sujet + verbe"),

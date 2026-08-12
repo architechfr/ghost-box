@@ -12,7 +12,7 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="Ghost Box">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<link rel="stylesheet" href="/ghost-box/lib/fonts.css?v=45">
+<link rel="stylesheet" href="/ghost-box/lib/fonts.css?v=46">
 <style>
 :root{
   --bench:#0A0F12;--panel:#141B20;--line:#2C383F;--hair:#1E262B;
@@ -284,7 +284,7 @@ body{margin:0;background:#000;color:var(--text);font-family:var(--body);
 }
 
 </style>
-<link rel="stylesheet" href="/ghost-box/lib/ambiance.css?v=45">
+<link rel="stylesheet" href="/ghost-box/lib/ambiance.css?v=46">
 </head>
 <body>
 <div id="app">
@@ -381,7 +381,9 @@ body{margin:0;background:#000;color:var(--text);font-family:var(--body);
   <div class="opts">
     <button id="oVoix" type="button">Voix</button>
     <button id="oNuit" type="button">Mode nuit</button>
+    <button id="oTorche" type="button">Torche</button>
   </div>
+  <p class="aide" id="torcheAide"></p>
   <div class="tt">Témoin croisé — un deuxième téléphone</div>
   <div class="opts">
     <button id="oLier" type="button">Créer la liaison</button>
@@ -418,22 +420,24 @@ body{margin:0;background:#000;color:var(--text);font-family:var(--body);
 <div id="voile"></div>
 </div><!-- #app -->
 
-<script src="/ghost-box/lib/version.js?v=45"></script>
-<script src="/ghost-box/lib/nuit.js?v=45"></script>
-<script src="/ghost-box/lib/wakelock.js?v=45"></script>
-<script src="/ghost-box/lib/media.js?v=45"></script>
-<script src="/ghost-box/lib/moteur.js?v=45"></script>
-<script src="/ghost-box/lib/recit.js?v=45"></script>
-<script src="/ghost-box/lib/capteurs.js?v=45"></script>
-<script src="/ghost-box/lib/objectif.js?v=45"></script>
-<script src="/ghost-box/lib/qr.js?v=45"></script>
-<script src="/ghost-box/lib/croise.js?v=45"></script>
-<script src="/ghost-box/lib/mur.js?v=45"></script>
-<script src="/ghost-box/lib/voix.js?v=45"></script>
-<script src="/ghost-box/lib/historique.js?v=45"></script>
-<script src="/ghost-box/lib/tampon.js?v=45"></script>
-<script src="/ghost-box/lib/secours.js?v=45"></script>
-<script src="/ghost-box/lib/capture.js?v=45"></script>
+<script src="/ghost-box/lib/version.js?v=46"></script>
+<script src="/ghost-box/lib/nuit.js?v=46"></script>
+<script src="/ghost-box/lib/wakelock.js?v=46"></script>
+<script src="/ghost-box/lib/media.js?v=46"></script>
+<script src="/ghost-box/lib/moteur.js?v=46"></script>
+<script src="/ghost-box/lib/recit.js?v=46"></script>
+<script src="/ghost-box/lib/capteurs.js?v=46"></script>
+<script src="/ghost-box/lib/objectif.js?v=46"></script>
+<script src="/ghost-box/lib/qr.js?v=46"></script>
+<script src="/ghost-box/lib/croise.js?v=46"></script>
+<script src="/ghost-box/lib/torche.js?v=46"></script>
+<script src="/ghost-box/lib/lexique.js?v=46"></script>
+<script src="/ghost-box/lib/mur.js?v=46"></script>
+<script src="/ghost-box/lib/voix.js?v=46"></script>
+<script src="/ghost-box/lib/historique.js?v=46"></script>
+<script src="/ghost-box/lib/tampon.js?v=46"></script>
+<script src="/ghost-box/lib/secours.js?v=46"></script>
+<script src="/ghost-box/lib/capture.js?v=46"></script>
 <script>
 /* ═══════════════════════════════════════════════════════════════════════
    Séance simple — un écran, un bouton.
@@ -542,6 +546,7 @@ async function demarrer(){
 
   W={}; ATT={};
   vivantes.forEach(v=>{ W[v.code]=M.mk(v.code, v.label); });
+  try{ GBTorche.adopter(B.fluxCamera()); }catch(e){}   // la lampe se pose sur CETTE piste
   try{ H=GBHistorique.ouvrir({mode:'séance simple'}); }catch(e){ H=null; }
   if(H) H.noter('veille', vivantes.length+' voie(s)');
   phase='apprentissage'; tPhase=performance.now();
@@ -1007,6 +1012,7 @@ function majTiroir(){
       + 'c\'est voulu. Si la pastille sur l\'image dit « trop petite », c\'est ici qu\'on peut changer d\'avis.';
   $('oVoix').className = (window.GBVoix && GBVoix.actif()) ? 'on' : '';
   $('oNuit').className = (window.GBNuit && GBNuit.actif()) ? 'on' : '';
+  $('oTorche').className = GBTorche.allumee() ? 'on' : '';
   majJournal(); majVoies();
   listerObjectifs();
 }
@@ -1028,6 +1034,16 @@ function poserSens(v){
 $('oPrudente').onclick   = ()=>poserSens('prudente');
 $('oPermissive').onclick = ()=>poserSens('permissive');
 $('oVoix').onclick=()=>{ if(window.GBVoix) GBVoix.basculer(); majTiroir(); };
+
+/* ═══════ la torche ═══════
+   Le mode simple s'utilise dans le noir : c'est ici qu'elle sert le plus. Et
+   c'est ici qu'il faut être le plus clair sur son prix — voir lib/torche.js.
+   La lampe éclaire aussi l'objectif : les voies caméra effacent leur normale
+   et se taisent 30 s le temps de réapprendre le lieu tel qu'il est. */
+GBTorche.brancher($('oTorche'));
+GBTorche.honnete({ moteur:M, voies:()=>W, flux:()=>B.fluxCamera(),
+  noter:t=>{ if(H) try{ H.noter('torche', t); }catch(e){} },
+  dit:t=>{ const e=$('torcheAide'); if(e) e.textContent=t; } });
 
 /* ═══════════════════════════════════════════════════════════════════════
    Garder ce qui compte — sans que l'utilisateur ait rien à faire.
@@ -1235,10 +1251,10 @@ async function allumerDetection(quoi, silencieux){
   if(!silencieux) $('silAide').textContent='Chargement du modèle (une seule fois)…';
   try{
     if(quoi==='sil'){
-      if(!POSE) POSE = await import('/ghost-box/lib/pose.js?v=45');
+      if(!POSE) POSE = await import('/ghost-box/lib/pose.js?v=46');
       await POSE.load(); silOn=true; silVoulu=true; appliquerSeverite();
     } else {
-      if(!VIS) VIS = await import('/ghost-box/lib/visage.js?v=45');
+      if(!VIS) VIS = await import('/ghost-box/lib/visage.js?v=46');
       await VIS.load(); visOn=true; visVoulu=true; appliquerSeverite();
     }
     $('squelette').classList.add('on'); $('nbPers').classList.add('on');

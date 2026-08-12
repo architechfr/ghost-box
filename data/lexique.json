@@ -3968,6 +3968,20 @@
    "pos": "PREP",
    "categorie": "liaison",
    "poids": 1
+  },
+  {
+   "idx": 567,
+   "mot": "quelque chose",
+   "pos": "REPONSE",
+   "categorie": "reponse",
+   "poids": 2
+  },
+  {
+   "idx": 568,
+   "mot": "bien sûr",
+   "pos": "REPONSE",
+   "categorie": "reponse",
+   "poids": 1
   }
  ],
  "gabarits": [

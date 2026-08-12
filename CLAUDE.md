@@ -194,3 +194,28 @@ Pour les pages caméra : Playwright + Chromium headless avec `--use-fake-device-
 Pièges attrapés par ces tests et à re-vérifier à chaque livraison : une variable `let` lue par une boucle démarrée plus haut dans le script (TDZ silencieuse qui tue la boucle) ; le bouton plein écran flottant qui recouvre « Quitter » en écran fixe (`body.filming #fsFloat{display:none}`) ; un `<script src>` oublié alors que le nom du module apparaît déjà dans un commentaire (le test de présence textuelle ment) ; et l'ordre des bandes en écran fixe (aucun chevauchement, mesuré au pixel).
 
 À chaque livraison : incrémenter `VERSION` dans sw.js ET tous les `?v=` des pages (les deux ensemble, jamais l'un sans l'autre), ajouter tout nouveau `lib/*.js` et toute nouvelle page à `ENVELOPPE`, et ajouter la page à la liste `doitEtre` du vérificateur hors-ligne de Réglages.
+
+## 000aj — Un mot juste peut quand même être gaspillé
+
+Le principe « un mot ne doit jamais sortir pour rien » avait toujours été appliqué au DÉCLENCHEMENT : seuil auto, témoin de bruit, persistance, coïncidence. Il n'avait jamais été appliqué à l'autre bout de la chaîne, le VOCABULAIRE. Or une anomalie est rare ; quand elle arrive, elle désigne une case du lexique. Si cette case porte « parce », « te », « sur », « il », la mesure était vraie et elle a été **gaspillée** — pire qu'un faux positif, parce que rien ne le signale.
+
+`lib/lexique.js` écarte cinquante mots-outils (prépositions, pronoms sujets, copules, moitiés d'expressions figées : « ne pas », « s'il te plaît », « bien sûr »). 569 mots dans le fichier, **519 offerts à la mesure**. Deux choses à ne jamais perdre de vue :
+
+- **La règle est dans le code, pas dans les données.** `data/lexique.json` reste du vocabulaire pur, régénérable par `data/gen_lexique.py` sans rien casser. Le jugement « ce mot dit-il quelque chose tout seul ? » est un jugement d'usage : il se lit et se corrige en un écran. Aucune règle automatique par nature grammaticale n'aurait été juste — « personne » est un pronom et reste, « il » est un pronom et part.
+- **Le tri ne fait pas sortir plus de mots.** Ni seuil, ni témoin, ni cadence ne sont touchés. Il change ce qui est écrit, jamais quand. Le dire à chaque endroit où on l'affiche, sinon on lira « ils ont facilité les sorties ».
+
+Un seul point de chargement : `GBLexique.charger()` puis `GBLexique.mots()`. `lib/mur.js` y délègue (avec repli sur le fichier brut si le module manque : mieux vaut tous les mots que pas de mur). Interrupteur dans Réglages, `gb.mots.entier`.
+
+Deux entrées ajoutées au fichier : « quelque chose » et « bien sûr », en fin de liste pour ne déplacer aucun `idx`. **`data/gen_lexique.py` (sur le disque de Florian, absent de la copie de travail) doit recevoir les mêmes deux lignes**, sinon la prochaine régénération les perdra.
+
+## 000ak — La torche : une lampe qui parle à la place des fantômes
+
+Deux oublis signalés depuis le terrain le même jour, et le second était un piège. Un téléphone n'a pas de lampe indépendante : la LED appartient à la **caméra arrière**, on l'allume par `applyConstraints({advanced:[{torch:true}]})` sur une piste vidéo vivante. Conséquences non négociables, toutes dans `lib/torche.js` :
+
+- **Ne JAMAIS ouvrir un second `getUserMedia`** si la page a déjà un flux : sur Android, deux flux sur le même objectif échouent en `NotReadableError`. La page confie sa piste (`GBTorche.adopter(flux)`) ; le module n'ouvre un flux 320×240 à lui que si personne ne lui en donne un, et le referme en s'éteignant.
+- **La lampe fausse les voies caméra.** Mesuré (`node`, bruit autocorrélé, fichier `lib/moteur.js` chargé tel quel) : sur une voie armée dans le noir, l'allumage produisait, sur 200 essais, **entre 4 et 29 émissions en 300 relevés — médiane 14, et jamais zéro**. Des mots pour une lampe. La réponse n'est pas de « filtrer » mais de **réapprendre** : `GBMoteur.relancer(w, n)` efface normale, seuil, mémoire de bruit et relevages, et la voie se tait jusqu'à avoir revu `n` mesures du lieu tel qu'il est devenu (300 ≈ 30 s à 10 Hz). Après relance : **0 émission sur 2 300 relevés éclairés, dans 200 essais sur 200**, et une excursion franche passe toujours. Le son, le magnétique et le mouvement du téléphone ne sont pas concernés — les couper aussi aurait été de la superstition.
+- **Saturation** (lampe contre un mur blanc) : la voie ne se réarme pas du tout, le garde-fou « capteur plat » de `seal()` fait déjà le travail. C'est voulu, et c'est à dire.
+- Le branchement honnête vit en **un seul exemplaire**, `GBTorche.honnete({voies, camera, flux, moteur, noter, dit})`. Le jour où un mode oublierait de réapprendre, il sortirait des mots pour une lampe sans que personne le voie. Le banc fait exception (il porte ses propres témoins pour les montrer à l'écran) : il relance l'apprentissage complet, à la main, avec la même règle écrite en toutes lettres.
+- **La planche a un bouton FLOTTANT**, pas un bouton dans `.commandes` : elle s'utilise dans le noir et en écran fixe, où toutes les commandes disparaissent. Une lampe qu'on ne peut pas rallumer sans quitter la séance ne sert à rien.
+
+**Piège attrapé au banc d'essai :** deux écrivains pour une même ligne d'état. `brancher()` repeignait le bouton APRÈS la bascule — donc après tous les écouteurs — et sa phrase générique écrasait systématiquement l'avertissement « les voies caméra viennent de se taire ». Un avertissement effacé par une politesse. `brancher()` ne touche plus qu'au bouton ; le texte appartient à `honnete()`. Règle générale : **un seul écrivain par zone de texte**, et se méfier de tout ce qui repeint après coup.

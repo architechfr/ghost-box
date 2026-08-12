@@ -12,7 +12,7 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="Ghost Box">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<link rel="stylesheet" href="/ghost-box/lib/fonts.css?v=45">
+<link rel="stylesheet" href="/ghost-box/lib/fonts.css?v=46">
 <style>
 :root{
   --bench:#0A0F12;--panel:#1D262B;--sunk:#0A0F12;--line:#2C383F;--hair:#212B31;
@@ -118,7 +118,7 @@ body.filming #quitFix{display:block;position:fixed;z-index:61;right:10px;
   top:calc(10px + env(safe-area-inset-top, 0px));padding:6px 9px;font-size:11px;
   background:rgba(20,26,30,.85)}
 </style>
-<link rel="stylesheet" href="/ghost-box/lib/ambiance.css?v=45">
+<link rel="stylesheet" href="/ghost-box/lib/ambiance.css?v=46">
 </head>
 <body>
 
@@ -191,8 +191,10 @@ body.filming #quitFix{display:block;position:fixed;z-index:61;right:10px;
 <div class="row">
   <button id="fixBtn">Écran fixe</button>
   <button id="fsBtn">Plein écran</button>
+  <button id="torchBtn">Torche</button>
 </div>
 <div class="stat" id="etat">—</div>
+<p class="ex" id="torchState"></p>
 
 <div class="step" id="trace">
   <div class="lg">Trace <span id="jCount" style="color:var(--paper)"></span></div>
@@ -206,24 +208,26 @@ body.filming #quitFix{display:block;position:fixed;z-index:61;right:10px;
 
 </div>
 
-<script src="/ghost-box/lib/version.js?v=45"></script>
-<script src="/ghost-box/lib/nuit.js?v=45"></script>
-<script src="/ghost-box/lib/demarrage.js?v=45"></script>
-<script src="/ghost-box/lib/voix.js?v=45"></script>
-<script src="/ghost-box/lib/historique.js?v=45"></script>
-<script src="/ghost-box/lib/wakelock.js?v=45"></script>
-<script src="/ghost-box/lib/retour.js?v=45"></script>
-<script src="/ghost-box/lib/aide.js?v=45"></script>
-<script src="/ghost-box/lib/action.js?v=45"></script>
+<script src="/ghost-box/lib/version.js?v=46"></script>
+<script src="/ghost-box/lib/nuit.js?v=46"></script>
+<script src="/ghost-box/lib/demarrage.js?v=46"></script>
+<script src="/ghost-box/lib/voix.js?v=46"></script>
+<script src="/ghost-box/lib/historique.js?v=46"></script>
+<script src="/ghost-box/lib/wakelock.js?v=46"></script>
+<script src="/ghost-box/lib/retour.js?v=46"></script>
+<script src="/ghost-box/lib/aide.js?v=46"></script>
+<script src="/ghost-box/lib/action.js?v=46"></script>
 <script>addEventListener('load',function(){ try{ GBAction.init(['#prep']); }catch(e){} });</script>
-<script src="/ghost-box/lib/media.js?v=45"></script>
-<script src="/ghost-box/lib/moteur.js?v=45"></script>
-<script src="/ghost-box/lib/recit.js?v=45"></script>
-<script src="/ghost-box/lib/capteurs.js?v=45"></script>
-<script src="/ghost-box/lib/objectif.js?v=45"></script>
-<script src="/ghost-box/lib/spectre.js?v=45"></script>
-<script src="/ghost-box/lib/mur.js?v=45"></script>
-<script src="/ghost-box/lib/fullscreen.js?v=45"></script>
+<script src="/ghost-box/lib/media.js?v=46"></script>
+<script src="/ghost-box/lib/moteur.js?v=46"></script>
+<script src="/ghost-box/lib/recit.js?v=46"></script>
+<script src="/ghost-box/lib/capteurs.js?v=46"></script>
+<script src="/ghost-box/lib/objectif.js?v=46"></script>
+<script src="/ghost-box/lib/spectre.js?v=46"></script>
+<script src="/ghost-box/lib/torche.js?v=46"></script>
+<script src="/ghost-box/lib/lexique.js?v=46"></script>
+<script src="/ghost-box/lib/mur.js?v=46"></script>
+<script src="/ghost-box/lib/fullscreen.js?v=46"></script>
 <script>
 (() => {
 "use strict";
@@ -361,6 +365,8 @@ $('prep').onclick=async ()=>{
   B.voies().forEach(v=>{ if(v.vivante) W[v.code]=M.mk(v.code, v.label); });
   try{ H=GBHistorique.ouvrir({ mode:'le mur ('+MODE+')' }); }catch(e){ H=null; }
   if(H) H.noter('veille', Object.keys(W).length+' voie(s) en apprentissage');
+  // la lampe se pose sur la piste DÉJÀ ouverte par les capteurs
+  try{ GBTorche.adopter(B.fluxCamera()); }catch(e){}
   apprend=true; tApprend=performance.now(); tStart=tApprend;
   $('prep').className='act'; $('prep').textContent='Mur ouvert';
   $('essai').disabled=false;
@@ -521,6 +527,13 @@ $('essai').onclick=()=>{
 };
 
 /* ═══════════ trace ═══════════ */
+/* ═══════ la torche ═══════ voir lib/torche.js : allumer la lampe change ce que
+   la caméra voit, donc les voies caméra effacent leur normale et réapprennent. */
+GBTorche.brancher($('torchBtn'));
+GBTorche.honnete({ moteur:M, voies:()=>W, flux:()=>B.fluxCamera(),
+  noter:t=>{ addJ('torche','—',t); if(H) try{ H.noter('torche',t); }catch(e){} },
+  dit:t=>{ const e=$('torchState'); if(e) e.textContent=t; } });
+
 function addJ(type,mot,detail,rec){
   journal.unshift({t_ms:Math.round(performance.now()-(tStart||performance.now())),heure:hhmm(new Date()),type,mot,detail,
     rec:rec||null});   // les mesures structurées, pour l'acte de naissance

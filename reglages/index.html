@@ -10,7 +10,7 @@
 <link rel="manifest" href="/ghost-box/manifest.json">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
-<link rel="stylesheet" href="/ghost-box/lib/fonts.css?v=45">
+<link rel="stylesheet" href="/ghost-box/lib/fonts.css?v=46">
 <style>
 :root{
   --bench:#0A0F12;--panel:#1D262B;--line:#2C383F;--hair:#212B31;
@@ -45,7 +45,7 @@ table{width:100%;border-collapse:collapse;margin-top:8px}
 td{padding:7px 6px 7px 0;border-bottom:1px solid var(--hair);font-family:var(--mono);font-size:12px}
 td:first-child{color:var(--dim);width:46%}
 </style>
-<link rel="stylesheet" href="/ghost-box/lib/ambiance.css?v=45">
+<link rel="stylesheet" href="/ghost-box/lib/ambiance.css?v=46">
 </head>
 <body>
 
@@ -91,6 +91,38 @@ td:first-child{color:var(--dim);width:46%}
 </div>
 
 <div class="step">
+  <div class="lg">Vocabulaire</div>
+  <p class="ex">Une anomalie est <b>rare</b>. Quand elle arrive enfin, elle désigne une case du lexique — et
+  si cette case porte « parce », « te », « sur » ou « il », la séance vient de dépenser son événement le
+  plus rare sur un mot qui, seul, ne dit rien. Ces mots ne sont pas faux, ils sont <b>incomplets</b> :
+  ils appellent une suite qui n'existe pas, et invitent à broder. C'est exactement ce que cet appareil
+  refuse.</p>
+  <p class="ex"><b>Mots porteurs</b> (par défaut) écarte ces cinquante mots-outils. <b>Lexique entier</b>
+  les remet — utile si tu veux composer des phrases. Dans les deux cas <b>rien d'autre ne change</b> :
+  ni le seuil, ni le témoin de bruit, ni la cadence. Une séance muette reste muette.</p>
+  <div class="row">
+    <button id="motsPorteurs">Mots porteurs</button>
+    <button id="motsEntier">Lexique entier</button>
+  </div>
+  <p id="motsState" class="ex"></p>
+</div>
+
+<div class="step">
+  <div class="lg">La torche</div>
+  <p class="ex">Chaque mode a son bouton de torche — la planche a un bouton rond qui reste visible même
+  en écran fixe. Sur un téléphone la lampe appartient à la <b>caméra arrière</b> : l'appareil signalera
+  la caméra comme active, c'est normal, et la lampe s'éteint si la caméra se ferme.</p>
+  <div class="note"><b>Ce que la lampe coûte à la mesure.</b> Les voies caméra apprennent leur normale
+  dans le noir ; éclairées, cette normale ne décrit plus rien. Mesuré sur bruit simulé : un allumage
+  sans précaution sortait, sur 200 essais, <b>entre 4 et 29 émissions en 300 relevés</b> — médiane 14,
+  et jamais zéro. Des mots pour une lampe. À chaque
+  allumage <i>et</i> à chaque extinction, ces voies effacent tout et réapprennent le lieu tel qu'il est
+  devenu : elles se taisent <b>30 s</b>. Le son, le magnétique et le mouvement du téléphone continuent
+  sans interruption. Et si la lampe sature l'image — un mur blanc à vingt centimètres — la voie ne se
+  réarme pas du tout : le moteur refuse d'armer un capteur devenu plat.</div>
+</div>
+
+<div class="step">
   <div class="lg">Mode nuit</div>
   <p class="ex">L'écran passe en <b>rouge sombre</b> : la vision nocturne met vingt minutes à s'installer et un seul coup d'œil à un écran clair la ruine — le rouge sombre, lui, la préserve. Le réglage suit toutes les pages, images des caméras comprises.</p>
   <div class="row"><button id="nuit">Activer le mode nuit</button></div>
@@ -105,12 +137,13 @@ td:first-child{color:var(--dim);width:46%}
 
 </div>
 
-<script src="/ghost-box/lib/version.js?v=45"></script>
-<script src="/ghost-box/lib/nuit.js?v=45"></script>
-<script src="/ghost-box/lib/demarrage.js?v=45"></script>
-<script src="/ghost-box/lib/qr.js?v=45"></script>
-<script src="/ghost-box/lib/retour.js?v=45"></script>
-<script src="/ghost-box/lib/aide.js?v=45"></script>
+<script src="/ghost-box/lib/version.js?v=46"></script>
+<script src="/ghost-box/lib/lexique.js?v=46"></script>
+<script src="/ghost-box/lib/nuit.js?v=46"></script>
+<script src="/ghost-box/lib/demarrage.js?v=46"></script>
+<script src="/ghost-box/lib/qr.js?v=46"></script>
+<script src="/ghost-box/lib/retour.js?v=46"></script>
+<script src="/ghost-box/lib/aide.js?v=46"></script>
 <script>
 (() => {
 "use strict";
@@ -191,7 +224,11 @@ diag();
 $('verifCache').onclick=async ()=>{
   $('cacheState').textContent='Vérification…';
   const doitEtre=['/ghost-box/','/ghost-box/seance/','/ghost-box/banc/','/ghost-box/mur/','/ghost-box/planche/',
-    '/ghost-box/enregistreur/','/ghost-box/bibliotheque/','/ghost-box/manuel/','/ghost-box/manuel/naissance/','/ghost-box/data/lexique.json'];
+    '/ghost-box/enregistreur/','/ghost-box/bibliotheque/','/ghost-box/manuel/','/ghost-box/manuel/naissance/',
+    '/ghost-box/data/lexique.json',
+    // les deux modules livrés en v46 : sans eux, hors ligne, le vocabulaire n'est
+    // plus trié et la torche n'existe pas
+    '/ghost-box/lib/lexique.js?v=46','/ghost-box/lib/torche.js?v=46'];
   try{
     const ks=await caches.keys(); const k=ks.find(x=>x.startsWith('ghostbox-'));
     if(!k){ $('cacheState').innerHTML='<b style="color:var(--flag)">Aucun cache</b> — recharge la page une fois avec du réseau.'; return; }
@@ -213,10 +250,31 @@ $('raz').onclick=()=>{
      'gb-nuit','gb-voix','gb-direct-seance','gb-direct-banc','gb-direct-mur',
      'gb-direct-simple','gb-direct-ecoute','gb-direct-contact-ia',
      // Contact via IA a été retiré : sa clé et sa préférence n'ont plus d'usage
-     'ghostbox-mistral-key','ghostbox-mistral-key-verifiee'].forEach(k=>localStorage.removeItem(k));
+     'ghostbox-mistral-key','ghostbox-mistral-key-verifiee',
+     'gb.mots.entier'].forEach(k=>localStorage.removeItem(k));
     $('razState').textContent='Préférences réinitialisées. Les fichiers de la bibliothèque sont intacts.';
   }catch(e){ $('razState').textContent='Impossible : '+e.name; }
 };
+
+/* ── vocabulaire : mots porteurs ou lexique entier ──
+   Le chiffre affiché est COMPTÉ, pas écrit en dur : le jour où le lexique
+   change, cette page ne pourra pas mentir. */
+function majMots(){
+  const r = GBLexique.resume();
+  $('motsPorteurs').classList.toggle('on', !r.entier);
+  $('motsEntier').classList.toggle('on', r.entier);
+  $('motsPorteurs').style.borderColor = r.entier ? '' : 'var(--signal)';
+  $('motsEntier').style.borderColor   = r.entier ? 'var(--signal)' : '';
+  $('motsState').innerHTML = r.total
+    ? (r.entier
+        ? '<b>' + r.total + ' mots</b> offerts à la mesure, mots-outils compris.'
+        : '<b>' + r.porteurs + ' mots</b> offerts à la mesure — ' + r.outils
+          + ' mots-outils écartés. Le déclenchement, lui, est inchangé.')
+    : 'Lexique introuvable — impossible de compter.';
+}
+GBLexique.charger('../data/lexique.json').then(majMots).catch(()=>{ $('motsState').textContent='Lexique introuvable.'; });
+$('motsPorteurs').onclick = () => { GBLexique.entier(false); majMots(); };
+$('motsEntier').onclick   = () => { GBLexique.entier(true);  majMots(); };
 })();
 </script>
 <script>if('serviceWorker' in navigator){window.addEventListener('load',function(){navigator.serviceWorker.register('/ghost-box/sw.js').catch(function(){});});}</script>
