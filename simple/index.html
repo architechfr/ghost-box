@@ -12,7 +12,7 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="Ghost Box">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<link rel="stylesheet" href="/ghost-box/lib/fonts.css?v=44">
+<link rel="stylesheet" href="/ghost-box/lib/fonts.css?v=45">
 <style>
 :root{
   --bench:#0A0F12;--panel:#141B20;--line:#2C383F;--hair:#1E262B;
@@ -284,7 +284,7 @@ body{margin:0;background:#000;color:var(--text);font-family:var(--body);
 }
 
 </style>
-<link rel="stylesheet" href="/ghost-box/lib/ambiance.css?v=44">
+<link rel="stylesheet" href="/ghost-box/lib/ambiance.css?v=45">
 </head>
 <body>
 <div id="app">
@@ -418,21 +418,22 @@ body{margin:0;background:#000;color:var(--text);font-family:var(--body);
 <div id="voile"></div>
 </div><!-- #app -->
 
-<script src="/ghost-box/lib/version.js?v=44"></script>
-<script src="/ghost-box/lib/nuit.js?v=44"></script>
-<script src="/ghost-box/lib/wakelock.js?v=44"></script>
-<script src="/ghost-box/lib/media.js?v=44"></script>
-<script src="/ghost-box/lib/moteur.js?v=44"></script>
-<script src="/ghost-box/lib/capteurs.js?v=44"></script>
-<script src="/ghost-box/lib/objectif.js?v=44"></script>
-<script src="/ghost-box/lib/qr.js?v=44"></script>
-<script src="/ghost-box/lib/croise.js?v=44"></script>
-<script src="/ghost-box/lib/mur.js?v=44"></script>
-<script src="/ghost-box/lib/voix.js?v=44"></script>
-<script src="/ghost-box/lib/historique.js?v=44"></script>
-<script src="/ghost-box/lib/tampon.js?v=44"></script>
-<script src="/ghost-box/lib/secours.js?v=44"></script>
-<script src="/ghost-box/lib/capture.js?v=44"></script>
+<script src="/ghost-box/lib/version.js?v=45"></script>
+<script src="/ghost-box/lib/nuit.js?v=45"></script>
+<script src="/ghost-box/lib/wakelock.js?v=45"></script>
+<script src="/ghost-box/lib/media.js?v=45"></script>
+<script src="/ghost-box/lib/moteur.js?v=45"></script>
+<script src="/ghost-box/lib/recit.js?v=45"></script>
+<script src="/ghost-box/lib/capteurs.js?v=45"></script>
+<script src="/ghost-box/lib/objectif.js?v=45"></script>
+<script src="/ghost-box/lib/qr.js?v=45"></script>
+<script src="/ghost-box/lib/croise.js?v=45"></script>
+<script src="/ghost-box/lib/mur.js?v=45"></script>
+<script src="/ghost-box/lib/voix.js?v=45"></script>
+<script src="/ghost-box/lib/historique.js?v=45"></script>
+<script src="/ghost-box/lib/tampon.js?v=45"></script>
+<script src="/ghost-box/lib/secours.js?v=45"></script>
+<script src="/ghost-box/lib/capture.js?v=45"></script>
 <script>
 /* ═══════════════════════════════════════════════════════════════════════
    Séance simple — un écran, un bouton.
@@ -624,7 +625,9 @@ function motSorti(d){
   const j = Object.assign({
     heure:new Date().toLocaleTimeString('fr-FR'),
     mot:d.mot, colonne:d.colonne, maniere:d.mode||murMode,
-    retard_ms:d.retard_ms
+    retard_ms:d.retard_ms,
+    // ce que l'acte de naissance demande : la case désignée et le bassin
+    index:d.index, taille:d.taille
   }, declencheur||{voie:'—', sigma:null, seuil:null});
   JOURNAL.unshift(j); declencheur=null;
   if(JOURNAL.length>60) JOURNAL.length=60;
@@ -933,12 +936,32 @@ function majJournal(){
       ? esc(j.voie)+' · <b>'+nb(j.sigma)+' σ</b> pour un seuil de '+nb(j.seuil)+' σ'
         + (j.valeur!=null ? ' · '+nb(j.valeur,2)+' '+esc(j.unite||'') : '')
       : 'cause non relevée';
-    return '<div class="l'+(bouge?' bouge':'')+'">'
+    return '<div class="l'+(bouge?' bouge':'')+' ligneActe" data-i="'+JOURNAL.indexOf(j)+'" style="cursor:pointer">'
       + '<div class="h"><span class="m">'+esc(j.mot)+'</span>'
       + '<span class="q">'+esc(j.heure)+' · '+esc(j.colonne||'')+'</span></div>'
       + '<div class="d">'+mesure+(quoi? ' — '+quoi : '')+'</div></div>';
-  }).join('');
+  }).join('') + '<p class="ex" style="margin:6px 0 0">Touche un mot pour lire son acte de naissance.</p>';
 }
+
+/* ═══════ l'acte de naissance d'un mot ═══════
+   Le panneau vit HORS de #journal, reconstruit à chaque mot (règle 000ah). */
+(function(){
+  const box=$('journal'); if(!box) return;
+  const d=document.createElement('div');
+  d.id='acteMotS';
+  d.style.cssText='display:none;margin-top:10px;border:1px solid var(--line);border-left:2px solid var(--gold);border-radius:3px;background:#14100A;padding:12px 14px';
+  box.after(d);
+  box.addEventListener('click', ev=>{
+    const el=ev.target.closest('.ligneActe'); if(!el) return;
+    const j=JOURNAL[+el.dataset.i]; if(!j || j.croise) return;
+    const rec={ mot:j.mot, voie:j.voie, unite:j.unite||'', brut:j.valeur,
+      sigma:j.sigma, seuil:j.seuil, plancher:(window.GBMoteur?GBMoteur.PLANCHER:6.5),
+      relevages:j.relevages, index:j.index, taille:j.taille };
+    d.innerHTML='<div style="font-family:"Barlow Condensed","Arial Narrow",sans-serif;font-weight:600;letter-spacing:.15em;text-transform:uppercase;font-size:12px;color:var(--gold)">Acte de naissance — '+esc(j.mot)+'</div>'
+      + GBRecit.mot(rec).map(t=>'<p style="font-size:13px;line-height:1.62;color:#D8CBAA;margin:8px 0 0">'+esc(t)+'</p>').join('');
+    d.style.display='block';
+  });
+})();
 
 /* ── les voies, en direct : voir l'agitation AVANT qu'un mot sorte ── */
 function majVoies(){
@@ -1212,10 +1235,10 @@ async function allumerDetection(quoi, silencieux){
   if(!silencieux) $('silAide').textContent='Chargement du modèle (une seule fois)…';
   try{
     if(quoi==='sil'){
-      if(!POSE) POSE = await import('/ghost-box/lib/pose.js?v=44');
+      if(!POSE) POSE = await import('/ghost-box/lib/pose.js?v=45');
       await POSE.load(); silOn=true; silVoulu=true; appliquerSeverite();
     } else {
-      if(!VIS) VIS = await import('/ghost-box/lib/visage.js?v=44');
+      if(!VIS) VIS = await import('/ghost-box/lib/visage.js?v=45');
       await VIS.load(); visOn=true; visVoulu=true; appliquerSeverite();
     }
     $('squelette').classList.add('on'); $('nbPers').classList.add('on');

@@ -12,7 +12,7 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="Ghost Box">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<link rel="stylesheet" href="/ghost-box/lib/fonts.css?v=44">
+<link rel="stylesheet" href="/ghost-box/lib/fonts.css?v=45">
 <style>
 :root{
   --bench:#141A1E;--panel:#1D262B;--sunk:#0A0F12;--line:#2C383F;--hair:#212B31;
@@ -240,7 +240,7 @@ video{display:none}
   font-family:var(--mono);font-size:9px;color:var(--signal);
   background:rgba(10,15,18,.75);padding:1px 4px;border-radius:2px;pointer-events:none}
 </style>
-<link rel="stylesheet" href="/ghost-box/lib/ambiance.css?v=44">
+<link rel="stylesheet" href="/ghost-box/lib/ambiance.css?v=45">
 </head>
 <body>
 <div class="wrap">
@@ -382,21 +382,22 @@ video{display:none}
 <video id="vid2" playsinline muted></video>
 </div>
 
-<script src="/ghost-box/lib/version.js?v=44"></script>
-<script src="/ghost-box/lib/nuit.js?v=44"></script>
-<script src="/ghost-box/lib/demarrage.js?v=44"></script>
-<script src="/ghost-box/lib/voix.js?v=44"></script>
-<script src="/ghost-box/lib/historique.js?v=44"></script>
-<script src="/ghost-box/lib/moteur.js?v=44"></script>
-<script src="/ghost-box/lib/spectre.js?v=44"></script>
-<script src="/ghost-box/lib/retour.js?v=44"></script>
-<script src="/ghost-box/lib/aide.js?v=44"></script>
-<script src="/ghost-box/lib/action.js?v=44"></script>
+<script src="/ghost-box/lib/version.js?v=45"></script>
+<script src="/ghost-box/lib/nuit.js?v=45"></script>
+<script src="/ghost-box/lib/demarrage.js?v=45"></script>
+<script src="/ghost-box/lib/voix.js?v=45"></script>
+<script src="/ghost-box/lib/historique.js?v=45"></script>
+<script src="/ghost-box/lib/moteur.js?v=45"></script>
+<script src="/ghost-box/lib/recit.js?v=45"></script>
+<script src="/ghost-box/lib/spectre.js?v=45"></script>
+<script src="/ghost-box/lib/retour.js?v=45"></script>
+<script src="/ghost-box/lib/aide.js?v=45"></script>
+<script src="/ghost-box/lib/action.js?v=45"></script>
 <script>addEventListener('load',function(){ try{ GBAction.init(['#run']); }catch(e){} });</script>
-<script src="/ghost-box/lib/mur.js?v=44"></script>
-<script src="/ghost-box/lib/questions.js?v=44"></script>
-<script src="/ghost-box/lib/objectif.js?v=44"></script>
-<script src="/ghost-box/lib/fixe.js?v=44"></script>
+<script src="/ghost-box/lib/mur.js?v=45"></script>
+<script src="/ghost-box/lib/questions.js?v=45"></script>
+<script src="/ghost-box/lib/objectif.js?v=45"></script>
+<script src="/ghost-box/lib/fixe.js?v=45"></script>
 <script>
 (() => {
 "use strict";
@@ -1436,6 +1437,10 @@ function emit(now, contribs){
     capteur: realMode? (multi?('coinc:'+codes):WW[0].code) : '—',
     valeur_brute:+WW[0].v.toFixed(3), moyenne:+WW[0].moy.toFixed(3), ecart_type:+WW[0].sd.toFixed(4),
     z:+zc.toFixed(2), seuil_auto:+WW[0].thr.toFixed(2), index_calcule:idx, rehash:usedSalt, est_temoin:!realMode,
+    // ce que l'acte de naissance demande en plus : le libellé humain de la
+    // voie, le travail du témoin, et la taille du bassin de mots
+    voie_label: realMode? label : 'mode témoin', relevages: realMode? (WW[0].raises||0) : 0,
+    taille: viaMur? viaMur.taille : pool.length,
     contributeurs: WW.map(w=>({code:w.code, valeur:+w.v.toFixed(3), moyenne:+w.moy.toFixed(3), ecart_type:+w.sd.toFixed(4), z:+w.z.toFixed(2), seuil:+w.thr.toFixed(2)})),
     preuve: preuve });
   renderTrace(); majPhrase();
@@ -1456,12 +1461,44 @@ function renderTrace(){
   const rows=trace.slice(0,60).map(r=>{
     const src = show? (r.est_temoin?'<span class="tm">témoin</span>':esc(r.capteur)) : '—';
     const vue = r.preuve? '<img src="'+r.preuve+'" alt="vue" style="height:34px;border:1px solid var(--line);border-radius:2px">' : '';
-    return '<tr><td>'+fmt(r.t_ms/1000)+'</td><td class="w">'+r.mot+'</td><td>'+src+'</td><td>'+
+    return '<tr class="ligneActe" data-i="'+trace.indexOf(r)+'" style="cursor:pointer"><td>'+fmt(r.t_ms/1000)+'</td><td class="w">'+r.mot+'</td><td>'+src+'</td><td>'+
       (show? r.valeur_brute : '—')+'</td><td>'+r.z+' σ</td><td>'+r.index_calcule+'</td>'+
       (anyPreuve?'<td>'+vue+'</td>':'')+'</tr>';
   }).join('');
-  $('tblWrap').innerHTML='<table><thead><tr><th>t</th><th>mot</th><th>source</th><th>valeur</th><th>écart</th><th>idx</th>'+(anyPreuve?'<th>vue</th>':'')+'</tr></thead><tbody>'+rows+'</tbody></table>';
+  $('tblWrap').innerHTML='<table><thead><tr><th>t</th><th>mot</th><th>source</th><th>valeur</th><th>écart</th><th>idx</th>'+(anyPreuve?'<th>vue</th>':'')+'</tr></thead><tbody>'+rows+'</tbody></table>'
+    +'<p class="ex" style="margin-top:6px">Touche une ligne pour lire l\'acte de naissance du mot.</p>';
 }
+/* ═══════ l'acte de naissance d'un mot ═══════
+   Toucher une ligne de la trace ouvre le récit complet, rempli par les
+   mesures de CETTE émission. Le panneau vit HORS de #tblWrap, qui est
+   reconstruit à chaque émission (règle 000ah). EN AVEUGLE, l'acte reste
+   fermé jusqu'à la révélation : il dirait « mode témoin » et éventrerait
+   le protocole. */
+(function(){
+  const d=document.createElement('div');
+  d.id='acteMotB';
+  d.style.cssText='display:none;margin-top:10px;border:1px solid var(--line);border-left:2px solid var(--gold);border-radius:3px;background:#14100A;padding:12px 14px';
+  $('tblWrap').after(d);
+  $('tblWrap').addEventListener('click', ev=>{
+    const tr=ev.target.closest('.ligneActe'); if(!tr) return;
+    const r=trace[+tr.dataset.i]; if(!r) return;
+    if(blind && !revealed){
+      d.innerHTML='<p style="font-size:13px;line-height:1.6;color:#D8CBAA;margin:0">Séance en aveugle : '
+        +'l\'acte de naissance dirait si ce mot vient des capteurs ou du témoin, et le protocole '
+        +'perdrait tout son sens. Il s\'ouvrira à la révélation.';
+      d.style.display='block'; return;
+    }
+    const rec={ mot:r.mot, voie:r.voie_label||r.capteur, unite:'', brut:r.valeur_brute,
+      sigma:r.z, seuil:r.seuil_auto, plancher:(window.GBMoteur?GBMoteur.PLANCHER:6.5),
+      relevages:r.relevages, temoin:r.est_temoin,
+      coincidence:(r.contributeurs&&r.contributeurs.length>1)? r.contributeurs.map(c=>({voie:c.code,sigma:c.z})) : null,
+      index:r.index_calcule, taille:r.taille };
+    d.innerHTML='<div style="font-family:var(--legend);font-weight:600;letter-spacing:.15em;text-transform:uppercase;font-size:12px;color:var(--gold)">Acte de naissance — '+esc(r.mot)+'</div>'
+      + GBRecit.mot(rec).map(t=>'<p style="font-size:13px;line-height:1.62;color:#D8CBAA;margin:8px 0 0">'+esc(t)+'</p>').join('');
+    d.style.display='block';
+  });
+})();
+
 $('reveal').onclick=()=>{ revealed=true; renderTrace();
   const n=trace.filter(r=>r.est_temoin).length;
   $('blindNote').innerHTML='<div class="warn">'+n+' émission'+(n>1?'s':'')+' sur '+trace.length+' venaient du générateur aléatoire. Compare avec ce que tu avais noté.</div>'; };
@@ -1498,7 +1535,7 @@ $('camAi').onclick=async ()=>{
   if(!camActive){ $('aiState').textContent="Active d'abord la caméra."; return; }
   $('aiState').textContent='Chargement du modèle (~5 Mo, une seule fois)…';
   try{
-    if(!POSE) POSE=await import('/ghost-box/lib/pose.js?v=44');
+    if(!POSE) POSE=await import('/ghost-box/lib/pose.js?v=45');
     await POSE.load();
     aiOn=true; $('camAi').className='act';
     $('aiState').innerHTML='Détection active — un squelette n\'apparaît que si une <b>personne réelle</b> est reconnue. Dans le noir, le modèle ne voit rien : c\'est normal.';
@@ -1707,9 +1744,9 @@ addEventListener('load',function(){ try{ GBCapture.init({label:'seance-capteurs'
 })();
 </script>
 <script>if('serviceWorker' in navigator){window.addEventListener('load',function(){navigator.serviceWorker.register('/ghost-box/sw.js').catch(function(){});});}</script>
-<script src="/ghost-box/lib/wakelock.js?v=44"></script>
-<script src="/ghost-box/lib/media.js?v=44"></script>
-<script src="/ghost-box/lib/capture.js?v=44"></script>
-<script src="/ghost-box/lib/fullscreen.js?v=44"></script>
+<script src="/ghost-box/lib/wakelock.js?v=45"></script>
+<script src="/ghost-box/lib/media.js?v=45"></script>
+<script src="/ghost-box/lib/capture.js?v=45"></script>
+<script src="/ghost-box/lib/fullscreen.js?v=45"></script>
 </body>
 </html>

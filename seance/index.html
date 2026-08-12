@@ -12,7 +12,7 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="Ghost Box">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<link rel="stylesheet" href="/ghost-box/lib/fonts.css?v=44">
+<link rel="stylesheet" href="/ghost-box/lib/fonts.css?v=45">
 <style>
 :root{
   --bench:#0A0F12;--panel:#1D262B;--sunk:#0A0F12;--line:#2C383F;--hair:#212B31;
@@ -144,7 +144,7 @@ body.avecmur #murBox{display:flex}
    la place du ✕ à droite pour ne jamais passer dessous. */
 body.filming #live{padding-right:92px}
 </style>
-<link rel="stylesheet" href="/ghost-box/lib/ambiance.css?v=44">
+<link rel="stylesheet" href="/ghost-box/lib/ambiance.css?v=45">
 </head>
 <body>
 
@@ -232,24 +232,24 @@ body.filming #live{padding-right:92px}
 <video id="vid3" playsinline muted></video>
 <video id="vid4" playsinline muted></video>
 
-<script src="/ghost-box/lib/version.js?v=44"></script>
-<script src="/ghost-box/lib/nuit.js?v=44"></script>
-<script src="/ghost-box/lib/demarrage.js?v=44"></script>
-<script src="/ghost-box/lib/voix.js?v=44"></script>
-<script src="/ghost-box/lib/historique.js?v=44"></script>
-<script src="/ghost-box/lib/moteur.js?v=44"></script>
-<script src="/ghost-box/lib/retour.js?v=44"></script>
-<script src="/ghost-box/lib/aide.js?v=44"></script>
-<script src="/ghost-box/lib/action.js?v=44"></script>
+<script src="/ghost-box/lib/version.js?v=45"></script>
+<script src="/ghost-box/lib/nuit.js?v=45"></script>
+<script src="/ghost-box/lib/demarrage.js?v=45"></script>
+<script src="/ghost-box/lib/voix.js?v=45"></script>
+<script src="/ghost-box/lib/historique.js?v=45"></script>
+<script src="/ghost-box/lib/moteur.js?v=45"></script>
+<script src="/ghost-box/lib/retour.js?v=45"></script>
+<script src="/ghost-box/lib/aide.js?v=45"></script>
+<script src="/ghost-box/lib/action.js?v=45"></script>
 <script>addEventListener('load',function(){ try{ GBAction.init(['#recBtn','#prep']); }catch(e){} });</script>
-<script src="/ghost-box/lib/secours.js?v=44"></script>
-<script src="/ghost-box/lib/encodage.js?v=44"></script>
-<script src="/ghost-box/lib/tampon.js?v=44"></script>
-<script src="/ghost-box/lib/mur.js?v=44"></script>
-<script src="/ghost-box/lib/media.js?v=44"></script>
-<script src="/ghost-box/lib/wakelock.js?v=44"></script>
-<script src="/ghost-box/lib/objectif.js?v=44"></script>
-<script src="/ghost-box/lib/fixe.js?v=44"></script>
+<script src="/ghost-box/lib/secours.js?v=45"></script>
+<script src="/ghost-box/lib/encodage.js?v=45"></script>
+<script src="/ghost-box/lib/tampon.js?v=45"></script>
+<script src="/ghost-box/lib/mur.js?v=45"></script>
+<script src="/ghost-box/lib/media.js?v=45"></script>
+<script src="/ghost-box/lib/wakelock.js?v=45"></script>
+<script src="/ghost-box/lib/objectif.js?v=45"></script>
+<script src="/ghost-box/lib/fixe.js?v=45"></script>
 <script>
 (() => {
 "use strict";
@@ -748,7 +748,7 @@ $('aiBtn').onclick=async ()=>{
   if(!vstream){ $('aiState').textContent="Prépare d'abord le tournage."; return; }
   $('aiState').textContent='Chargement du modèle (~5 Mo, une seule fois)…';
   try{
-    if(!POSE) POSE=await import('/ghost-box/lib/pose.js?v=44');
+    if(!POSE) POSE=await import('/ghost-box/lib/pose.js?v=45');
     await POSE.load();
     aiOn=true; $('aiBtn').className='act';
     $('aiState').innerHTML='Détection active — jusqu\'à <b>4 personnes suivies en même temps</b>, chacune avec sa couleur et son numéro. Les squelettes s\'incrustent dans la vidéo enregistrée, et seulement si une personne réelle est reconnue.';
@@ -1305,7 +1305,7 @@ addEventListener('load',function(){ try{ GBCapture.init({label:($('lieu').value|
 })();
 </script>
 <script>if('serviceWorker' in navigator){window.addEventListener('load',function(){navigator.serviceWorker.register('/ghost-box/sw.js').catch(function(){});});}</script>
-<script src="/ghost-box/lib/capture.js?v=44"></script>
-<script src="/ghost-box/lib/fullscreen.js?v=44"></script>
+<script src="/ghost-box/lib/capture.js?v=45"></script>
+<script src="/ghost-box/lib/fullscreen.js?v=45"></script>
 </body>
 </html>

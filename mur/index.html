@@ -12,7 +12,7 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="Ghost Box">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<link rel="stylesheet" href="/ghost-box/lib/fonts.css?v=44">
+<link rel="stylesheet" href="/ghost-box/lib/fonts.css?v=45">
 <style>
 :root{
   --bench:#0A0F12;--panel:#1D262B;--sunk:#0A0F12;--line:#2C383F;--hair:#212B31;
@@ -118,7 +118,7 @@ body.filming #quitFix{display:block;position:fixed;z-index:61;right:10px;
   top:calc(10px + env(safe-area-inset-top, 0px));padding:6px 9px;font-size:11px;
   background:rgba(20,26,30,.85)}
 </style>
-<link rel="stylesheet" href="/ghost-box/lib/ambiance.css?v=44">
+<link rel="stylesheet" href="/ghost-box/lib/ambiance.css?v=45">
 </head>
 <body>
 
@@ -206,23 +206,24 @@ body.filming #quitFix{display:block;position:fixed;z-index:61;right:10px;
 
 </div>
 
-<script src="/ghost-box/lib/version.js?v=44"></script>
-<script src="/ghost-box/lib/nuit.js?v=44"></script>
-<script src="/ghost-box/lib/demarrage.js?v=44"></script>
-<script src="/ghost-box/lib/voix.js?v=44"></script>
-<script src="/ghost-box/lib/historique.js?v=44"></script>
-<script src="/ghost-box/lib/wakelock.js?v=44"></script>
-<script src="/ghost-box/lib/retour.js?v=44"></script>
-<script src="/ghost-box/lib/aide.js?v=44"></script>
-<script src="/ghost-box/lib/action.js?v=44"></script>
+<script src="/ghost-box/lib/version.js?v=45"></script>
+<script src="/ghost-box/lib/nuit.js?v=45"></script>
+<script src="/ghost-box/lib/demarrage.js?v=45"></script>
+<script src="/ghost-box/lib/voix.js?v=45"></script>
+<script src="/ghost-box/lib/historique.js?v=45"></script>
+<script src="/ghost-box/lib/wakelock.js?v=45"></script>
+<script src="/ghost-box/lib/retour.js?v=45"></script>
+<script src="/ghost-box/lib/aide.js?v=45"></script>
+<script src="/ghost-box/lib/action.js?v=45"></script>
 <script>addEventListener('load',function(){ try{ GBAction.init(['#prep']); }catch(e){} });</script>
-<script src="/ghost-box/lib/media.js?v=44"></script>
-<script src="/ghost-box/lib/moteur.js?v=44"></script>
-<script src="/ghost-box/lib/capteurs.js?v=44"></script>
-<script src="/ghost-box/lib/objectif.js?v=44"></script>
-<script src="/ghost-box/lib/spectre.js?v=44"></script>
-<script src="/ghost-box/lib/mur.js?v=44"></script>
-<script src="/ghost-box/lib/fullscreen.js?v=44"></script>
+<script src="/ghost-box/lib/media.js?v=45"></script>
+<script src="/ghost-box/lib/moteur.js?v=45"></script>
+<script src="/ghost-box/lib/recit.js?v=45"></script>
+<script src="/ghost-box/lib/capteurs.js?v=45"></script>
+<script src="/ghost-box/lib/objectif.js?v=45"></script>
+<script src="/ghost-box/lib/spectre.js?v=45"></script>
+<script src="/ghost-box/lib/mur.js?v=45"></script>
+<script src="/ghost-box/lib/fullscreen.js?v=45"></script>
 <script>
 (() => {
 "use strict";
@@ -415,7 +416,11 @@ function mesure(){
         if(r && !r.final && r.etape) nPas++;
         addJ(r && r.mot ? 'mot' : 'marche', (r && (r.mot||r.valeur)) || '—',
              info + (r && r.etape? ' · marche « '+r.etape+' »' : '')
-                  + ' · retard rattrapé '+Math.round(now-tAtt)+' ms');
+                  + ' · retard rattrapé '+Math.round(now-tAtt)+' ms',
+             // l'acte de naissance : les mesures de CET instant, pas une relecture
+             r && r.mot ? { mot:r.mot, voie:tireur.label, unite:tireur.unite==='—'?'':(tireur.unite||''),
+                            brut:+w.v.toFixed(3), sigma:+w.z.toFixed(1), seuil:+w.thr.toFixed(1),
+                            relevages:w.raises||0, index:r.index, taille:r.taille } : null);
       }
     }
   }
@@ -516,21 +521,38 @@ $('essai').onclick=()=>{
 };
 
 /* ═══════════ trace ═══════════ */
-function addJ(type,mot,detail){
-  journal.unshift({t_ms:Math.round(performance.now()-(tStart||performance.now())),heure:hhmm(new Date()),type,mot,detail});
+function addJ(type,mot,detail,rec){
+  journal.unshift({t_ms:Math.round(performance.now()-(tStart||performance.now())),heure:hhmm(new Date()),type,mot,detail,
+    rec:rec||null});   // les mesures structurées, pour l'acte de naissance
   renderJ();
 }
 function renderJ(){
   $('jCount').textContent=journal.length? '· '+journal.length : '';
   if(!journal.length){ $('jTbl').innerHTML='<p class="empty">Rien pour l\'instant. C\'est le résultat le plus fréquent.</p>'; return; }
   $('jTbl').innerHTML='<table><thead><tr><th>t</th><th>heure</th><th>mot</th><th>mesure</th></tr></thead><tbody>'+
-    journal.slice(0,40).map(r=>'<tr><td>'+fmt(r.t_ms/1000)+'</td><td>'+r.heure+'</td><td class="w">'+
+    journal.slice(0,40).map(r=>'<tr'+(r.rec? ' class="ligneActe" data-i="'+journal.indexOf(r)+'" style="cursor:pointer"':'')+'><td>'+fmt(r.t_ms/1000)+'</td><td>'+r.heure+'</td><td class="w">'+
     esc(r.mot)+(r.type==='ESSAI'?' <span style="color:var(--flag)">(essai)</span>':'')+
     (r.type==='marche'?' <span style="color:var(--gold)">(marche)</span>':'')+
     (r.type==='abandon'?' <span style="color:var(--dim)">(abandon)</span>':'')+
-    '</td><td>'+esc(r.detail)+'</td></tr>').join('')+'</tbody></table>';
+    '</td><td>'+esc(r.detail)+'</td></tr>').join('')+'</tbody></table>'
+    +(journal.some(r=>r.rec)? '<p class="ex" style="margin-top:6px">Touche un mot pour lire son acte de naissance.</p>':'');
 }
 $('clrJ').onclick=()=>{ journal=[]; renderJ(); };
+/* l'acte de naissance — panneau HORS de #jTbl, reconstruit à chaque mot (règle 000ah) */
+(function(){
+  const d=document.createElement('div');
+  d.id='acteMotM';
+  d.style.cssText='display:none;margin-top:10px;border:1px solid var(--line);border-left:2px solid var(--gold);border-radius:3px;background:#14100A;padding:12px 14px';
+  $('jTbl').after(d);
+  $('jTbl').addEventListener('click', ev=>{
+    const tr=ev.target.closest('.ligneActe'); if(!tr) return;
+    const r=journal[+tr.dataset.i]; if(!r || !r.rec) return;
+    const rec=Object.assign({plancher:(window.GBMoteur?GBMoteur.PLANCHER:6.5)}, r.rec);
+    d.innerHTML='<div style="font-family:"Barlow Condensed","Arial Narrow",sans-serif;font-weight:600;letter-spacing:.15em;text-transform:uppercase;font-size:12px;color:var(--gold)">Acte de naissance — '+esc(r.rec.mot)+'</div>'
+      + GBRecit.mot(rec).map(t=>'<p style="font-size:13px;line-height:1.62;color:#D8CBAA;margin:8px 0 0">'+esc(t)+'</p>').join('');
+    d.style.display='block';
+  });
+})();
 $('expJ').onclick=()=>{
   const capteurs={};
   Object.keys(W).forEach(k=>{ const w=W[k];
