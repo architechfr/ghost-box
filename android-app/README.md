@@ -26,7 +26,7 @@ dépendance au réseau ni à un nom de domaine, et pas de
 
 ## Pourquoi le site va dans `www/ghost-box/`
 
-164 chemins absolus `/ghost-box/...` sont écrits en dur dans 19 fichiers ; la
+266 chemins absolus `/ghost-box/...` sont écrits en dur dans 26 fichiers (comptés en v46 — 164 dans 19 fichiers en v14, le chiffre grandit avec le site) ; la
 constante `RACINE` de `sw.js` et le `scope` du `manifest.json` en font partie.
 En gardant ce préfixe dans l'application, **tous ces chemins résolvent sans
 qu'une seule ligne du site soit modifiée**. La version web et la version Android
@@ -55,7 +55,7 @@ restent exactement le même code — pas de fourche à maintenir, et la discipli
 ```bash
 npm install          # une fois
 npm run preparer     # reconstruit www/ depuis le site du dépôt
-npm run verifier     # ouvre les 11 pages sous localhost, exige zéro erreur
+npm run verifier     # ouvre les 16 pages sous localhost, exige zéro erreur
 npm run sync         # preparer + recopie dans le projet Android
 npm run ouvrir       # ouvre le projet dans Android Studio
 npm run apk          # APK de test
@@ -64,7 +64,9 @@ npm run icones       # refait les icônes après une nouvelle planche de marque
 ```
 
 `npm run verifier` est à lancer avant toute livraison : il sert `www/` sur
-localhost, ouvre les onze pages avec Chromium, et échoue si une seule erreur
+localhost, ouvre les seize pages de l'enveloppe hors-ligne avec Chromium
+(la liste PAGES suit ENVELOPPE de sw.js — toute page ajoutée à l'une entre
+dans l'autre), et échoue si une seule erreur
 JavaScript ou une seule ressource manquante apparaît. Une ressource absente ne
 se verrait sinon qu'en cave, hors réseau, au moment où on ne peut plus rien y
 faire.

@@ -44,10 +44,13 @@
          « au cas où ».
          ═══════════════════════════════════════════════════════════════════ -->
 
-    <!-- Réseau : deux usages seulement, tous deux facultatifs et hors séance —
-         le modèle MediaPipe de détection de personne (premier lancement) et la
-         transcription Voxtral du mode Contact via IA, qui est un choix
-         explicite de l'utilisateur. Une séance entière se tient sans réseau. -->
+    <!-- Réseau : un seul usage restant depuis le retrait de Contact via IA
+         (v29) — le modèle MediaPipe de détection de personne, téléchargé une
+         fois au premier lancement. Facultatif et hors séance : une séance
+         entière se tient sans réseau. L'option « lettres entendues » de la
+         planche (lib/lettres.js) passerait par la reconnaissance vocale de
+         Chrome, absente des WebView Android — si l'essai sur le vrai
+         téléphone le confirme, rien ne quitte l'appareil, sans exception. -->
     <uses-permission android:name="android.permission.INTERNET" />
 
     <!-- Caméra : séance caméra, jusqu'à quatre vues composées en une image. -->

@@ -8,7 +8,7 @@
    derivent. On recopie donc a chaque construction, jamais a la main.
 
    POURQUOI le site va dans www/ghost-box/ et pas a la racine de www/ :
-   164 chemins absolus /ghost-box/... sont ecrits en dur dans 19 fichiers,
+   266 chemins absolus /ghost-box/... sont ecrits en dur dans 26 fichiers (v46),
    RACINE de sw.js et scope du manifest en font partie. En conservant le
    prefixe, TOUS ces chemins resolvent sans qu'une seule ligne du site soit
    modifiee : la version web et la version Android restent le meme code.
@@ -88,7 +88,8 @@ const INDISPENSABLES = [
   'index.html', 'manifest.json', 'sw.js',
   'data/lexique.json',
   'lib/moteur.js', 'lib/mur.js', 'lib/capteurs.js',
-  'banc/index.html', 'seance/index.html', 'mur/index.html',
+  'simple/index.html', 'banc/index.html', 'seance/index.html',
+  'mur/index.html', 'planche/index.html',
   'enregistreur/index.html', 'bibliotheque/index.html',
   'reglages/index.html', 'manuel/index.html', 'contact-ia/index.html'
 ];

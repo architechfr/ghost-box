@@ -2,8 +2,8 @@
    verifier.js — vérifie www/ AVANT de le confier au téléphone.
 
    POURQUOI ce script existe : l'empaquetage déplace le site sous une autre
-   origine (https://localhost au lieu de architechfr.github.io). Les 164
-   chemins absolus /ghost-box/... sont censés continuer de résoudre grâce au
+   origine (https://localhost au lieu de architechfr.github.io). Les 266
+   chemins absolus /ghost-box/... (v46) sont censés continuer de résoudre grâce au
    dossier www/ghost-box/ et à la page de renvoi. « Censés » ne suffit pas :
    une seule ressource manquante ne se verrait qu'en cave, hors réseau, au
    moment où on ne peut plus rien y faire.
@@ -33,18 +33,25 @@ const TYPES = {
 
 /* Les pages à ouvrir. Ce sont celles que l'ENVELOPPE du service worker
    promet hors ligne : si l'une d'elles casse ici, elle cassera sur le
-   terrain. */
+   terrain. La liste doit donc suivre ENVELOPPE — simple/ et planche/ en ont
+   été absentes pendant plusieurs versions : une ressource cassée dans ces
+   pages ne se serait vue qu'en cave. Toute page ajoutée à ENVELOPPE entre
+   ici dans le même geste. */
 const PAGES = [
   ['/', 'renvoi de la racine'],
   ['/ghost-box/', 'accueil'],
+  ['/ghost-box/simple/', 'séance simple'],
   ['/ghost-box/seance/', 'séance caméra'],
   ['/ghost-box/banc/', 'séance capteurs'],
   ['/ghost-box/mur/', 'le mur'],
+  ['/ghost-box/planche/', 'la planche'],
   ['/ghost-box/enregistreur/', 'Écoute'],
   ['/ghost-box/bibliotheque/', 'Bibliothèque'],
   ['/ghost-box/reglages/', 'Réglages'],
   ['/ghost-box/manuel/', "Mode d'emploi"],
-  ['/ghost-box/contact-ia/', 'Contact via IA'],
+  ['/ghost-box/manuel/viser/', 'manuel — viser'],
+  ['/ghost-box/manuel/naissance/', 'manuel — naissance'],
+  ['/ghost-box/contact-ia/', 'redirection contact-ia'],
   ['/ghost-box/realisateur/', 'redirection réalisateur'],
   ['/ghost-box/vision/', 'redirection vision']
 ];
