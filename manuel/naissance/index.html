@@ -1,0 +1,289 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#0A0F12">
+<title>Comment un mot naît — Ghost Box</title>
+<link rel="icon" type="image/png" href="/ghost-box/favicon.png">
+<link rel="apple-touch-icon" href="/ghost-box/apple-touch-icon.png">
+<link rel="manifest" href="/ghost-box/manifest.json">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Ghost Box">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<link rel="stylesheet" href="/ghost-box/lib/fonts.css?v=44">
+<style>
+:root{
+  --bench:#0A0F12;--panel:#1D262B;--sunk:#0A0F12;--line:#2C383F;--hair:#212B31;
+  --signal:#5FD3A6;--gold:#E9B44C;--flag:#E2574C;--paper:#CFC6B4;--dim:#78868E;--text:#DDE6EA;
+  --legend:"Barlow Condensed","Arial Narrow",sans-serif;
+  --body:"IBM Plex Sans",system-ui,sans-serif;--mono:"IBM Plex Mono",ui-monospace,monospace;
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;background:var(--bench);color:var(--text);font-family:var(--body);-webkit-font-smoothing:antialiased}
+body{padding:0 0 calc(env(safe-area-inset-bottom, 0px) + 28px)}
+.wrap{max-width:660px;margin:0 auto;padding:0 14px}
+.wrap>*{min-width:0}
+.top{position:sticky;top:0;z-index:20;background:rgba(10,15,18,.96);backdrop-filter:blur(8px);
+  border-bottom:1px solid var(--line);padding:env(safe-area-inset-top, 0px) 0 0}
+.topin{max-width:660px;margin:0 auto;padding:10px 14px;display:flex;align-items:center;gap:10px}
+.topin a{color:var(--dim);text-decoration:none;font-family:var(--mono);font-size:16px}
+.topin h1{font-family:var(--legend);text-transform:uppercase;letter-spacing:.16em;font-size:15px;font-weight:600;margin:0;flex:1}
+h2{font-family:var(--legend);text-transform:uppercase;letter-spacing:.16em;font-size:14px;font-weight:600;
+  margin:30px 0 6px;color:var(--gold)}
+h2 .n{display:inline-flex;align-items:center;justify-content:center;width:22px;height:22px;margin-right:9px;
+  border-radius:50%;border:1px solid var(--gold);font:600 12px/1 var(--mono);vertical-align:-4px}
+p{font-size:14px;line-height:1.68;color:var(--dim);margin:8px 0}
+p b{color:var(--paper);font-weight:500}
+p .sig{color:var(--signal)}
+.note{border-left:2px solid var(--gold);background:#1A1710;padding:12px 14px;font-size:13.5px;
+  line-height:1.65;color:#E4D3AE;margin:14px 0}
+.note.verte{border-left-color:var(--signal);background:#0E1A17;color:#A8D9C6}
+code{font-family:var(--mono);font-size:12.5px;color:var(--paper);background:var(--panel);
+  padding:1px 5px;border-radius:2px}
+/* ── le banc d'essai vivant ── */
+#demo{margin-top:14px;border:1px solid var(--line);border-radius:4px;background:var(--panel);padding:13px}
+#demo .etat{display:flex;align-items:baseline;justify-content:space-between;gap:10px;flex-wrap:wrap;
+  font-family:var(--mono);font-size:12px;color:var(--dim)}
+#demo .etat b{color:var(--signal);font-weight:500}
+#scope{display:block;width:100%;height:190px;margin-top:10px;border-radius:3px;background:var(--sunk)}
+#demo .rang{display:flex;gap:8px;margin-top:11px;flex-wrap:wrap}
+button{font-family:var(--legend);text-transform:uppercase;letter-spacing:.13em;font-weight:600;
+  border:1px solid var(--line);background:var(--sunk);color:var(--text);border-radius:3px;
+  padding:11px 12px;font-size:13px;cursor:pointer;flex:1;min-width:130px}
+button:disabled{opacity:.4;cursor:default}
+button.or{border-color:var(--gold);color:var(--gold)}
+button.vert{border-color:var(--signal);color:var(--signal)}
+#verdict{margin-top:11px;font-family:var(--mono);font-size:12.5px;line-height:1.6;color:var(--dim);min-height:20px}
+#verdict b{color:var(--gold)}
+/* ── l'acte de naissance ── */
+#acte{display:none;margin-top:12px;border:1px solid var(--line);border-left:2px solid var(--gold);
+  border-radius:3px;background:#14100A;padding:13px 15px}
+#acte h3{margin:0 0 2px;font-family:var(--legend);text-transform:uppercase;letter-spacing:.15em;
+  font-size:12px;color:var(--gold);font-weight:600}
+#acte .mot{font:600 26px/1.2 var(--legend);letter-spacing:.14em;text-transform:uppercase;color:#F3E4BC;
+  margin:4px 0 8px}
+#acte p{font-size:13px;line-height:1.62;color:#D8CBAA;margin:8px 0}
+.chaine{display:flex;flex-wrap:wrap;gap:6px;margin:12px 0 4px;font-family:var(--mono);font-size:10.5px}
+.chaine span{padding:5px 8px;border:1px solid var(--line);border-radius:2px;color:var(--dim);
+  letter-spacing:.05em;white-space:nowrap}
+.chaine span.on{border-color:var(--signal);color:var(--signal)}
+.chaine i{align-self:center;color:#4E5C64;font-style:normal}
+</style>
+</head>
+<body>
+
+<div class="top"><div class="topin">
+  <a href="../" aria-label="Retour au mode d'emploi">←</a>
+  <h1>Comment un mot naît</h1>
+</div></div>
+
+<div class="wrap">
+
+<p style="margin-top:16px">Cette page ne décrit pas le moteur : elle le fait <b>tourner sous tes yeux</b>.
+Le tracé ci-dessous est produit par le vrai code de détection — le même fichier, à l'octet près, qui
+juge tes séances. Quand tu sauras lire cet écran, tu sauras répondre à la seule question qui compte :
+<b>pourquoi ce mot est-il sorti, et pourquoi presque jamais&nbsp;?</b></p>
+
+<div id="demo">
+  <div class="etat">
+    <span id="dPhase">apprentissage…</span>
+    <span>seuil <b id="dSeuil">—</b></span>
+    <span>témoin relevé <b id="dRel">0</b> fois</span>
+    <span>mots <b id="dMots">0</b></span>
+  </div>
+  <canvas id="scope" width="640" height="190"></canvas>
+  <div class="chaine" id="chaine">
+    <span data-e="mesure">mesure</span><i>→</i>
+    <span data-e="seuil">seuil franchi</span><i>→</i>
+    <span data-e="tenue">tenue 4 relevés</span><i>→</i>
+    <span data-e="index">index calculé</span><i>→</i>
+    <span data-e="mot">mot</span>
+  </div>
+  <div class="rang">
+    <button id="bExc" class="or" disabled>Provoquer une excursion (8 σ) — simulée</button>
+    <button id="bReset">Recommencer l'apprentissage</button>
+  </div>
+  <div id="verdict"></div>
+</div>
+
+<div id="acte">
+  <h3>Acte de naissance</h3>
+  <div class="mot" id="acteMot"></div>
+  <div id="acteTxt"></div>
+</div>
+
+<h2><span class="n">1</span>L'appareil apprend le lieu, pas l'inverse</h2>
+<p>Pendant l'apprentissage, chaque capteur est écouté <b>sans rien juger</b>. L'appareil en tire la
+<b>normale du lieu</b> — par la médiane et l'écart absolu médian, deux mesures qu'un claquement isolé ne
+peut pas fausser — puis il note le <b>pire pic</b> que le lieu a produit tout seul. Le seuil de départ est
+ce pire pic augmenté de 40&nbsp;%, et jamais moins de <b>6,5&nbsp;σ</b>. Ce chiffre n'a pas été choisi :
+il a été <b>mesuré</b>. À 5&nbsp;σ, 900&nbsp;heures de bruit simulé laissaient encore passer 74 faux
+mots&nbsp;; à 6,5&nbsp;σ avec le témoin renforcé&nbsp;: <span class="sig">zéro</span>.</p>
+
+<h2><span class="n">2</span>Le témoin de bruit — le juge qui ne dort jamais</h2>
+<p>Pendant toute la séance, l'appareil rejoue en boucle <b>le propre bruit du lieu</b>, par blocs, pour en
+garder les habitudes — et l'éprouve <b>seize fois par mesure réelle</b>. Ce témoin rencontre donc les coups
+de chance du hasard bien avant que la réalité ne les rencontre. Chaque fois qu'il réussit à « faire
+sortir un mot », c'est la preuve que le seuil est trop bas&nbsp;: il est relevé de 15&nbsp;%, immédiatement.
+Sur le tracé, tu vois la ligne du seuil <b>monter d'elle-même</b> quand le hasard s'agite&nbsp;: c'est
+l'appareil qui se durcit tout seul.</p>
+
+<h2><span class="n">3</span>Franchir ne suffit pas — il faut tenir</h2>
+<p>Un mot n'est pas émis quand une mesure dépasse le seuil, mais quand elle le dépasse <b>quatre relevés
+de suite</b> — environ quatre dixièmes de seconde. Un claquement, un frôlement, un parasite électrique
+font un pic d'un seul relevé&nbsp;: ils ne comptent pas. Et dans les modes qui écoutent plusieurs
+capteurs, on exige en plus la <b>coïncidence</b>&nbsp;: deux voies distinctes dans la même fenêtre, parce
+qu'un défaut d'appareil ne touche qu'une voie alors qu'un événement physique en touche plusieurs.</p>
+
+<h2><span class="n">4</span>L'instant désigne, le lexique fournit, le sens n'appartient qu'à toi</h2>
+<p>Quand tout ce qui précède est passé, l'appareil ne « choisit » pas un mot&nbsp;: <b>l'instant de
+l'anomalie désigne une position</b> parmi les mots visibles, et cette position porte un mot du lexique.
+Sur la planche, même chaîne&nbsp;: ce sont les <b>millièmes de la valeur brute</b> — la partie fine, pas
+le niveau — qui désignent la case, et seuls les capteurs dont la <b>finesse</b> a été éprouvée pendant le
+rituel ont le droit de désigner. La même valeur redonnerait la même lettre, six mois plus tard, à la main,
+depuis l'export CSV.</p>
+
+<div class="note">Voilà pourquoi le silence est le résultat <b>normal</b>. Une heure au bord d'une rivière
+pour un seul mot, ce n'est pas l'appareil qui fonctionne mal — c'est l'appareil qui refuse de te raconter
+des histoires. Chaque mot qui sort a survécu à la normale du lieu, au plancher mesuré, au témoin qui durcit
+le seuil, à la tenue de quatre relevés et, souvent, à la coïncidence de deux voies. Ce qu'il prouve&nbsp;:
+une anomalie réelle, mesurée, datée. Ce qu'il ne prouve pas&nbsp;: qui, ou quoi.</div>
+
+<div class="note verte">Chaque mot et chaque lettre gardent désormais leur <b>acte de naissance</b>&nbsp;:
+dans la trace de la planche, touche une ligne pour lire le récit complet — la voie, l'écart, le seuil du
+moment, le travail du témoin, le calcul de la case. Ce récit n'est pas un commentaire&nbsp;: chaque phrase
+est remplie par les mesures, et par rien d'autre.</div>
+
+</div>
+
+<script src="/ghost-box/lib/version.js?v=44"></script>
+<script src="/ghost-box/lib/retour.js?v=44"></script>
+<script src="/ghost-box/lib/moteur.js?v=44"></script>
+<script src="/ghost-box/lib/recit.js?v=44"></script>
+<script>
+"use strict";
+/* ═══════ le banc d'essai vivant ═══════
+   Le VRAI moteur (lib/moteur.js), nourri d'un bruit autocorrélé engendré ici.
+   Rien n'est mimé : la ligne de seuil est w.thr, les relèvements sont
+   w.raises, et le mot sort par GBMoteur.feed() — le même chemin que sur le
+   terrain. La seule licence : le temps est accéléré (40 mesures/s au lieu de
+   10) pour que l'apprentissage tienne en quelques secondes. */
+const $=id=>document.getElementById(id);
+const cvs=$('scope'), g=cvs.getContext('2d');
+const LEXD=['froid','homme','porte','attends','creuser','lumière','oui','pierre','nord','revenir'];
+
+let W=null, hist=[], phase='appr', nAppr=0, mots=0, excDemande=0, chaineT={}, repos=0;
+let x=0;   // le bruit autocorrélé
+function bruit(){ x=x*0.93+(Math.random()*2-1); return x; }
+
+function reset(){
+  W=GBMoteur.mk('demo','Voie de démonstration');
+  hist=[]; phase='appr'; nAppr=0; excDemande=0; chaineT={};
+  $('bExc').disabled=true; $('dPhase').textContent='apprentissage…';
+  $('dSeuil').textContent='—'; $('dRel').textContent='0';
+  $('verdict').textContent=''; $('acte').style.display='none';
+}
+$('bReset').onclick=reset;
+$('bExc').onclick=()=>{ if(phase==='veille'){ excDemande=18; marque('mesure'); } };
+
+function marque(e){
+  chaineT[e]=performance.now();
+}
+function pas(){
+  let v;
+  if(excDemande>0){
+    // une excursion FRANCHE et SOUTENUE : ce que ferait un événement réel.
+    v = W.moy + 8*W.sd + (Math.random()-0.5)*W.sd*0.4;
+    excDemande--;
+  } else v = bruit();
+
+  if(phase==='appr'){
+    GBMoteur.feed(W, v, true); nAppr++;
+    if(nAppr>=340){
+      const ok=GBMoteur.seal(W);
+      phase = ok? 'veille':'appr';
+      if(ok){ $('dPhase').textContent='veille — le lieu est appris'; $('bExc').disabled=false; }
+      else { nAppr=0; }
+    }
+  } else {
+    const feu=GBMoteur.feed(W, v, false);
+    if(repos>0) repos--;
+    if(W.z>=W.thr) marque('seuil');
+    if(W.persist>=2) marque('tenue');
+    /* anti-rafale, comme sur le terrain : une excursion soutenue est UN
+       événement, pas quatre. Sans ce repos, la démonstration sortait quatre
+       mots pour une seule excursion — et aurait appris le contraire de ce
+       qu'elle enseigne. */
+    if(feu && repos===0){
+      repos=80;
+      marque('tenue');
+      // l'index : la partie fine de la valeur, comme sur la planche
+      const f=Math.abs(v)*1000, idx=Math.min(LEXD.length-1, Math.floor((f-Math.floor(f))*LEXD.length));
+      marque('index');
+      const mot=LEXD[idx]; mots++;
+      $('dMots').textContent=mots; marque('mot');
+      montrerActe(mot, v, idx);
+    }
+  }
+  hist.push({v:v, thr:W.ready? W.thr:null, moy:W.moy, sd:W.sd, appr:phase==='appr'});
+  if(hist.length>640) hist.shift();
+}
+
+function montrerActe(mot, v, idx){
+  $('verdict').innerHTML='<b>« '+mot+' »</b> — excursion soutenue, seuil franchi et tenu. '+
+    'C\'est le seul chemin possible ; le bruit seul n\'y arrive pas (mesuré : zéro mot sur 300 h).';
+  $('acte').style.display='block';
+  $('acteMot').textContent=mot;
+  const rec={mot:mot, voie:'Voie de démonstration', unite:'', brut:v, sigma:W.z, seuil:W.thr,
+             plancher:GBMoteur.PLANCHER, relevages:W.raises, index:idx, taille:LEXD.length};
+  $('acteTxt').innerHTML=GBRecit.mot(rec).map(t=>'<p>'+t+'</p>').join('');
+}
+
+/* le tracé : la mesure, la bande de normale, la ligne de seuil */
+function dessiner(){
+  const w=cvs.width, h=cvs.height, n=hist.length;
+  g.fillStyle='#0A0F12'; g.fillRect(0,0,w,h);
+  if(!n){ requestAnimationFrame(dessiner); return; }
+  const ymin=-6, ymax=14;                     // en unités du bruit
+  const Y=v=>h-(v-ymin)/(ymax-ymin)*h;
+  // bande de la normale ±1 σ
+  if(W&&W.ready){
+    g.fillStyle='rgba(95,211,166,.07)';
+    g.fillRect(0, Y(W.moy+W.sd), w, Y(W.moy-W.sd)-Y(W.moy+W.sd));
+    g.strokeStyle='rgba(95,211,166,.45)'; g.setLineDash([3,4]); g.beginPath();
+    g.moveTo(0,Y(W.moy)); g.lineTo(w,Y(W.moy)); g.stroke(); g.setLineDash([]);
+  }
+  // la mesure
+  g.strokeStyle= (W&&W.ready)? '#CFC6B4' : '#5FD3A6'; g.lineWidth=1.2; g.beginPath();
+  hist.forEach((p,i)=>{ const px=i/(640-1)*w, py=Y(p.v); i?g.lineTo(px,py):g.moveTo(px,py); });
+  g.stroke();
+  // la ligne de seuil — celle du moteur, pas un dessin
+  g.strokeStyle='#E9B44C'; g.lineWidth=1.4; g.beginPath(); let d=false;
+  hist.forEach((p,i)=>{ if(p.thr==null){d=false;return;}
+    const px=i/(640-1)*w, py=Y(p.moy+p.thr*p.sd); d?g.lineTo(px,py):g.moveTo(px,py); d=true; });
+  g.stroke();
+  g.fillStyle='#E9B44C'; g.font='10px ui-monospace,monospace';
+  if(W&&W.ready) g.fillText('seuil = normale + '+W.thr.toFixed(1)+' σ', 8, Math.max(12,Y(W.moy+W.thr*W.sd)-6));
+  g.fillStyle='#4E5C64'; g.fillText(phase==='appr'?'APPRENTISSAGE — rien n\'est jugé':'VEILLE — le témoin éprouve le seuil 16× par mesure', 8, h-8);
+  requestAnimationFrame(dessiner);
+}
+
+setInterval(()=>{
+  for(let i=0;i<4;i++) pas();                 // temps accéléré ×4
+  if(W&&W.ready){
+    $('dSeuil').textContent=W.thr.toFixed(1).replace('.',',')+' σ';
+    $('dRel').textContent=W.raises;
+  }
+  // la chaîne s'éclaire au passage et s'éteint après 1,4 s
+  const now=performance.now();
+  document.querySelectorAll('#chaine span').forEach(s=>{
+    s.classList.toggle('on', !!chaineT[s.dataset.e] && now-chaineT[s.dataset.e]<1400);
+  });
+},100);
+reset();
+dessiner();
+</script>
+</body>
+</html>

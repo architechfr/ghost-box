@@ -12,7 +12,7 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="Ghost Box">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<link rel="stylesheet" href="/ghost-box/lib/fonts.css?v=43">
+<link rel="stylesheet" href="/ghost-box/lib/fonts.css?v=44">
 <style>
 /* ═══════════════════════════════════════════════════════════════════════
    La planche — habillage.
@@ -478,6 +478,11 @@ body.gbx #board{margin-top:6px}
   <div class="section">
     <div class="etiq">Trace des émissions</div>
     <div id="traceTab"></div>
+    <!-- HORS de #traceTab : ce conteneur-là est reconstruit deux fois par
+         seconde, et tout ce qu'on y met meurt à la reconstruction suivante.
+         Le premier jet posait l'acte dedans — il s'ouvrait puis disparaissait
+         en une demi-seconde, trop vite même pour être vu. -->
+    <div id="acteLettre" style="display:none;margin-top:10px;border:1px solid var(--filet);border-left:2px solid var(--or);border-radius:3px;background:#16120A;padding:12px 14px"></div>
   </div>
 
   <div class="section">
@@ -573,19 +578,20 @@ body.gbx #board{margin-top:6px}
 </div>
 
 </div>
-<script src="/ghost-box/lib/version.js?v=43"></script>
-<script src="/ghost-box/lib/wakelock.js?v=43"></script>
-<script src="/ghost-box/lib/historique.js?v=43"></script>
-<script src="/ghost-box/lib/retour.js?v=43"></script>
-<script src="/ghost-box/lib/aide.js?v=43"></script>
-<script src="/ghost-box/lib/action.js?v=43"></script>
-<script src="/ghost-box/lib/moteur.js?v=43"></script>
-<script src="/ghost-box/lib/capteurs.js?v=43"></script>
-<script src="/ghost-box/lib/objectif.js?v=43"></script>
-<script src="/ghost-box/lib/voix.js?v=43"></script>
-<script src="/ghost-box/lib/lettres.js?v=43"></script>
-<script src="/ghost-box/lib/planche.js?v=43"></script>
-<script src="/ghost-box/lib/fixe.js?v=43"></script>
+<script src="/ghost-box/lib/version.js?v=44"></script>
+<script src="/ghost-box/lib/wakelock.js?v=44"></script>
+<script src="/ghost-box/lib/historique.js?v=44"></script>
+<script src="/ghost-box/lib/retour.js?v=44"></script>
+<script src="/ghost-box/lib/aide.js?v=44"></script>
+<script src="/ghost-box/lib/action.js?v=44"></script>
+<script src="/ghost-box/lib/moteur.js?v=44"></script>
+<script src="/ghost-box/lib/capteurs.js?v=44"></script>
+<script src="/ghost-box/lib/objectif.js?v=44"></script>
+<script src="/ghost-box/lib/voix.js?v=44"></script>
+<script src="/ghost-box/lib/lettres.js?v=44"></script>
+<script src="/ghost-box/lib/recit.js?v=44"></script>
+<script src="/ghost-box/lib/planche.js?v=44"></script>
+<script src="/ghost-box/lib/fixe.js?v=44"></script>
 <script>
 "use strict";
 /* ═══════ La planche — câblage de la page ═══════
@@ -836,12 +842,21 @@ function majSeance(voies){
   $('mot').classList.toggle('plein', !!m);
 
   const j = PL.journal().slice(0, 5);
-  $('traceTab').innerHTML = j.length
-    ? '<table><thead><tr><th>lettre</th><th>capteur</th><th>brut</th><th>σ</th><th>idx</th></tr></thead><tbody>' +
-      j.map(x => '<tr><td class="w">' + esc(x.ch) + '</td><td>' + esc(x.label) + '</td><td>' +
-        esc(x.brut) + ' ' + esc(x.unite) + '</td><td>' + x.sigma + '</td><td>' + x.idx + '</td></tr>').join('') +
-      '</tbody></table>'
-    : '<div class="empty">Rien encore. Une planche muette est une planche qui fonctionne.</div>';
+  /* Chaque ligne est TOUCHABLE : elle ouvre l'acte de naissance de la lettre —
+     le récit complet en français, rempli par les mesures et par rien d'autre.
+     C'est la réponse de l'appareil à « comment et pourquoi cette lettre ? ».
+     (Au passage : la colonne « source » et le marquage vert des lettres
+     entendues, annoncés en v39, n'étaient jamais arrivés ici — le remplacement
+     avait échoué en silence, sans assertion. Réparé en même temps.) */
+  $('traceTab').innerHTML = (j.length
+    ? '<table><thead><tr><th>lettre</th><th>source</th><th>brut</th><th>σ</th><th>idx</th></tr></thead><tbody>' +
+      j.map((x,i) => '<tr class="ligneRecit" data-i="' + i + '" style="cursor:pointer"><td class="w"' +
+        (x.origine === 'entendue' ? ' style="color:var(--signal)"' : '') + '>' + esc(x.ch) +
+        '</td><td>' + (x.origine === 'entendue' ? '<b style="color:var(--signal)">entendue</b> · ' : '') +
+        esc(x.label) + '</td><td>' + esc(x.brut) + ' ' + esc(x.unite) + '</td><td>' +
+        (x.sigma || '—') + '</td><td>' + x.idx + '</td></tr>').join('') +
+      '</tbody></table><p class="ex" style="margin-top:6px">Touche une ligne pour lire l\'acte de naissance de la lettre.</p>'
+    : '<div class="empty">Rien encore. Une planche muette est une planche qui fonctionne.</div>');
 
   const r = PL.refus().slice(0, 4);
   $('refus').innerHTML = r.length
@@ -869,6 +884,25 @@ addEventListener('resize', () => setTimeout(mesurerBoard, 60));
 addEventListener('orientationchange', () => setTimeout(mesurerBoard, 250));
 
 const LOUPE = 1.75;          // grossissement du verre
+
+/* l'acte de naissance d'une lettre, au toucher. Écouteur DÉLÉGUÉ sur le
+   conteneur : la table est reconstruite deux fois par seconde, un écouteur
+   posé sur les lignes mourrait à chaque reconstruction. */
+$('traceTab').addEventListener('click', ev => {
+  const tr = ev.target.closest('.ligneRecit'); if(!tr || !PL) return;
+  const x = PL.journal()[+tr.dataset.i]; if(!x) return;
+  const d = document.getElementById('acteLettre'); if(!d) return;
+  const rec = { ch:x.ch, voie:x.label, brut:x.brut, unite:x.unite,
+                sigma:+x.sigma || NaN, idx:x.idx, origine:x.origine,
+                texte:x.origine === 'entendue' ? x.brut : '',
+                temoin: x.origine === 'temoin', graine: PL.graine(),
+                coincidence: rCoinc, garde: PL.garde(), arret: rArret };
+  d.innerHTML = '<div style="font-family:var(--legende);font-weight:600;letter-spacing:.15em;' +
+    'text-transform:uppercase;font-size:12px;color:var(--or)">Acte de naissance — ' + esc(x.ch) + '</div>' +
+    GBRecit.lettre(rec).map(t => '<p style="font-size:13px;line-height:1.62;color:#D8CBAA;margin:8px 0 0">' +
+      esc(t) + '</p>').join('');
+  d.style.display = 'block';
+});
 
 function dessiner(){
   if(!PL || ecran !== 'seance') return;
