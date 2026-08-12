@@ -25,3 +25,6 @@ Thumbs.db
 desktop.ini
 ~$*
 mintty.*.png
+
+# Outils locaux (session Claude)
+.claude/
