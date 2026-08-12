@@ -12,7 +12,7 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="Ghost Box">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<link rel="stylesheet" href="/ghost-box/lib/fonts.css?v=46">
+<link rel="stylesheet" href="/ghost-box/lib/fonts.css?v=48">
 <style>
 :root{
   --bench:#141A1E;--panel:#1D262B;--sunk:#0A0F12;--line:#2C383F;--hair:#212B31;
@@ -240,7 +240,7 @@ video{display:none}
   font-family:var(--mono);font-size:9px;color:var(--signal);
   background:rgba(10,15,18,.75);padding:1px 4px;border-radius:2px;pointer-events:none}
 </style>
-<link rel="stylesheet" href="/ghost-box/lib/ambiance.css?v=46">
+<link rel="stylesheet" href="/ghost-box/lib/ambiance.css?v=48">
 </head>
 <body>
 <div class="wrap">
@@ -317,8 +317,9 @@ video{display:none}
   <div class="row">
     <button id="tSpeak" class="tgl">Voix</button>
     <button id="tBlind" class="tgl">À l'aveugle</button>
+    <button id="tAuto" class="tgl">Capture auto</button>
   </div>
-  <p class="ex"><b>Voix</b> : le mot est prononcé en français, pour ne pas avoir à fixer l'écran. <b>À l'aveugle</b> : à chaque lancement, l'appareil tire à pile ou face entre le vrai capteur et un générateur aléatoire réglé sur la même statistique, sans dire lequel tourne. Tu notes tes impressions, puis tu révèles. C'est le seul moyen de savoir si le capteur apporte quelque chose.</p>
+  <p class="ex"><b>Capture auto</b> : quand la détection de personne confirme une silhouette, l'appareil prend la photo <b>à l'instant même</b>, squelette dessiné dessus — une apparition furtive ne laisse pas le temps d'appuyer. Si la silhouette reste plus de 4 s, l'enregistrement démarre seul et garde <b>les secondes d'avant</b> grâce à la mémoire tampon. Un mot retenu déclenche la même chose. Anti-rafale de 12 s entre deux photos. <b>Voix</b> : le mot est prononcé en français, pour ne pas avoir à fixer l'écran. <b>À l'aveugle</b> : à chaque lancement, l'appareil tire à pile ou face entre le vrai capteur et un générateur aléatoire réglé sur la même statistique, sans dire lequel tourne. Tu notes tes impressions, puis tu révèles. C'est le seul moyen de savoir si le capteur apporte quelque chose.</p>
 </div>
 
 <div class="step" id="veilleStep">
@@ -385,24 +386,24 @@ video{display:none}
 <video id="vid2" playsinline muted></video>
 </div>
 
-<script src="/ghost-box/lib/version.js?v=46"></script>
-<script src="/ghost-box/lib/nuit.js?v=46"></script>
-<script src="/ghost-box/lib/demarrage.js?v=46"></script>
-<script src="/ghost-box/lib/voix.js?v=46"></script>
-<script src="/ghost-box/lib/historique.js?v=46"></script>
-<script src="/ghost-box/lib/moteur.js?v=46"></script>
-<script src="/ghost-box/lib/recit.js?v=46"></script>
-<script src="/ghost-box/lib/spectre.js?v=46"></script>
-<script src="/ghost-box/lib/retour.js?v=46"></script>
-<script src="/ghost-box/lib/aide.js?v=46"></script>
-<script src="/ghost-box/lib/action.js?v=46"></script>
+<script src="/ghost-box/lib/version.js?v=48"></script>
+<script src="/ghost-box/lib/nuit.js?v=48"></script>
+<script src="/ghost-box/lib/demarrage.js?v=48"></script>
+<script src="/ghost-box/lib/voix.js?v=48"></script>
+<script src="/ghost-box/lib/historique.js?v=48"></script>
+<script src="/ghost-box/lib/moteur.js?v=48"></script>
+<script src="/ghost-box/lib/recit.js?v=48"></script>
+<script src="/ghost-box/lib/spectre.js?v=48"></script>
+<script src="/ghost-box/lib/retour.js?v=48"></script>
+<script src="/ghost-box/lib/aide.js?v=48"></script>
+<script src="/ghost-box/lib/action.js?v=48"></script>
 <script>addEventListener('load',function(){ try{ GBAction.init(['#run']); }catch(e){} });</script>
-<script src="/ghost-box/lib/torche.js?v=46"></script>
-<script src="/ghost-box/lib/lexique.js?v=46"></script>
-<script src="/ghost-box/lib/mur.js?v=46"></script>
-<script src="/ghost-box/lib/questions.js?v=46"></script>
-<script src="/ghost-box/lib/objectif.js?v=46"></script>
-<script src="/ghost-box/lib/fixe.js?v=46"></script>
+<script src="/ghost-box/lib/torche.js?v=48"></script>
+<script src="/ghost-box/lib/lexique.js?v=48"></script>
+<script src="/ghost-box/lib/mur.js?v=48"></script>
+<script src="/ghost-box/lib/questions.js?v=48"></script>
+<script src="/ghost-box/lib/objectif.js?v=48"></script>
+<script src="/ghost-box/lib/fixe.js?v=48"></script>
 <script>
 (() => {
 "use strict";
@@ -616,6 +617,28 @@ $('pMag').onclick = async () => {
 };
 
 let vstream=null, prevFrame=null, camBg=null, camActive=false, camBlob0=null;
+
+/* ═══ CAPTURE AUTOMATIQUE — le trou que ce mode avait ═══
+   Constaté en séance réelle : « j'ai vu passer des silhouettes et il n'y a pas
+   eu d'enregistrement ; imagine que quelque chose passe devant le téléphone
+   posé, on pourrait perdre des évènements importants. » Et c'était exact :
+   la détection de personne tournait ici depuis longtemps, mais elle ne faisait
+   qu'AFFICHER. Rien n'était branché derrière — ni photo, ni vidéo, ni mémoire
+   tampon. La règle 8duodecies (« la capture automatique réagit plus vite que
+   la main ») n'était appliquée que dans deux modes sur trois, et celui qui
+   manquait est précisément celui où l'on pose le téléphone pour des heures.
+
+   Trois choses, toutes déjà écrites ailleurs dans le projet :
+   — photo À L'INSTANT de la détection, avec le squelette dessiné dessus
+     (8duodecies-a : une décision automatique embarque ce qui l'a motivée) ;
+   — vidéo si la silhouette PERSISTE, avec les secondes d'AVANT grâce au
+     tampon (8ter : un événement est déjà terminé quand on appuie) ;
+   — le filet de secours, pour qu'une prise interrompue ne se perde jamais. */
+let autoCap = (function(){ try{ return localStorage.getItem('gb-autocap')!=='0'; }catch(e){ return true; } })();
+let TAMPON=null, SEC=null, videoAuto=false, tVideoAuto=0, derniereSilh=0, lastPhotoAuto=-1e9, motifPrise='';
+const ANTI_PHOTO = 12000;    // anti-rafale entre deux photos automatiques
+const SILH_VIDEO = 4000;     // au-delà, la silhouette n'est plus un passage : on filme
+const SILH_FIN   = 5000;     // on continue 5 s après sa disparition
 let camLiveHits=0, camCtrlHits=0, camLiveOn=false, camCtrlOn=false, camStart=0;
 const CW=64, CH=48, CAM_TH=24, CAM_DET=5;   // seuil pixel (0-255), seuil de détection (% de l'image)
 /* plus grand groupe de pixels connexes : une silhouette est connexe, le bruit est épars */
@@ -648,6 +671,20 @@ $('pCam').onclick = async () => {
     try{GBWake.on();}catch(e){}
     curLens=(vstream.getVideoTracks()[0].getSettings()||{}).deviceId||null; listLenses();
     try{ GBTorche.adopter(vstream); }catch(e){}   // la lampe se pose sur CETTE piste
+    /* La mémoire tampon tourne dès que la caméra tourne : elle encode en
+       continu et ne GARDE rien — seules les dernières secondes vivent en
+       mémoire vive, le reste est effacé au fur et à mesure. Aucun fichier
+       n'existe tant que rien n'a été demandé (8ter). */
+    try{
+      if(window.GBTampon && GBTampon.supporte() && !TAMPON){
+        TAMPON = GBTampon.creer({ secondes: 10, largeur: CW, hauteur: CH,
+          /* le filet : chaque morceau part dans la base au fur et à mesure,
+             pour qu'une prise interrompue se récupère au retour (8quinquies) */
+          onGarde: parts => { try{ if(SEC) parts.forEach(bl=>SEC.ajouter(bl)); }catch(e){} },
+          onMorceau: bl => { try{ if(SEC) SEC.ajouter(bl); }catch(e){} } });
+        TAMPON.demarrer(vstream);
+      }
+    }catch(e){ TAMPON=null; }
     $('camView').style.display='block'; $('camHint').style.display='block';
     $('camTag').style.display=camHidden?'none':'block';
     (function loop(){
@@ -698,6 +735,9 @@ function stopCam(){
   if($('camView2')) $('camView2').style.display='none'; if($('twoCam')) $('twoCam').className='';
   aiOn=false; lastPeople=null; if($('camAi')) $('camAi').className='';
   if(vstream){ vstream.getTracks().forEach(t=>t.stop()); vstream=null; }
+  // une prise automatique en cours doit être FERMÉE, pas abandonnée
+  if(videoAuto) stopVideoAuto('caméra arrêtée');
+  try{ if(TAMPON){ TAMPON.arreter(); TAMPON=null; } }catch(e){}
   camActive=false; camBg=null; prevFrame=null;
   const view=$('camView'); if(view){ view.style.display='none'; view.classList.remove('big'); }
   const hint=$('camHint'); if(hint) hint.style.display='none';
@@ -705,6 +745,70 @@ function stopCam(){
   $('camWatch').textContent=''; markOff('pCam');
   deactivate(['cam_lum','cam_diff','cam_forme']);
 }
+/* ═══ photo automatique ═══
+   Prise à l'INSTANT de la détection, à partir de la vue analysée, squelette
+   dessiné dessus : une preuve sans sa raison d'être ne prouve rien
+   (8duodecies-a). En séance à l'aveugle, la photo est prise comme ailleurs —
+   l'événement doit être gardé — mais sa CAUSE reste voilée jusqu'à la
+   révélation, sans quoi une image trahirait le protocole du témoin. */
+function photoAuto(pourquoi, gens){
+  if(!autoCap || !camActive) return;
+  const now=performance.now();
+  if(now-lastPhotoAuto < ANTI_PHOTO) return;
+  lastPhotoAuto=now;
+  try{
+    const v=$('vid'); if(!v || !v.videoWidth) return;
+    const c=document.createElement('canvas');
+    c.width=v.videoWidth; c.height=v.videoHeight;
+    const g=c.getContext('2d');
+    g.drawImage(v,0,0,c.width,c.height);
+    // le squelette qui a MOTIVÉ la photo, dessiné sur l'image même
+    if(gens && gens.length && POSE && POSE.drawAll){
+      try{ POSE.drawAll(g, gens, c.width, c.height, c.width/640); }catch(e){}
+    }
+    const voile = (blind && !revealed);
+    GBCapture.photoCanvas(c, Object.assign({
+      auto:true, motif: voile ? 'capture automatique' : pourquoi,
+      personnes: gens? gens.length : 0
+    }, voile ? {aveugle:true} : {conditions: etatCapteurs()}));
+    if(H) H.noter('photo', voile ? 'capture automatique (séance à l\'aveugle)' : 'capture automatique — '+pourquoi);
+  }catch(e){}
+}
+
+/* ═══ vidéo automatique ═══
+   Elle passe par le TAMPON : les secondes d'avant l'apparition font partie du
+   fichier, parce qu'un événement est déjà terminé quand on appuie. */
+function startVideoAuto(pourquoi){
+  if(!autoCap || videoAuto || !TAMPON || !TAMPON.actif()) return;
+  videoAuto=true; tVideoAuto=performance.now(); motifPrise=pourquoi;
+  try{ SEC = GBSecours.ouvrir({nom:'banc-'+Date.now(), mode:'séance capteurs'}); }catch(e){ SEC=null; }
+  try{ TAMPON.garder(); }catch(e){ videoAuto=false; return; }
+  const voile = (blind && !revealed);
+  if(H) H.noter('video', voile ? 'enregistrement automatique (séance à l\'aveugle)'
+                               : 'enregistrement automatique — '+pourquoi);
+}
+async function stopVideoAuto(motifFin){
+  if(!videoAuto || !TAMPON) return;
+  videoAuto=false;
+  /* PIÈGE DÉJÀ PAYÉ AILLEURS : le motif d'ARRÊT n'est pas celui du DÉPART.
+     On garde `motifPrise` jusqu'à l'écriture, sinon la fiche dirait « fin de
+     séquence » là où il faudrait « silhouette confirmée ». */
+  try{
+    const r=await TAMPON.terminer();
+    if(r && r.blob){
+      const voile = (blind && !revealed);
+      await dbPutClip({ id:Date.now(), type:'video', nom:'banc-'+new Date().toISOString().slice(0,19).replace(/[:T]/g,'-')+'.webm',
+        mime:r.blob.type||'video/webm', taille:r.blob.size, duree:Math.round(r.duree||0),
+        blob:r.blob, cam:'séance capteurs', avant_s:Math.round(r.preroll||0), auto:true,
+        motif: voile ? 'capture automatique' : motifPrise, fin: motifFin,
+        conditions: voile ? {aveugle:true} : etatCapteurs() });
+      if(H) H.noter('video','prise gardée — '+Math.round(r.duree||0)+' s dont '+Math.round(r.preroll||0)+' s d\'avant');
+    }
+    try{ if(SEC){ SEC.jeter(); SEC=null; } }catch(e){}   // assemblé : les morceaux ne servent plus
+  }catch(e){}
+  motifPrise='';
+}
+
 function grabEvidence(){
   if(!camActive) return null;
   try{ const v=$('vid'); if(!v||!v.videoWidth) return null;
@@ -886,9 +990,20 @@ function remplirClasses(){
     $(id).classList.add('on'); checkReady(); };
 });
 let speak=false, blind=false, coinc=false, indep=false;
+let SIL=null, VIE=null, tVie=0, sillageEnAttente=null;
 const coincSel=new Set();
 $('tSpeak').onclick=e=>{speak=!speak;e.target.classList.toggle('on',speak);};
 $('tBlind').onclick=e=>{blind=!blind;e.target.classList.toggle('on',blind);};
+/* La capture automatique est ALLUMÉE par défaut — c'est le comportement qui
+   évite de perdre ce qui passe devant un téléphone posé — mais elle se coupe,
+   et l'écran dit dans quel état elle est. Jamais de décision muette. */
+$('tAuto').classList.toggle('on', autoCap);
+$('tAuto').onclick=e=>{
+  autoCap=!autoCap; e.target.classList.toggle('on',autoCap);
+  try{ localStorage.setItem('gb-autocap', autoCap?'1':'0'); }catch(err){}
+  if(!autoCap && videoAuto) stopVideoAuto('capture automatique coupée');
+  if(H) H.noter('reglage', 'capture automatique '+(autoCap?'allumée':'coupée'));
+};
 $('tCoinc').onclick=e=>{ coinc=!coinc; if(coinc){ indep=false; $('tIndep').classList.remove('on'); }
   e.target.classList.toggle('on',coinc);
   $('coincWrap').style.display=(coinc||indep)?'block':'none'; updateCoinc(); checkReady(); };
@@ -1059,6 +1174,7 @@ function tick(){
         w.persist=0; w.cPersist=0; w.lastAbove=-1e9; w.lastCtl=now;
       }
       phase='watch'; tWatch=now; $('n3').className='n done';
+      try{ SIL=GBSillage.banc({}); VIE=GBSillage.vieCollecteur(); tVie=now; }catch(e){ SIL=null; VIE=null; }
       // sinon l'écran restait figé sur « 0 s » et « ne touche pas au téléphone »
       // pendant des heures, sans qu'on sache que la veille avait commencé
       $('word').className='q'; $('word').textContent='···';
@@ -1076,6 +1192,10 @@ function tick(){
     const z=Math.abs(v-w.moy)/w.sd; w.v=v; w.z=z;
     if(z>=w.thr) w.persist++; else w.persist=0;
     if(w.persist>=PERSIST_NEED) w.lastAbove=now;
+    /* le sillage : les mesures d'AVANT, gardées en mémoire vive et jetées au
+       fur et à mesure — rien n'est écrit tant qu'aucun mot ne sort */
+    if(SIL) SIL.pousser(w.code, w.label, v, z, w.thr, w.unite||'');
+    if(VIE) VIE.pousser(z, w.thr);
     // mémoriser TOUT le bruit, pics compris — sinon le témoin serait plus sage que la réalité
     w.noise.push(v); if(w.noise.length>NOISE_MAX) w.noise.shift();
     // ne suivre la dérive de la normale que sur les passages calmes
@@ -1096,6 +1216,7 @@ function tick(){
     if(z>maxz){ maxz=z; primary=w; }
   }
   lastZ=maxz; drawZ(maxz); majHud(now,maxz);
+  if(VIE && H && now-tVie >= 60000){ tVie=now; VIE.minute(); H.vie(VIE.points()); }
   if(now-qrTickLast>400){ qrTickLast=now; qrMaj(now); }
   $('upt').textContent='veille · '+dureeLisible((now-t0)/1000);
   $('zNow').textContent=maxz.toFixed(1).replace('.',',')+' σ';
@@ -1114,6 +1235,24 @@ function tick(){
         : '<b>aucun mot</b>, et c\'est le résultat normal')
       +' · seuil '+seuils+(relev? ' (relevé '+relev+'× par le témoin)':'')
       +' · écart courant '+maxz.toFixed(1).replace('.',',')+' σ';
+  }
+
+  /* le rendez-vous du sillage — et la garde de l'aveugle : en séance témoin,
+     la fenêtre est gardée mais ne s'ouvrira qu'à la révélation, comme l'acte
+     de naissance (000ai). Un graphe affiché avant la révélation dirait lequel
+     des deux bras tournait. */
+  if(sillageEnAttente && now >= sillageEnAttente.quand){
+    const r=sillageEnAttente; sillageEnAttente=null;
+    try{
+      const sil=SIL.figer(r.code);
+      const tir=(sil.voies||[]).find(v=>v.tireuse);
+      const n=tir? tir.sigma.length : 0;
+      const ci=n-1-Math.round(GBSillage.APRES*1000/(1000/sil.hz));
+      if(H) H.noter('sillage', r.mot+' · '+r.voie, { sillage:{
+        sil:sil, mot:r.mot, t:Date.now(), voie:r.voie, sigma:r.sigma, seuil:r.seuil,
+        attaque_i: Math.max(0, ci-PERSIST_NEED+1), confirme_i: ci,
+        need: PERSIST_NEED, aveugle: r.temoin && blind } });
+    }catch(e){}
   }
 
   const multi=W.length>1 && coinc;
@@ -1453,11 +1592,26 @@ function emit(now, contribs){
     if(r){ mot=r.mot; viaMur=r; }
   }
   $('word').className=''; $('word').textContent=mot;
+  /* Un mot retenu EST l'événement de cette application : on garde l'image et
+     les secondes qui l'ont précédé, sans rien demander. En aveugle, la photo
+     est prise mais ne dit pas ce qui l'a motivée. */
+  if(camActive){
+    photoAuto('mot retenu : '+mot, lastPeople);
+    if(!videoAuto){ startVideoAuto('mot retenu : '+mot);
+      setTimeout(()=>{ if(!derniereSilh) stopVideoAuto('fin de séquence'); }, 8000); }
+  }
   // le mot est PRONONCÉ (option voix) : on le sait sans regarder l'écran, et
   // il est sur la bande son de la séance — jamais en mode témoin à l'aveugle,
   // qui perdrait tout son sens si l'appareil annonçait ses propres essais
   if(realMode && window.GBVoix) GBVoix.dire(mot);
   if(H) H.noter('mot', mot+' · '+(realMode? (multi?('coïncidence '+codes):WW[0].code)+' · écart '+zc.toFixed(1)+' σ · seuil '+WW[0].thr.toFixed(1)+' σ' : 'témoin à l\'aveugle'));
+  /* La fenêtre du sillage ne se fige pas maintenant : il y manquerait l'après,
+     et une courbe qui s'arrête au pic ne montre pas la retombée. On prend
+     rendez-vous ; la boucle figera dans APRES secondes. */
+  if(SIL) sillageEnAttente = { code: WW[0].code, mot: mot,
+    quand: performance.now() + GBSillage.APRES*1000,
+    sigma: +zc.toFixed(1), seuil: +WW[0].thr.toFixed(1), voie: WW[0].label,
+    temoin: !realMode };
   $('stage').classList.add('alert');
   $('deriv').innerHTML = blind
     ? 'écart <b>'+zc.toFixed(2).replace('.',',')+' σ</b> → index <b>'+idx+'</b> / '+pool.length
@@ -1584,7 +1738,7 @@ $('camAi').onclick=async ()=>{
   if(!camActive){ $('aiState').textContent="Active d'abord la caméra."; return; }
   $('aiState').textContent='Chargement du modèle (~5 Mo, une seule fois)…';
   try{
-    if(!POSE) POSE=await import('/ghost-box/lib/pose.js?v=46');
+    if(!POSE) POSE=await import('/ghost-box/lib/pose.js?v=48');
     await POSE.load();
     aiOn=true; $('camAi').className='act';
     $('aiState').innerHTML='Détection active — un squelette n\'apparaît que si une <b>personne réelle</b> est reconnue. Dans le noir, le modèle ne voit rien : c\'est normal.';
@@ -1596,8 +1750,26 @@ $('camAi').onclick=async ()=>{
         const r=POSE.detect(v);
         if(r){ lastPeople=r.people; lastPoseT=performance.now();
           $('aiState').innerHTML='<b>'+r.count+' personne'+(r.count>1?'s':'')+' détectée'+(r.count>1?'s':'')+'</b> — '
-            +r.people.map((p,i)=>'n°'+(i+1)+' '+p.pct+' %').join(' · ')+'. À vérifier de tes yeux.'; }
-        else { lastPeople=null; $('aiState').innerHTML='Aucune personne confirmée — <span style="color:var(--dim)">'+esc(POSE.why()||'…')+'</span>'; }
+            +r.people.map((p,i)=>'n°'+(i+1)+' '+p.pct+' %').join(' · ')+'. À vérifier de tes yeux.';
+          /* ── CE QUI MANQUAIT : la détection GARDE, au lieu de seulement dire ──
+             Une apparition furtive ne laisse pas le temps d'appuyer : la photo
+             part tout de suite. Si la silhouette RESTE, ce n'est plus un
+             passage — on filme, avec les secondes d'avant venues du tampon. */
+          const nowP=performance.now();
+          if(!derniereSilh) derniereSilh=nowP;      // début de la présence
+          photoAuto(r.count+' silhouette'+(r.count>1?'s':'')+' confirmée'+(r.count>1?'s':''), r.people);
+          if(nowP-derniereSilh >= SILH_VIDEO) startVideoAuto('silhouette présente depuis '+Math.round((nowP-derniereSilh)/1000)+' s');
+          tVideoAuto=nowP;                          // dernière fois qu'on l'a vue
+        }
+        else { lastPeople=null; $('aiState').innerHTML='Aucune personne confirmée — <span style="color:var(--dim)">'+esc(POSE.why()||'…')+'</span>';
+          const nowP=performance.now();
+          // la présence est finie quand elle a cessé depuis assez longtemps —
+          // et la prise continue encore SILH_FIN, pour ne pas couper au milieu
+          if(derniereSilh && nowP-tVideoAuto > SILH_FIN){
+            derniereSilh=0;
+            if(videoAuto) stopVideoAuto('silhouette partie');
+          }
+        }
       }
       requestAnimationFrame(loopAi);
     })();
@@ -1793,9 +1965,12 @@ addEventListener('load',function(){ try{ GBCapture.init({label:'seance-capteurs'
 })();
 </script>
 <script>if('serviceWorker' in navigator){window.addEventListener('load',function(){navigator.serviceWorker.register('/ghost-box/sw.js').catch(function(){});});}</script>
-<script src="/ghost-box/lib/wakelock.js?v=46"></script>
-<script src="/ghost-box/lib/media.js?v=46"></script>
-<script src="/ghost-box/lib/capture.js?v=46"></script>
-<script src="/ghost-box/lib/fullscreen.js?v=46"></script>
+<script src="/ghost-box/lib/wakelock.js?v=48"></script>
+<script src="/ghost-box/lib/media.js?v=48"></script>
+<script src="/ghost-box/lib/capture.js?v=48"></script>
+<script src="/ghost-box/lib/tampon.js?v=48"></script>
+<script src="/ghost-box/lib/secours.js?v=48"></script>
+<script src="/ghost-box/lib/sillage.js?v=48"></script>
+<script src="/ghost-box/lib/fullscreen.js?v=48"></script>
 </body>
 </html>

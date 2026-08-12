@@ -12,7 +12,7 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="Ghost Box">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<link rel="stylesheet" href="/ghost-box/lib/fonts.css?v=46">
+<link rel="stylesheet" href="/ghost-box/lib/fonts.css?v=48">
 <style>
 :root{
   --bench:#0A0F12;--panel:#1D262B;--sunk:#0A0F12;--line:#2C383F;--hair:#212B31;
@@ -118,7 +118,7 @@ body.filming #quitFix{display:block;position:fixed;z-index:61;right:10px;
   top:calc(10px + env(safe-area-inset-top, 0px));padding:6px 9px;font-size:11px;
   background:rgba(20,26,30,.85)}
 </style>
-<link rel="stylesheet" href="/ghost-box/lib/ambiance.css?v=46">
+<link rel="stylesheet" href="/ghost-box/lib/ambiance.css?v=48">
 </head>
 <body>
 
@@ -168,6 +168,8 @@ body.filming #quitFix{display:block;position:fixed;z-index:61;right:10px;
   <p id="prepState" class="ex"></p>
   <div class="fld"><span class="lg">vitesse</span><input type="range" id="vit" min="30" max="900" value="330"><span class="stat" id="vitL" style="margin:0;min-width:74px">330 px/s</span></div>
   <p class="ex">Le défilement peut être rendu très rapide : les mots ne sont pas là pour être lus par toi, mais pour être tous <b>disponibles</b> à chaque seconde. En escalier, la vitesse ne concerne que la première étape.</p>
+  <div class="opts"><button id="oLire" type="button">Lire le mur</button></div>
+  <p class="ex" id="lireAide">Mesuré : au rythme normal un mot passe en <b>67 à 130 ms</b>, quand en lire un en demande 200 à 250. Ce n'est pas un défaut — la durée qui permet de <b>lire</b> un mot est exactement celle qui permet de le <b>viser</b> : sur 200 000 tentatives, quelqu'un qui a choisi son mot l'obtient <b>0 fois sur 100</b> au rythme normal, et <b>21 fois sur 100</b> à vitesse lisible. « Lire le mur » ralentit donc à 110 px/s <b>et suspend toute retenue</b> pendant deux minutes : on voit ce qui est proposé, et rien de ce qui arrive pendant ce temps n'est écrit. Le compte des mesures ignorées s'affiche, et le mode se coupe seul.</p>
 </div>
 
 <div id="hud"></div>
@@ -208,26 +210,26 @@ body.filming #quitFix{display:block;position:fixed;z-index:61;right:10px;
 
 </div>
 
-<script src="/ghost-box/lib/version.js?v=46"></script>
-<script src="/ghost-box/lib/nuit.js?v=46"></script>
-<script src="/ghost-box/lib/demarrage.js?v=46"></script>
-<script src="/ghost-box/lib/voix.js?v=46"></script>
-<script src="/ghost-box/lib/historique.js?v=46"></script>
-<script src="/ghost-box/lib/wakelock.js?v=46"></script>
-<script src="/ghost-box/lib/retour.js?v=46"></script>
-<script src="/ghost-box/lib/aide.js?v=46"></script>
-<script src="/ghost-box/lib/action.js?v=46"></script>
+<script src="/ghost-box/lib/version.js?v=48"></script>
+<script src="/ghost-box/lib/nuit.js?v=48"></script>
+<script src="/ghost-box/lib/demarrage.js?v=48"></script>
+<script src="/ghost-box/lib/voix.js?v=48"></script>
+<script src="/ghost-box/lib/historique.js?v=48"></script>
+<script src="/ghost-box/lib/wakelock.js?v=48"></script>
+<script src="/ghost-box/lib/retour.js?v=48"></script>
+<script src="/ghost-box/lib/aide.js?v=48"></script>
+<script src="/ghost-box/lib/action.js?v=48"></script>
 <script>addEventListener('load',function(){ try{ GBAction.init(['#prep']); }catch(e){} });</script>
-<script src="/ghost-box/lib/media.js?v=46"></script>
-<script src="/ghost-box/lib/moteur.js?v=46"></script>
-<script src="/ghost-box/lib/recit.js?v=46"></script>
-<script src="/ghost-box/lib/capteurs.js?v=46"></script>
-<script src="/ghost-box/lib/objectif.js?v=46"></script>
-<script src="/ghost-box/lib/spectre.js?v=46"></script>
-<script src="/ghost-box/lib/torche.js?v=46"></script>
-<script src="/ghost-box/lib/lexique.js?v=46"></script>
-<script src="/ghost-box/lib/mur.js?v=46"></script>
-<script src="/ghost-box/lib/fullscreen.js?v=46"></script>
+<script src="/ghost-box/lib/media.js?v=48"></script>
+<script src="/ghost-box/lib/moteur.js?v=48"></script>
+<script src="/ghost-box/lib/recit.js?v=48"></script>
+<script src="/ghost-box/lib/capteurs.js?v=48"></script>
+<script src="/ghost-box/lib/objectif.js?v=48"></script>
+<script src="/ghost-box/lib/spectre.js?v=48"></script>
+<script src="/ghost-box/lib/torche.js?v=48"></script>
+<script src="/ghost-box/lib/lexique.js?v=48"></script>
+<script src="/ghost-box/lib/mur.js?v=48"></script>
+<script src="/ghost-box/lib/fullscreen.js?v=48"></script>
 <script>
 (() => {
 "use strict";
@@ -249,9 +251,25 @@ $('vitL').textContent = $('vit').value+' px/s';
 let MUR=null, pret=false;
 let MODE = REG.lis('gb-mur-mode','instant')==='escalier' ? 'escalier' : 'instant';
 
+/* ── lecture hors mesure : on lit, donc on n'écrit pas ──
+   Le verrou vit dans lib/mur.js ; ici on ne fait qu'appeler le geste et
+   rendre compte de ce qu'il coûte. Une mesure refusée doit s'entendre. */
+function murIgnore(info, n){
+  const l=$('lireAide');
+  if(l) l.innerHTML='<b style="color:var(--flag)">'+n+' mesure'+(n>1?'s':'')+' ignorée'
+    +(n>1?'s':'')+' depuis le début de la lecture.</b> C\'est le prix de ce mode : '
+    +'pendant qu\'on lit, on ne mesure pas.';
+}
+function murLecture(on, n){
+  const b=$('oLire');
+  if(b){ b.classList.toggle('on', on); b.textContent = on ? 'Revenir à la mesure' : 'Lire le mur'; }
+  const v=$('vit'); if(v) v.disabled = on;
+}
+
 GBMur.lexique('../data/lexique.json').then(mots=>{
   MUR=GBMur.creer({hote:$('mur'), mots:mots, vitesse:+$('vit').value, mode:MODE,
-                   onMot:motRetenu, onEtape:etapeFranchie});
+                   onMot:motRetenu, onEtape:etapeFranchie,
+                   onIgnore:murIgnore, onLecture:murLecture});
   if(!MUR){ $('colonnes').innerHTML='<b style="color:var(--flag)">Mur indisponible.</b>'; return; }
   MUR.demarrer(); pret=true;
   const c=MUR.colonnes();
@@ -261,6 +279,7 @@ GBMur.lexique('../data/lexique.json').then(mots=>{
   majMode();
 }).catch(()=>{ $('colonnes').innerHTML='<b style="color:var(--flag)">Lexique introuvable.</b> Le mur ne peut pas s\'ouvrir.'; });
 
+$('oLire').onclick=()=>{ if(MUR) MUR.lecture(); };
 $('vit').oninput=()=>{ $('vitL').textContent=$('vit').value+' px/s'; REG.note('gb-mur-vitesse',$('vit').value); if(MUR) MUR.vitesse(+$('vit').value); };
 
 /* ═══════════ manière de désigner ═══════════ */

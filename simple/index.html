@@ -12,7 +12,7 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="Ghost Box">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<link rel="stylesheet" href="/ghost-box/lib/fonts.css?v=46">
+<link rel="stylesheet" href="/ghost-box/lib/fonts.css?v=48">
 <style>
 :root{
   --bench:#0A0F12;--panel:#141B20;--line:#2C383F;--hair:#1E262B;
@@ -284,7 +284,7 @@ body{margin:0;background:#000;color:var(--text);font-family:var(--body);
 }
 
 </style>
-<link rel="stylesheet" href="/ghost-box/lib/ambiance.css?v=46">
+<link rel="stylesheet" href="/ghost-box/lib/ambiance.css?v=48">
 </head>
 <body>
 <div id="app">
@@ -382,7 +382,9 @@ body{margin:0;background:#000;color:var(--text);font-family:var(--body);
     <button id="oVoix" type="button">Voix</button>
     <button id="oNuit" type="button">Mode nuit</button>
     <button id="oTorche" type="button">Torche</button>
+    <button id="oLire" type="button">Lire le mur</button>
   </div>
+  <p class="aide" id="lireAide">Le mur défile trop vite pour être lu, et c'est mesuré : un mot passe en <b>67 à 130 millisecondes</b>, alors qu'en lire un en demande 200 à 250. Ce n'est pas un défaut à corriger — la durée qui permet de <b>lire</b> un mot est exactement celle qui permet de le <b>viser</b>. Mesuré sur 200 000 tentatives : au rythme normal, quelqu'un qui a choisi son mot l'obtient 0 fois sur 100 ; à vitesse lisible, 21 fois sur 100. <b>« Lire le mur » ralentit donc le défilement ET suspend toute retenue</b> pendant deux minutes : tu vois ce que l'appareil propose, et rien de ce qui arrive pendant ce temps ne peut être écrit. L'écran le dit en rouge tant que ça dure, et compte ce que la mesure a laissé passer.</p>
   <p class="aide" id="torcheAide"></p>
   <div class="tt">Témoin croisé — un deuxième téléphone</div>
   <div class="opts">
@@ -420,24 +422,25 @@ body{margin:0;background:#000;color:var(--text);font-family:var(--body);
 <div id="voile"></div>
 </div><!-- #app -->
 
-<script src="/ghost-box/lib/version.js?v=46"></script>
-<script src="/ghost-box/lib/nuit.js?v=46"></script>
-<script src="/ghost-box/lib/wakelock.js?v=46"></script>
-<script src="/ghost-box/lib/media.js?v=46"></script>
-<script src="/ghost-box/lib/moteur.js?v=46"></script>
-<script src="/ghost-box/lib/recit.js?v=46"></script>
-<script src="/ghost-box/lib/capteurs.js?v=46"></script>
-<script src="/ghost-box/lib/objectif.js?v=46"></script>
-<script src="/ghost-box/lib/qr.js?v=46"></script>
-<script src="/ghost-box/lib/croise.js?v=46"></script>
-<script src="/ghost-box/lib/torche.js?v=46"></script>
-<script src="/ghost-box/lib/lexique.js?v=46"></script>
-<script src="/ghost-box/lib/mur.js?v=46"></script>
-<script src="/ghost-box/lib/voix.js?v=46"></script>
-<script src="/ghost-box/lib/historique.js?v=46"></script>
-<script src="/ghost-box/lib/tampon.js?v=46"></script>
-<script src="/ghost-box/lib/secours.js?v=46"></script>
-<script src="/ghost-box/lib/capture.js?v=46"></script>
+<script src="/ghost-box/lib/version.js?v=48"></script>
+<script src="/ghost-box/lib/nuit.js?v=48"></script>
+<script src="/ghost-box/lib/wakelock.js?v=48"></script>
+<script src="/ghost-box/lib/media.js?v=48"></script>
+<script src="/ghost-box/lib/moteur.js?v=48"></script>
+<script src="/ghost-box/lib/recit.js?v=48"></script>
+<script src="/ghost-box/lib/capteurs.js?v=48"></script>
+<script src="/ghost-box/lib/objectif.js?v=48"></script>
+<script src="/ghost-box/lib/qr.js?v=48"></script>
+<script src="/ghost-box/lib/croise.js?v=48"></script>
+<script src="/ghost-box/lib/torche.js?v=48"></script>
+<script src="/ghost-box/lib/lexique.js?v=48"></script>
+<script src="/ghost-box/lib/mur.js?v=48"></script>
+<script src="/ghost-box/lib/sillage.js?v=48"></script>
+<script src="/ghost-box/lib/voix.js?v=48"></script>
+<script src="/ghost-box/lib/historique.js?v=48"></script>
+<script src="/ghost-box/lib/tampon.js?v=48"></script>
+<script src="/ghost-box/lib/secours.js?v=48"></script>
+<script src="/ghost-box/lib/capture.js?v=48"></script>
 <script>
 /* ═══════════════════════════════════════════════════════════════════════
    Séance simple — un écran, un bouton.
@@ -472,6 +475,10 @@ let phase='arret', tPhase=0, tPret=0, armees=0, nMots=0, lastMot=-1e9;
    fin du script, et une déclaration plus bas la ferait échouer. */
 const JOURNAL=[];
 let declencheur=null, gArret=false;
+/* Déclarés ICI comme le reste de l'état : la boucle de mesure démarre avant
+   la fin du script, et une déclaration plus bas la ferait échouer en silence
+   (TDZ) — piège déjà payé sur ce fichier. */
+let SIL=null, VIE=null, tVie=0, sillageEnAttente=null;
 let vue='mots';
 let murMode = (()=>{ try{ return localStorage.getItem('gb-simple-mode')==='escalier'?'escalier':'instant'; }catch(e){ return 'instant'; } })();
 let sens = (()=>{ try{ return localStorage.getItem('gb-simple-sens')==='permissive'?'permissive':'prudente'; }catch(e){ return 'prudente'; } })();
@@ -483,8 +490,15 @@ const SEVERITE = {
 
 
 /* ═══ le mur, monté tout de suite : l'écran n'est jamais vide ═══ */
+/* La vitesse vient du réglage MÉMORISÉ, pas d'un nombre écrit ici. Défaut
+   payé : un nombre en dur à cet endroit signifiait qu'un curseur réglé dans
+   « Le mur » n'avait aucun effet dans le mode où l'on travaille — un réglage
+   qui n'est appliqué que par sa propre page n'est pas un réglage. */
+const murVitesse = (()=>{ try{ return +localStorage.getItem('gb-mur-vitesse')||330; }
+                          catch(e){ return 330; } })();
 GBMur.lexique('../data/lexique.json').then(mots=>{
-  MUR=GBMur.creer({hote:$('mur'), mots:mots, vitesse:300, mode:murMode, onMot:motSorti});
+  MUR=GBMur.creer({hote:$('mur'), mots:mots, vitesse:murVitesse, mode:murMode,
+                   onMot:motSorti, onIgnore:murIgnore, onLecture:murLecture});
   if(MUR) MUR.demarrer();
 }).catch(()=>{ dire('<b class="ko">Vocabulaire introuvable.</b><p>L\'application n\'a pas pu charger sa liste de mots. Rouvre-la une fois avec du réseau.</p>'); });
 
@@ -546,6 +560,10 @@ async function demarrer(){
 
   W={}; ATT={};
   vivantes.forEach(v=>{ W[v.code]=M.mk(v.code, v.label); });
+  // les collecteurs naissent avec la séance et meurent avec elle : rien ne
+  // survit d'une veille à l'autre, rien ne se mélange
+  try{ SIL=GBSillage.banc({}); VIE=GBSillage.vieCollecteur(); tVie=performance.now(); }
+  catch(e){ SIL=null; VIE=null; }
   try{ GBTorche.adopter(B.fluxCamera()); }catch(e){}   // la lampe se pose sur CETTE piste
   try{ H=GBHistorique.ouvrir({mode:'séance simple'}); }catch(e){ H=null; }
   if(H) H.noter('veille', vivantes.length+' voie(s)');
@@ -603,9 +621,19 @@ function mesure(){
       if(!w || !w.ready || !v.vivante || v.val==null) return;
       const p0=w.persist;
       const feu=M.feed(w, v.val, false);
+      /* LE SILLAGE : chaque voie garde ses dernières secondes en mémoire vive.
+         Rien n'est écrit tant qu'aucun mot ne sort — même principe que la
+         mémoire tampon vidéo. Sans ces mesures d'avant, un mot n'a qu'un
+         point, et un point ne montre pas la différence entre le lieu qui
+         respire et l'événement. */
+      if(SIL) SIL.pousser(v.code, v.label, v.val, w.z, w.thr, v.unite||'');
+      if(VIE) VIE.pousser(w.z, w.thr);
       if(w.persist===1 && p0===0) ATT[v.code]=now;
       if(feu && !tireur){ tireur=v; tAtt=ATT[v.code] ?? now; }
     });
+    /* un point de ligne de vie par minute, y compris quand rien ne sort —
+       c'est justement le cas qu'il faut pouvoir montrer */
+    if(VIE && H && now-tVie >= 60000){ tVie=now; H.vie(VIE.minute() && VIE.points()); }
     if(tireur && (now-tPret)>=SETTLE && (now-lastMot)>=RAFALE && MUR && !MUR.estFige()){
       lastMot=now;
       const w=W[tireur.code];
@@ -615,15 +643,62 @@ function mesure(){
       declencheur = { voie:tireur.label, famille:tireur.famille, code:tireur.code,
         valeur:(tireur.val!=null ? +(+tireur.val).toFixed(2) : null), unite:tireur.unite||'',
         sigma:+w.z.toFixed(1), seuil:+(w.thr||0).toFixed(1),
-        relevages:w.raises||0, t:Date.now() };
+        relevages:w.raises||0, t:Date.now(), tAttaque:Date.now()-(now-tAtt) };
+      /* La fenêtre ne se fige pas MAINTENANT : il manquerait l'après, et une
+         courbe qui s'arrête pile au pic ne montre pas la retombée — or une
+         excursion qui monte puis redescend ne se lit pas comme une dérive.
+         On note le rendez-vous ; la boucle figera dans APRES secondes. */
+      if(SIL) sillageEnAttente = { code:tireur.code, quand:now + GBSillage.APRES*1000,
+                                   tAttaque:tAtt, tConfirme:now };
       MUR.figer(tireur.label+' · écart '+w.z.toFixed(1)+' σ / seuil '+(w.thr||0).toFixed(1)+' σ', false, tAtt);
     }
+  }
+
+  /* le rendez-vous du sillage : on fige la fenêtre une fois l'après écoulé,
+     et on l'attache au dernier mot du journal */
+  if(sillageEnAttente && now >= sillageEnAttente.quand){
+    const r = sillageEnAttente; sillageEnAttente = null;
+    try{
+      const sil = SIL.figer(r.code);
+      const j = JOURNAL[0];
+      if(j){
+        const tir = (sil.voies||[]).find(v=>v.tireuse);
+        j.sillage = sil;
+        j.attaque_i = tir ? tir.sigma.length-1 - Math.round((GBSillage.APRES*1000 + (r.tConfirme-r.tAttaque))/(1000/sil.hz)) : null;
+        j.confirme_i = tir ? tir.sigma.length-1 - Math.round(GBSillage.APRES*1000/(1000/sil.hz)) : null;
+        if(H) H.noter('sillage', j.mot+' · '+(tir?tir.label:'—'), { sillage:{
+          sil:sil, mot:j.mot, t:j.t||Date.now(), attaque_i:j.attaque_i, confirme_i:j.confirme_i,
+          sigma:j.sigma, seuil:j.seuil, voie:j.voie, need:M.NEED } });
+      }
+    }catch(e){}
   }
 
   majInfos(now);
   setTimeout(mesure,100);
 }
 mesure();
+
+/* ── lecture hors mesure ──
+   Le mur refuse d'écrire pendant ce temps ; il nous prévient à chaque refus
+   (murIgnore) et à chaque bascule (murLecture). On JOURNALISE les deux : une
+   mesure perdue doit se retrouver dans la fiche de séance, sinon la lecture
+   deviendrait un trou muet dans la veille. */
+function murIgnore(info, n){
+  if(H) H.noter('lecture', 'mesure ignorée pendant la lecture — ' + (info||'') + ' (' + n + ')');
+  const l=$('lireAide');
+  if(l) l.innerHTML = '<b style="color:var(--flag)">' + n + ' mesure' + (n>1?'s':'')
+    + ' ignorée' + (n>1?'s':'') + ' depuis le début de la lecture.</b> '
+    + 'C\'est le prix de ce mode : pendant qu\'on lit, on ne mesure pas.';
+}
+function murLecture(on, n){
+  const b=$('oLire'); if(b){ b.classList.toggle('on', on); b.textContent = on ? 'Revenir à la mesure' : 'Lire le mur'; }
+  if(H) H.noter('lecture', on ? 'lecture du mur — rien ne peut être retenu' : 'retour à la mesure');
+  if(!on){
+    const l=$('lireAide');
+    if(l && n) l.innerHTML = '<b>Retour à la mesure.</b> ' + n + ' mesure' + (n>1?'s':'')
+      + ' a été ignorée pendant la lecture — elle n\'a pas été écrite, et c\'est voulu.';
+  }
+}
 
 function motSorti(d){
   nMots++;
@@ -735,7 +810,8 @@ function poserMur(){
   v.insertBefore(d, v.firstChild);
   if(MUR){ MUR.arreter(); }
   GBMur.lexique('../data/lexique.json').then(mots=>{
-    MUR=GBMur.creer({hote:d, mots:mots, vitesse:300, mode:murMode, onMot:motSorti});
+    MUR=GBMur.creer({hote:d, mots:mots, vitesse:murVitesse, mode:murMode,
+                     onMot:motSorti, onIgnore:murIgnore, onLecture:murLecture});
     if(MUR) MUR.demarrer();
   });
 }
@@ -964,6 +1040,24 @@ function majJournal(){
       relevages:j.relevages, index:j.index, taille:j.taille };
     d.innerHTML='<div style="font-family:"Barlow Condensed","Arial Narrow",sans-serif;font-weight:600;letter-spacing:.15em;text-transform:uppercase;font-size:12px;color:var(--gold)">Acte de naissance — '+esc(j.mot)+'</div>'
       + GBRecit.mot(rec).map(t=>'<p style="font-size:13px;line-height:1.62;color:#D8CBAA;margin:8px 0 0">'+esc(t)+'</p>').join('');
+    /* LE SILLAGE, sous le récit : le texte explique, la courbe montre. Un mot
+       d'avant la v47 n'en a pas — le module le DIT au lieu de dessiner un
+       cadre vide, parce qu'un graphe absent sans explication se lit comme une
+       panne. */
+    if(window.GBSillage){
+      const cv=document.createElement('canvas');
+      cv.style.cssText='margin-top:10px;border-radius:4px';
+      d.appendChild(cv);
+      GBSillage.dessiner(cv, j.sillage||null,
+        { attaque_i:j.attaque_i, confirme_i:j.confirme_i,
+          need:(window.GBMoteur?GBMoteur.NEED:4) });
+      if(j.sillage){
+        const pl=document.createElement('p');
+        pl.style.cssText='font-family:ui-monospace,monospace;font-size:10px;color:var(--dim);margin:4px 0 0';
+        pl.textContent=GBSillage.legende(j.sillage);
+        d.appendChild(pl);
+      }
+    }
     d.style.display='block';
   });
 })();
@@ -1034,6 +1128,7 @@ function poserSens(v){
 $('oPrudente').onclick   = ()=>poserSens('prudente');
 $('oPermissive').onclick = ()=>poserSens('permissive');
 $('oVoix').onclick=()=>{ if(window.GBVoix) GBVoix.basculer(); majTiroir(); };
+$('oLire').onclick=()=>{ if(MUR) MUR.lecture(); };
 
 /* ═══════ la torche ═══════
    Le mode simple s'utilise dans le noir : c'est ici qu'elle sert le plus. Et
@@ -1251,10 +1346,10 @@ async function allumerDetection(quoi, silencieux){
   if(!silencieux) $('silAide').textContent='Chargement du modèle (une seule fois)…';
   try{
     if(quoi==='sil'){
-      if(!POSE) POSE = await import('/ghost-box/lib/pose.js?v=46');
+      if(!POSE) POSE = await import('/ghost-box/lib/pose.js?v=48');
       await POSE.load(); silOn=true; silVoulu=true; appliquerSeverite();
     } else {
-      if(!VIS) VIS = await import('/ghost-box/lib/visage.js?v=46');
+      if(!VIS) VIS = await import('/ghost-box/lib/visage.js?v=48');
       await VIS.load(); visOn=true; visVoulu=true; appliquerSeverite();
     }
     $('squelette').classList.add('on'); $('nbPers').classList.add('on');

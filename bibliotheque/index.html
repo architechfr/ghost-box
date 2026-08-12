@@ -12,7 +12,7 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="Ghost Box">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<link rel="stylesheet" href="/ghost-box/lib/fonts.css?v=46">
+<link rel="stylesheet" href="/ghost-box/lib/fonts.css?v=48">
 <style>
 :root{
   --bench:#0A0F12;--panel:#1D262B;--sunk:#0A0F12;--line:#2C383F;--hair:#212B31;
@@ -70,7 +70,7 @@ body.choix #barSel{display:block}
 .empty{color:var(--dim);font-size:13.5px;padding:14px 0;line-height:1.55}
 video.player{width:100%;margin-top:8px;border:1px solid var(--line);border-radius:3px;background:#000}
 </style>
-<link rel="stylesheet" href="/ghost-box/lib/ambiance.css?v=46">
+<link rel="stylesheet" href="/ghost-box/lib/ambiance.css?v=48">
 </head>
 <body>
 
@@ -116,11 +116,13 @@ video.player{width:100%;margin-top:8px;border:1px solid var(--line);border-radiu
 
 </div>
 
-<script src="/ghost-box/lib/version.js?v=46"></script>
-<script src="/ghost-box/lib/nuit.js?v=46"></script>
-<script src="/ghost-box/lib/secours.js?v=46"></script>
-<script src="/ghost-box/lib/retour.js?v=46"></script>
-<script src="/ghost-box/lib/aide.js?v=46"></script>
+<script src="/ghost-box/lib/version.js?v=48"></script>
+<script src="/ghost-box/lib/nuit.js?v=48"></script>
+<script src="/ghost-box/lib/secours.js?v=48"></script>
+<script src="/ghost-box/lib/retour.js?v=48"></script>
+<script src="/ghost-box/lib/aide.js?v=48"></script>
+<script src="/ghost-box/lib/recit.js?v=48"></script>
+<script src="/ghost-box/lib/sillage.js?v=48"></script>
 <script>
 (() => {
 "use strict";
@@ -291,16 +293,66 @@ async function render(){
         +encodeURIComponent('<svg xmlns=\'http://www.w3.org/2000/svg\' viewBox=\'0 0 24 24\' fill=\'none\' stroke=\'%23E9B44C\' stroke-width=\'1.5\'><rect x=\'4\' y=\'3\' width=\'16\' height=\'18\' rx=\'2\'/><path d=\'M8 8h8M8 12h8M8 16h5\'/></svg>')+'">'
         +'<div class="meta"><div class="nm">'+esc(c.nom)+'</div>'
         +'<div class="sub">'+bits.join(' · ')+'</div><div class="acts"></div></div>';
+      /* ── LA LIGNE DE VIE, en tête de fiche ──
+         Une veille de trois heures sans un mot est le résultat NORMAL, et elle
+         n'avait aucune image pour se montrer : une liste de lignes de texte ne
+         dit pas à l'œil la différence entre « le lieu respire » et « quelque
+         chose est arrivé ». La courbe le dit d'un coup d'œil, et elle porte sa
+         propre légende — c'est un agrégat par minute, pas la mesure brute. */
+      if(window.GBSillage && c.ligne_de_vie && c.ligne_de_vie.length > 1){
+        const lv=document.createElement('canvas');
+        lv.style.cssText='margin-top:8px;border-radius:5px';
+        d.querySelector('.meta').appendChild(lv);
+        const mots=(c.evenements||[]).filter(e=>e.type==='mot')
+          .map(e=>({ min: Math.round((e.t-(c.debut||c.id))/60000) }));
+        const r=GBSillage.vie(lv, c.ligne_de_vie, { mots });
+        const lg=document.createElement('div');
+        lg.style.cssText='font-family:var(--mono);font-size:10px;color:var(--dim);margin-top:3px';
+        lg.textContent='un point par minute : l\'écart le plus fort atteint, toutes voies '
+          +'confondues (vert), et le seuil moyen exigé (or) · σ max '
+          +String(Math.round(r.pic*10)/10).replace('.',',')
+          +(mots.length? ' · les traits or sont les mots'
+                       : ' · la courbe n\'a jamais franchi le seuil assez longtemps');
+        d.querySelector('.meta').appendChild(lg);
+      }
       const acts=d.querySelector('.acts');
       const bo=document.createElement('button'); bo.textContent='Détail';
-      bo.onclick=()=>{ const ex=d.querySelector('.jr'); if(ex){ ex.remove(); return; }
+      bo.onclick=()=>{ const ex=d.querySelector('.jr');
+        if(ex){ ex.remove(); d.querySelectorAll('.silBloc').forEach(x=>x.remove()); return; }
         const pj=document.createElement('div'); pj.className='jr';
         pj.style.cssText='margin-top:8px;font-family:var(--mono);font-size:11px;color:var(--dim);line-height:1.6';
         const lignes=(c.evenements||[]).map(e=>esc(new Date(e.t).toLocaleTimeString('fr-FR')+' · '+e.type+' · '+e.detail));
         if(c.resume && c.resume.phrase && c.resume.phrase.length)
           lignes.push('<b style="color:var(--gold)">phrase : '+esc(c.resume.phrase.join(' '))+'</b>');
         pj.innerHTML = lignes.length? lignes.join('<br>') : 'Aucun événement — la séance a veillé, rien n\'est sorti.';
-        d.querySelector('.meta').appendChild(pj); };
+        d.querySelector('.meta').appendChild(pj);
+        /* ── UN GROS PLAN PAR MOT ──
+           Le sillage voyage dans la fiche depuis la v47 ; les séances plus
+           anciennes n'en ont pas, et on le DIT plutôt que d'afficher un cadre
+           vide, qui se lirait comme une panne. */
+        if(!window.GBSillage) return;
+        (c.evenements||[]).filter(e=>e.sillage||e.sillage_omis).forEach(e=>{
+          const bloc=document.createElement('div'); bloc.className='silBloc';
+          bloc.style.cssText='margin-top:10px;padding-top:8px;border-top:1px solid var(--line)';
+          const S=e.sillage||{};
+          bloc.innerHTML='<div style="font-family:var(--mono);font-size:11px;color:var(--gold)">'
+            +esc(S.mot||e.detail||'mot')+'</div>';
+          if(e.sillage_omis){
+            bloc.innerHTML+='<p style="font-family:var(--mono);font-size:10px;color:var(--dim);margin:4px 0 0">'
+              +'courbe non gardée — au-delà de douze mots, une fiche cesserait de tenir dans la base ; '
+              +'les mesures de ce mot, elles, sont complètes ci-dessus.</p>';
+          } else {
+            const cv=document.createElement('canvas'); cv.style.cssText='margin-top:6px;border-radius:4px';
+            bloc.appendChild(cv);
+            GBSillage.dessiner(cv, S.sil, { attaque_i:S.attaque_i, confirme_i:S.confirme_i, need:S.need||4 });
+            const lg2=document.createElement('div');
+            lg2.style.cssText='font-family:var(--mono);font-size:10px;color:var(--dim);margin-top:3px';
+            lg2.textContent=GBSillage.legende(S.sil);
+            bloc.appendChild(lg2);
+          }
+          d.querySelector('.meta').appendChild(bloc);
+        });
+      };
       const bj=document.createElement('button'); bj.textContent='Export JSON';
       bj.onclick=()=>dl(new Blob([JSON.stringify(c,null,1)],{type:'application/json'}), c.nom+'.json');
       const bx=document.createElement('button'); bx.textContent='Supprimer'; bx.className='ko';
@@ -410,6 +462,6 @@ secours(); render();
 })();
 </script>
 <script>if('serviceWorker' in navigator){window.addEventListener('load',function(){navigator.serviceWorker.register('/ghost-box/sw.js').catch(function(){});});}</script>
-<script src="/ghost-box/lib/fullscreen.js?v=46"></script>
+<script src="/ghost-box/lib/fullscreen.js?v=48"></script>
 </body>
 </html>
