@@ -59,3 +59,27 @@ régime ne produit **aucune** photo sur 6 h de bruit.
 
 Ne pas modifier lib/zone.js sans refaire ces mesures (harnais : simulation
 hors dépôt, voir la fiche de livraison v49).
+
+## Témoin de pose (`bouge`), veilleur et veto — mesures v50
+
+Même harnais, scène STRUCTURÉE (rectangles ±35 niveaux plus larges que les
+blocs + texture fine ±10 + bruit capteur σ=2,5) — une texture fine seule est
+un cas pathologique qui efface le déplacement dans les moyennes de blocs.
+
+| Épreuve | Résultat |
+|---|---|
+| `bouge` caméra posée, 60 s (10 et 30 im/s) | max **0,33–0,34** |
+| `bouge` panoramique 2 px/s | max 2,1 |
+| `bouge` marche 12 px/s | min **2,4** – max 8,1 |
+| Veilleur : marche 60→150 s | bascule à 60,8 s, retour à 153,2 s |
+| Veilleur : saut d'éclairage ±25 niveaux | bascule ~2,5 s puis retour (→ réapprentissage, voulu) |
+| Trépied déplacé 6 s en pleine veille, SANS garde | mot sorti **20/20** (la course : mot 400 ms < témoin 700 ms) |
+| — avec garde état + VETO à l'émission (image seule) | **0/20** |
+| — avec accéléromètre simulé | **0/20** |
+| Caméraman 10 min (2 marches, 2 pauses), sans anomalie | **0/20** faux mot |
+| — brume 12 niveaux pendant une pause | détectée **20/20** |
+
+Seuils d'ÉTAT (pas d'émission) : haut 1,2 / bas 0,5 niveau, tenir 700 ms,
+calme 2 s ; accéléromètre 0,7 m/s² (enveloppe). Le veto ne peut pas coûter
+une vraie détection : la médiane des blocs est insensible à une anomalie
+locale — seule l'image qui bouge EN BLOC (caméra, éclairage) le déclenche.

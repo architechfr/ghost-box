@@ -12,7 +12,7 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="Ghost Box">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<link rel="stylesheet" href="/ghost-box/lib/fonts.css?v=49">
+<link rel="stylesheet" href="/ghost-box/lib/fonts.css?v=50">
 <style>
 :root{
   --bench:#0A0F12;--panel:#141B20;--line:#2C383F;--hair:#1E262B;
@@ -284,7 +284,7 @@ body{margin:0;background:#000;color:var(--text);font-family:var(--body);
 }
 
 </style>
-<link rel="stylesheet" href="/ghost-box/lib/ambiance.css?v=49">
+<link rel="stylesheet" href="/ghost-box/lib/ambiance.css?v=50">
 </head>
 <body>
 <div id="app">
@@ -422,27 +422,27 @@ body{margin:0;background:#000;color:var(--text);font-family:var(--body);
 <div id="voile"></div>
 </div><!-- #app -->
 
-<script src="/ghost-box/lib/version.js?v=49"></script>
-<script src="/ghost-box/lib/nuit.js?v=49"></script>
-<script src="/ghost-box/lib/wakelock.js?v=49"></script>
-<script src="/ghost-box/lib/media.js?v=49"></script>
-<script src="/ghost-box/lib/moteur.js?v=49"></script>
-<script src="/ghost-box/lib/recit.js?v=49"></script>
-<script src="/ghost-box/lib/zone.js?v=49"></script>
-<script src="/ghost-box/lib/capteurs.js?v=49"></script>
-<script src="/ghost-box/lib/objectif.js?v=49"></script>
-<script src="/ghost-box/lib/qr.js?v=49"></script>
-<script src="/ghost-box/lib/croise.js?v=49"></script>
-<script src="/ghost-box/lib/torche.js?v=49"></script>
-<script src="/ghost-box/lib/lexique.js?v=49"></script>
-<script src="/ghost-box/lib/mur.js?v=49"></script>
-<script src="/ghost-box/lib/sillage.js?v=49"></script>
-<script src="/ghost-box/lib/voix.js?v=49"></script>
-<script src="/ghost-box/lib/historique.js?v=49"></script>
-<script src="/ghost-box/lib/encodage.js?v=49"></script>
-<script src="/ghost-box/lib/tampon.js?v=49"></script>
-<script src="/ghost-box/lib/secours.js?v=49"></script>
-<script src="/ghost-box/lib/capture.js?v=49"></script>
+<script src="/ghost-box/lib/version.js?v=50"></script>
+<script src="/ghost-box/lib/nuit.js?v=50"></script>
+<script src="/ghost-box/lib/wakelock.js?v=50"></script>
+<script src="/ghost-box/lib/media.js?v=50"></script>
+<script src="/ghost-box/lib/moteur.js?v=50"></script>
+<script src="/ghost-box/lib/recit.js?v=50"></script>
+<script src="/ghost-box/lib/zone.js?v=50"></script>
+<script src="/ghost-box/lib/capteurs.js?v=50"></script>
+<script src="/ghost-box/lib/objectif.js?v=50"></script>
+<script src="/ghost-box/lib/qr.js?v=50"></script>
+<script src="/ghost-box/lib/croise.js?v=50"></script>
+<script src="/ghost-box/lib/torche.js?v=50"></script>
+<script src="/ghost-box/lib/lexique.js?v=50"></script>
+<script src="/ghost-box/lib/mur.js?v=50"></script>
+<script src="/ghost-box/lib/sillage.js?v=50"></script>
+<script src="/ghost-box/lib/voix.js?v=50"></script>
+<script src="/ghost-box/lib/historique.js?v=50"></script>
+<script src="/ghost-box/lib/encodage.js?v=50"></script>
+<script src="/ghost-box/lib/tampon.js?v=50"></script>
+<script src="/ghost-box/lib/secours.js?v=50"></script>
+<script src="/ghost-box/lib/capture.js?v=50"></script>
 <script>
 /* ═══════════════════════════════════════════════════════════════════════
    Séance simple — un écran, un bouton.
@@ -1364,10 +1364,10 @@ async function allumerDetection(quoi, silencieux){
   if(!silencieux) $('silAide').textContent='Chargement du modèle (une seule fois)…';
   try{
     if(quoi==='sil'){
-      if(!POSE) POSE = await import('/ghost-box/lib/pose.js?v=49');
+      if(!POSE) POSE = await import('/ghost-box/lib/pose.js?v=50');
       await POSE.load(); silOn=true; silVoulu=true; appliquerSeverite();
     } else {
-      if(!VIS) VIS = await import('/ghost-box/lib/visage.js?v=49');
+      if(!VIS) VIS = await import('/ghost-box/lib/visage.js?v=50');
       await VIS.load(); visOn=true; visVoulu=true; appliquerSeverite();
     }
     $('squelette').classList.add('on'); $('nbPers').classList.add('on');

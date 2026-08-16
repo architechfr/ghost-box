@@ -12,7 +12,7 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="Ghost Box">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<link rel="stylesheet" href="/ghost-box/lib/fonts.css?v=49">
+<link rel="stylesheet" href="/ghost-box/lib/fonts.css?v=50">
 <style>
 :root{
   --bench:#0A0F12;--panel:#1D262B;--sunk:#0A0F12;--line:#2C383F;--hair:#212B31;
@@ -144,12 +144,12 @@ body.avecmur #murBox{display:flex}
    la place du ✕ à droite pour ne jamais passer dessous. */
 body.filming #live{padding-right:92px}
 </style>
-<link rel="stylesheet" href="/ghost-box/lib/ambiance.css?v=49">
+<link rel="stylesheet" href="/ghost-box/lib/ambiance.css?v=50">
 </head>
 <body>
 
 <div class="top"><div class="topin">
-  <a href="../">←</a><h1>Séance caméra <span style="font-size:10px;color:var(--signal)">v5</span></h1>
+  <a href="../">←</a><h1>Séance caméra <span style="font-size:10px;color:var(--signal)">v6</span></h1>
   <span class="lg" id="phase">à préparer</span>
 </div></div>
 
@@ -203,6 +203,7 @@ body.filming #live{padding-right:92px}
 <div id="murBox"></div>
 <div class="row">
   <button id="aiBtn" disabled>Silhouette IA</button>
+  <button id="poseBtn">Trépied</button>
   <button id="autoBtn" class="act">Capture auto</button>
   <button id="murBtn">Mur de mots</button>
   <button id="incrustBtn">Incrustation</button>
@@ -211,6 +212,7 @@ body.filming #live{padding-right:92px}
   <button id="torchBtn">Torche</button>
 </div>
 <p id="torchState" class="ex"></p>
+<p id="poseState" class="ex"><b>Trépied</b> : téléphone posé, image fixe — tout ce qui passe devant est mesuré, et si la caméra est déplacée ou cognée, les voies image se taisent et réapprennent au lieu de sortir un mot pour un choc. <b>Caméraman</b> : tu te déplaces — l'enregistrement démarre tout seul et tourne en continu, la détection de personne reste allumée, et les voies image ne mesurent que pendant tes <b>arrêts</b> (30 s de réapprentissage à chaque pause) : une image qui défile ne peut pas dire ce qui est anormal, et l'écran dit toujours dans quel état il est. Le choix est mémorisé.</p>
 <p id="autoState" class="ex"><b>Capture auto</b> : quand la détection confirme une silhouette <b>ou qu'un changement localisé dépasse son seuil</b> (petite lueur, voile léger — la voie « zone »), une <b>photo part toute seule</b> — une apparition furtive ne laisse pas le temps d'appuyer. Si ça <b>reste plus de 4 secondes</b>, l'enregistrement vidéo démarre tout seul et s'arrête peu après la disparition. Tout est noté dans le journal, mesures comprises. La silhouette nécessite la détection de personne allumée ; le changement localisé, lui, marche toujours.</p>
 <p id="murState" class="ex">Le <b>mur de mots</b> montre tout le vocabulaire à l'écran, en colonnes qui défilent. Écran tourné vers la pièce, il rend visible ce que l'appareil peut dire — et quand une mesure dépasse le seuil, il se fige à cet instant sur un mot. Les vitesses tournent entre les colonnes : aucune famille n'est durablement la plus rapide.</p>
 <p id="incrustState" class="ex"><b>Incrustation allumée</b> : la vidéo enregistrée contient l'heure, le lieu, le niveau sonore, les squelettes et les mots. Éteinte, c'est l'image brute de la caméra principale, sans rien dessus.</p>
@@ -234,27 +236,27 @@ body.filming #live{padding-right:92px}
 <video id="vid3" playsinline muted></video>
 <video id="vid4" playsinline muted></video>
 
-<script src="/ghost-box/lib/version.js?v=49"></script>
-<script src="/ghost-box/lib/nuit.js?v=49"></script>
-<script src="/ghost-box/lib/demarrage.js?v=49"></script>
-<script src="/ghost-box/lib/voix.js?v=49"></script>
-<script src="/ghost-box/lib/historique.js?v=49"></script>
-<script src="/ghost-box/lib/moteur.js?v=49"></script>
-<script src="/ghost-box/lib/zone.js?v=49"></script>
-<script src="/ghost-box/lib/retour.js?v=49"></script>
-<script src="/ghost-box/lib/aide.js?v=49"></script>
-<script src="/ghost-box/lib/action.js?v=49"></script>
+<script src="/ghost-box/lib/version.js?v=50"></script>
+<script src="/ghost-box/lib/nuit.js?v=50"></script>
+<script src="/ghost-box/lib/demarrage.js?v=50"></script>
+<script src="/ghost-box/lib/voix.js?v=50"></script>
+<script src="/ghost-box/lib/historique.js?v=50"></script>
+<script src="/ghost-box/lib/moteur.js?v=50"></script>
+<script src="/ghost-box/lib/zone.js?v=50"></script>
+<script src="/ghost-box/lib/retour.js?v=50"></script>
+<script src="/ghost-box/lib/aide.js?v=50"></script>
+<script src="/ghost-box/lib/action.js?v=50"></script>
 <script>addEventListener('load',function(){ try{ GBAction.init(['#recBtn','#prep']); }catch(e){} });</script>
-<script src="/ghost-box/lib/secours.js?v=49"></script>
-<script src="/ghost-box/lib/encodage.js?v=49"></script>
-<script src="/ghost-box/lib/tampon.js?v=49"></script>
-<script src="/ghost-box/lib/lexique.js?v=49"></script>
-<script src="/ghost-box/lib/torche.js?v=49"></script>
-<script src="/ghost-box/lib/mur.js?v=49"></script>
-<script src="/ghost-box/lib/media.js?v=49"></script>
-<script src="/ghost-box/lib/wakelock.js?v=49"></script>
-<script src="/ghost-box/lib/objectif.js?v=49"></script>
-<script src="/ghost-box/lib/fixe.js?v=49"></script>
+<script src="/ghost-box/lib/secours.js?v=50"></script>
+<script src="/ghost-box/lib/encodage.js?v=50"></script>
+<script src="/ghost-box/lib/tampon.js?v=50"></script>
+<script src="/ghost-box/lib/lexique.js?v=50"></script>
+<script src="/ghost-box/lib/torche.js?v=50"></script>
+<script src="/ghost-box/lib/mur.js?v=50"></script>
+<script src="/ghost-box/lib/media.js?v=50"></script>
+<script src="/ghost-box/lib/wakelock.js?v=50"></script>
+<script src="/ghost-box/lib/objectif.js?v=50"></script>
+<script src="/ghost-box/lib/fixe.js?v=50"></script>
 <script>
 (() => {
 "use strict";
@@ -438,6 +440,17 @@ $('twoCam').onclick=async ()=>{
   }
   const dispo=lenses.filter(d=>d.deviceId!==curLens);
   if(!dispo.length){ $('twoState').textContent='Aucune autre caméra sur cet appareil.'; return; }
+  /* ── écran fixe : PAS de menu de choix — il s'affichait dans une zone que
+     l'écran fixe masque, et le bouton du bandeau « ne faisait rien »
+     (retour de terrain, même piège que 8nonies-a : un élément dont un
+     ancêtre est masqué est invisible quel que soit son propre CSS).
+     On prend d'office la caméra AVANT si la principale est une arrière —
+     le geste du terrain : l'arrière filme la pièce, l'avant garde le dos.
+     Le choix fin reste disponible hors écran fixe. */
+  if(filming && !attente){
+    const av=dispo.find(d=>/front|user|avant|selfie/i.test(d.label||''));
+    attente=(av||dispo[0]).deviceId;
+  }
   if(dispo.length>1 && !attente){
     const box=$('twoState'); box.innerHTML='Ajouter : ';
     dispo.forEach((d,i)=>{
@@ -557,7 +570,11 @@ function hud(now, frac){
     + (tampon&&tampon.actif()&&!tampon.enGarde()? chip('tampon', Math.round(tampon.dispo())+' s', '') : '')
     + '<span class="vu'+(lvl>.85?' fort':'')+'"><i style="width:'+(lvl*100).toFixed(0)+'%"></i></span>'
     + chip('son', level.toFixed(0)+' dB', silence>50?'alerte':'');
-  const l2 = chip('mouv', frac.toFixed(1)+' %', box?'alerte':'')
+  const reapZ=Math.max(M.reste(WM)||0, M.reste(WZ)||0);
+  const l2 = chip(pose==='cameraman'?'caméraman':'trépied',
+      etatPose==='fixe'? (reapZ? 'réapprend '+Math.ceil(reapZ/10)+' s' : 'posée') : 'en mouvement',
+      etatPose==='fixe'? (reapZ?'':'on') : 'alerte')
+    + chip('mouv', frac.toFixed(1)+' %', box?'alerte':'')
     + chip('vues', nbVues()+(aiOn? ' · '+pers+' pers.' : ''), aiOn&&pers?'on':'')
     + chip('seuils', seuils, '')
     + chip('présence', mHits+' / témoin '+cHits, '')
@@ -601,7 +618,8 @@ GBFixe.installer({
     {cle:'auto',     label:'Auto',             actif:()=>autoCap, basculer:()=>$('autoBtn').click()},
     {cle:'mur',      label:'Mur', toujours:true, delai:700, actif:()=>!!MUR, basculer:()=>$('murBtn').click()},
     {cle:'tampon',   label:'Tampon',      delai:600,  actif:()=>!!(tampon&&tampon.actif()), basculer:()=>$('tampBtn').click()},
-    {cle:'cam2',     label:'2e cam',      delai:1200, actif:()=>nbVues()>1, basculer:()=>$('twoCam').click()},
+    {cle:'cam2',     label:()=>nbVues()>1? nbVues()+' cams':'2e cam', delai:1200, actif:()=>nbVues()>1, basculer:()=>$('twoCam').click()},
+    {cle:'pose',     label:()=>pose==='cameraman'?'Caméraman':'Trépied', action:()=>$('poseBtn').click()},
     {cle:'incrust',  label:'Incrust',                 actif:()=>incrust, basculer:()=>$('incrustBtn').click()},
     // bouton d'ACTION et non de bascule : il passe à l'objectif suivant et
     // porte le nom de celui qui tourne
@@ -661,7 +679,8 @@ let autoIncrustForcee=false;
 /* l'état des témoins à un instant donné — rangé avec chaque preuve produite
    automatiquement : une capture sans ses conditions ne prouve rien */
 function etatCapteursSeance(){
-  return { seuil_son:(WA&&WA.ready? +WA.thr.toFixed(2):null),
+  return { pose: pose==='cameraman'? 'caméraman':'trépied', etat_image: etatPose==='fixe'? 'posée':'en mouvement',
+           seuil_son:(WA&&WA.ready? +WA.thr.toFixed(2):null),
            seuil_image:(WM&&WM.ready? +WM.thr.toFixed(2):null),
            seuil_zone:(WZ&&WZ.ready? +WZ.thr.toFixed(2):null),
            relevages_temoin:(WA?WA.raises:0)+(WM?WM.raises:0)+(WZ?WZ.raises:0),
@@ -824,7 +843,7 @@ $('aiBtn').onclick=async ()=>{
   if(!vstream){ $('aiState').textContent="Prépare d'abord le tournage."; return; }
   $('aiState').textContent='Chargement du modèle (~5 Mo, une seule fois)…';
   try{
-    if(!POSE) POSE=await import('/ghost-box/lib/pose.js?v=49');
+    if(!POSE) POSE=await import('/ghost-box/lib/pose.js?v=50');
     await POSE.load();
     aiOn=true; $('aiBtn').className='act';
     $('aiState').innerHTML='Détection active — jusqu\'à <b>4 personnes suivies en même temps</b>, chacune avec sa couleur et son numéro. Les squelettes s\'incrustent dans la vidéo enregistrée, et seulement si une personne réelle est reconnue.';
@@ -889,6 +908,100 @@ GBTorche.surChangement((etat, info)=>{
   addJ(performance.now(), 'torche', txt);
 });
 
+/* ═══════ trépied / caméraman — la pose de la caméra est un ÉTAT MESURÉ ═══════
+   Retour de terrain : de la fumée envoyée devant la caméra, rien de détecté —
+   et la question de fond posée par l'utilisateur : une caméra POSÉE et une
+   caméra PORTÉE ne peuvent pas mesurer pareil. Une image qui défile ne peut
+   pas dire ce qui est anormal ; et un trépied qu'on déplace ne doit pas
+   sortir un mot pour un choc.
+
+   Deux témoins de pose, mesurés (docs/mesures-zone.md) :
+   — l'image : médiane des écarts de blocs à une moyenne courte (GBZone .bouge).
+     Posée < 0,35 niveau ; marche > 2,4 ; indépendant de la cadence d'images.
+     Latence ~0,7 s (le temps de TENIR du veilleur).
+   — l'accéléromètre : saisir ou cogner le téléphone s'y lit À L'IMAGE MÊME,
+     bien avant que l'image ne l'avoue. Enveloppe de |accél − moyenne|.
+   Et une COURSE mesurée qui impose le veto : le moteur confirme un mot en
+   400 ms, le témoin image met ~700 ms — sans veto, le mot gagne 20 fois sur
+   20. Donc à l'émission d'une voie image, si l'image bouge EN BLOC à cet
+   instant (médiane > seuil — insensible à une anomalie locale : une lueur ne
+   déplace pas la médiane), le mot est refusé et la voie réapprend. Mesuré :
+   trépied déplacé en pleine veille, 0/20 mots avec la garde, 20/20 sans ;
+   caméraman 10 min de marche, 0/20 faux, brume pendant une pause 20/20. */
+let pose=(function(){ try{ return localStorage.getItem('gb-seance-pose')==='cameraman'?'cameraman':'trepied'; }catch(e){ return 'trepied'; } })();
+let VB=null, etatPose='fixe', jerkNow=0, jerkEma=null;
+const BOUGE_HAUT=1.2, JERK_SEUIL=0.7;   // seuils d'ÉTAT (pas d'émission), mesurés
+function majPoseBtn(){
+  $('poseBtn').textContent = pose==='cameraman'? 'Caméraman' : 'Trépied';
+  $('poseBtn').className = pose==='cameraman'? 'act' : '';
+}
+$('poseBtn').onclick=()=>{
+  pose = pose==='cameraman'? 'trepied' : 'cameraman';
+  try{ localStorage.setItem('gb-seance-pose', pose); }catch(e){}
+  majPoseBtn();
+  if(tStart) addJ(performance.now(),'reglage','mode '+(pose==='cameraman'?'caméraman':'trépied'));
+  if(pose==='cameraman' && vstream) lancerCameraman();
+};
+majPoseBtn();
+/* l'accéléromètre, s'il existe : permission demandée dans le geste de
+   préparation (iOS l'exige) ; refusée ou absente → le témoin image suffit */
+let motionH=null;
+async function armerTemoinMouvement(){
+  if(motionH || typeof DeviceMotionEvent==='undefined') return;
+  try{
+    if(DeviceMotionEvent.requestPermission){
+      const r=await DeviceMotionEvent.requestPermission();
+      if(r!=='granted') return;
+    }
+  }catch(e){ return; }
+  motionH=e=>{
+    const a=e.accelerationIncludingGravity; if(!a || a.x==null) return;
+    const m=Math.hypot(a.x,a.y,a.z);
+    if(jerkEma==null) jerkEma=m;
+    jerkEma += 0.25*(m-jerkEma);
+    // enveloppe à décroissance (~0,3 s) : la marche oscille, l'enveloppe tient
+    jerkNow = Math.max(jerkNow*0.95, Math.abs(m-jerkEma));
+  };
+  addEventListener('devicemotion', motionH);
+}
+/* la bascule d'état + ses conséquences : UNE seule fonction, appelée à chaque
+   mesure d'image. Toute transition est dite à l'écran et au journal. */
+function majPose(now, bougeImage){
+  if(!VB) return;
+  const sig = Math.max(bougeImage, jerkNow*(BOUGE_HAUT/JERK_SEUIL));
+  const avant = etatPose;
+  etatPose = VB.pousser(sig, now);
+  if(etatPose===avant) return;
+  if(etatPose==='bouge'){
+    addJ(now,'auto', pose==='trepied'
+      ? 'la caméra bouge — ou l\'éclairage a changé en bloc : voies image muettes, réapprentissage au retour au calme'
+      : 'en mouvement — les voies image se taisent (une image qui défile ne mesure rien)');
+  } else {
+    bg=null; if(ZS) ZS.raz();
+    M.relancer(WM, REAPP_CAM); M.relancer(WZ, REAPP_CAM);
+    addJ(now,'auto','image posée — les voies image réapprennent le lieu ('+Math.round(REAPP_CAM/10)+' s)');
+  }
+}
+/* refus d'un mot image quand l'image bouge en bloc : la course mesurée
+   (mot en 400 ms, témoin en 700 ms) rend ce veto indispensable */
+function vetoImage(now){
+  addJ(now,'auto','écart image REFUSÉ — l\'image bougeait en bloc (caméra ou éclairage) au moment du tir ; les voies image réapprennent');
+  bg=null; if(ZS) ZS.raz();
+  M.relancer(WM, REAPP_CAM); M.relancer(WZ, REAPP_CAM);
+}
+/* mode caméraman : la visite s'enregistre EN CONTINU (choix explicite de
+   l'utilisateur — une visite ne se rejoue pas), et la détection de personne
+   reste allumée. L'écran affiche le poids en Mo/min (lib/encodage.js). */
+function lancerCameraman(){
+  if(!aiOn){ try{ $('aiBtn').click(); }catch(e){} }
+  setTimeout(()=>{
+    if(pose==='cameraman' && !recording && vstream){
+      try{ $('recBtn').click();
+        addJ(performance.now(),'auto','enregistrement continu démarré — mode caméraman'); }catch(e){}
+    }
+  }, 1500);
+}
+
 $('prep').onclick=async ()=>{
   $('prepState').textContent='Autorisations…';
   try{ await useLens(null); if(!vstream) throw new Error('aucun flux'); }
@@ -899,6 +1012,8 @@ $('prep').onclick=async ()=>{
   WA=mkW('audio','Niveau sonore'); WM=mkW('mouvement','Mouvement');
   WZ=mkW('zone','Changement localisé');
   ZS = window.GBZone? GBZone.creer() : null; zbox=null;
+  VB = window.GBZone? GBZone.veilleur({}) : null; etatPose='fixe'; jerkNow=0; jerkEma=null;
+  armerTemoinMouvement();
   try{ H=GBHistorique.ouvrir({ mode:'séance caméra', lieu:($('lieu').value||'') }); }catch(e){ H=null; }
   learning=true; tLearn=performance.now(); tStart=tLearn; bg=null; mHits=0; cHits=0;
   $('prep').className='act'; $('prep').textContent='Caméra active';
@@ -906,8 +1021,10 @@ $('prep').onclick=async ()=>{
   // filmer ne dépend pas du moteur de mots : la caméra tourne, donc on peut enregistrer.
   $('selftest').disabled=false; $('aiBtn').disabled=false; $('twoCam').disabled=false; $('recBtn').disabled=false;
   $('phase').textContent='apprentissage';
-  $('prepState').innerHTML='Apprentissage du bruit du lieu — <b>ne bouge pas</b> pendant ce temps.';
+  $('prepState').innerHTML='Apprentissage du bruit du lieu — <b>ne bouge pas</b> pendant ce temps.'
+    +(pose==='cameraman'? ' Mode <b>caméraman</b> : l\'enregistrement continu démarre, la détection de personne s\'allume.' : '');
   startLoops();
+  if(pose==='cameraman') lancerCameraman();
 };
 
 /* ── les deux boucles (image et mesure) ──
@@ -949,7 +1066,7 @@ function measure(tok){
   // Une analyse en pause n'est PAS un silence : on ne l'annonce pas comme tel.
   if(anaVive && (level<-85 || !micVivant())) silence++; else silence=0;
   // mouvement
-  const v=$('vid'); let frac=0, zval=0;
+  const v=$('vid'); let frac=0, zval=0, bougeVal=0;
   if(v.videoWidth){
     mg.drawImage(v,0,0,64,48);
     const im=mg.getImageData(0,0,64,48).data, px=64*48, cur=new Float32Array(px);
@@ -959,15 +1076,21 @@ function measure(tok){
     for(let j=0;j<px;j++){ if(Math.abs(cur[j]-bg[j])>26) mask[j]=1; bg[j]+=.02*(cur[j]-bg[j]); }
     const b=largestBlob(mask,64,48); frac=b.size/px*100;
     const cf=largestBlob(shuffled(mask),64,48).size/px*100;
-    if(frac>=4.5){ if(!mOn){mHits++;mOn=true;} box=b; lastPresence=now; } else { mOn=false; box=null; }
-    if(cf>=4.5){ if(!cOn){cHits++;cOn=true;} } else cOn=false;
     // changement localisé : le bloc qui s'écarte le plus de son fond appris —
     // c'est lui qui voit la petite lueur et le voile léger que « mouvement » noie
-    if(ZS){ const rz=ZS.mesurer(cur); zval=rz.val; if(rz.bloc) zbox=rz.bloc; }
+    if(ZS){ const rz=ZS.mesurer(cur); zval=rz.val; if(rz.bloc) zbox=rz.bloc; bougeVal=rz.bouge||0; }
+    // la pose d'abord : une image qui défile ne mesure rien
+    majPose(now, bougeVal);
+    if(etatPose==='fixe'){
+      if(frac>=4.5){ if(!mOn){mHits++;mOn=true;} box=b; lastPresence=now; } else { mOn=false; box=null; }
+      if(cf>=4.5){ if(!cOn){cHits++;cOn=true;} } else cOn=false;
+    } else { mOn=false; cOn=false; box=null; }
   }
-  // moteur
+  const posee = etatPose==='fixe';
+  // moteur — les voies image ne sont nourries que caméra POSÉE : nourrir une
+  // voie avec une image qui défile, c'est lui apprendre un lieu qui n'existe pas
   if(learning){
-    feed(WA,level,true); feed(WM,frac,true); if(ZS) feed(WZ,zval,true);
+    feed(WA,level,true); if(posee){ feed(WM,frac,true); if(ZS) feed(WZ,zval,true); }
     if(now-tLearn>=LEARN_MS){
       const a=seal(WA), m=seal(WM), z=ZS? seal(WZ) : false;
       learning=false; tReady=now;
@@ -980,10 +1103,16 @@ function measure(tok){
           +'simplement aucun mot ne peut sortir. C\'est la règle : sans bruit à comparer, on se tait.';
     }
   } else {
-    const fa=WA.ready&&feed(WA,level,false), fm=WM.ready&&feed(WM,frac,false),
-          fz=WZ.ready&&ZS&&feed(WZ,zval,false);
+    const fa=WA.ready&&feed(WA,level,false);
+    let fm=posee&&WM.ready&&feed(WM,frac,false),
+        fz=posee&&WZ.ready&&ZS&&feed(WZ,zval,false);
+    /* le VETO : le moteur confirme en 400 ms, le témoin de pose en ~700 ms —
+       sans ce refus à l'émission, un trépied déplacé sort un mot 20 fois sur
+       20 (mesuré). La médiane des blocs est insensible à une anomalie LOCALE :
+       une vraie lueur ne déclenche jamais ce veto. */
+    if((fm||fz) && bougeVal>BOUGE_HAUT){ vetoImage(now); fm=false; fz=false; }
     // l'anomalie visuelle laisse sa preuve — photo tout de suite, vidéo si ça dure
-    zoneTic(now);
+    if(posee) zoneTic(now);
     // seul délai conservé : empêcher qu'UN MÊME événement physique produise une rafale.
     // Ce n'est pas un quota — rien ne garantit qu'un mot sortira un jour.
     if((fa||fm||fz) && (now-tReady)>20000 && (now-lastEmit)>=ANTI_RAFALE && MOTS.length){
@@ -1003,6 +1132,7 @@ function measure(tok){
                    : (WM.ready? WM.thr.toFixed(1)+' σ' : 'non armé'))
       +', zone '+(M.reste(WZ)? '<b style="color:var(--gold)">réapprend, '+Math.ceil(M.reste(WZ)/10)+' s</b>'
                    : (WZ.ready? WZ.thr.toFixed(1)+' σ' : 'non armée'))
+      +(etatPose==='fixe'? '' : ' · <b style="color:var(--gold)">en mouvement — voies image muettes</b>')
       +' (relevés '+(WA.raises+WM.raises)+'×) · présence '
       +mHits+'× vs témoin de bruit '+cHits+'×'+mute+cams+depuis;
   setTimeout(()=>measure(tok),100);
@@ -1130,7 +1260,7 @@ function render(tok){
   }
   // changement localisé : le bloc en cause, encadré SEULEMENT quand la voie
   // dépasse réellement son seuil — un cadre permanent serait une invention
-  if(WZ && WZ.ready && WZ.z>=WZ.thr && zbox){
+  if(WZ && WZ.ready && etatPose==='fixe' && WZ.z>=WZ.thr && zbox){
     const sx=vW/64, sy=vH/48;
     g.strokeStyle='#E9B44C'; g.lineWidth=2*S;
     g.strokeRect(zbox.x*sx, zbox.y*sy, zbox.w*sx, zbox.h*sy);
@@ -1435,7 +1565,7 @@ addEventListener('load',function(){ try{ GBCapture.init({label:($('lieu').value|
 })();
 </script>
 <script>if('serviceWorker' in navigator){window.addEventListener('load',function(){navigator.serviceWorker.register('/ghost-box/sw.js').catch(function(){});});}</script>
-<script src="/ghost-box/lib/capture.js?v=49"></script>
-<script src="/ghost-box/lib/fullscreen.js?v=49"></script>
+<script src="/ghost-box/lib/capture.js?v=50"></script>
+<script src="/ghost-box/lib/fullscreen.js?v=50"></script>
 </body>
 </html>

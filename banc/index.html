@@ -12,7 +12,7 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="Ghost Box">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<link rel="stylesheet" href="/ghost-box/lib/fonts.css?v=49">
+<link rel="stylesheet" href="/ghost-box/lib/fonts.css?v=50">
 <style>
 :root{
   --bench:#141A1E;--panel:#1D262B;--sunk:#0A0F12;--line:#2C383F;--hair:#212B31;
@@ -240,13 +240,13 @@ video{display:none}
   font-family:var(--mono);font-size:9px;color:var(--signal);
   background:rgba(10,15,18,.75);padding:1px 4px;border-radius:2px;pointer-events:none}
 </style>
-<link rel="stylesheet" href="/ghost-box/lib/ambiance.css?v=49">
+<link rel="stylesheet" href="/ghost-box/lib/ambiance.css?v=50">
 </head>
 <body>
 <div class="wrap">
 
 <p style="margin:14px 0 0"><a href="../" style="color:var(--dim);text-decoration:none;font-family:var(--mono);font-size:13px">← poste de terrain</a></p>
-<h1>Séance capteurs <span style="font-size:11px;color:var(--signal);letter-spacing:.12em">v21</span></h1>
+<h1>Séance capteurs <span style="font-size:11px;color:var(--signal);letter-spacing:.12em">v22</span></h1>
 <p class="sub">L'appareil est fait pour <b>se taire</b>. Il apprend le bruit normal du capteur, puis relève son seuil tant que ce bruit pourrait le faire parler. Un mot ne sort que si une mesure dépasse tout ce que l'appareil a vu de normal — <b>et le silence est le résultat attendu</b>. S'il n'y a rien, il n'y a rien.</p>
 
 <div class="step">
@@ -392,25 +392,25 @@ video{display:none}
 <video id="vid2" playsinline muted></video>
 </div>
 
-<script src="/ghost-box/lib/version.js?v=49"></script>
-<script src="/ghost-box/lib/nuit.js?v=49"></script>
-<script src="/ghost-box/lib/demarrage.js?v=49"></script>
-<script src="/ghost-box/lib/voix.js?v=49"></script>
-<script src="/ghost-box/lib/historique.js?v=49"></script>
-<script src="/ghost-box/lib/moteur.js?v=49"></script>
-<script src="/ghost-box/lib/zone.js?v=49"></script>
-<script src="/ghost-box/lib/recit.js?v=49"></script>
-<script src="/ghost-box/lib/spectre.js?v=49"></script>
-<script src="/ghost-box/lib/retour.js?v=49"></script>
-<script src="/ghost-box/lib/aide.js?v=49"></script>
-<script src="/ghost-box/lib/action.js?v=49"></script>
+<script src="/ghost-box/lib/version.js?v=50"></script>
+<script src="/ghost-box/lib/nuit.js?v=50"></script>
+<script src="/ghost-box/lib/demarrage.js?v=50"></script>
+<script src="/ghost-box/lib/voix.js?v=50"></script>
+<script src="/ghost-box/lib/historique.js?v=50"></script>
+<script src="/ghost-box/lib/moteur.js?v=50"></script>
+<script src="/ghost-box/lib/zone.js?v=50"></script>
+<script src="/ghost-box/lib/recit.js?v=50"></script>
+<script src="/ghost-box/lib/spectre.js?v=50"></script>
+<script src="/ghost-box/lib/retour.js?v=50"></script>
+<script src="/ghost-box/lib/aide.js?v=50"></script>
+<script src="/ghost-box/lib/action.js?v=50"></script>
 <script>addEventListener('load',function(){ try{ GBAction.init(['#run']); }catch(e){} });</script>
-<script src="/ghost-box/lib/torche.js?v=49"></script>
-<script src="/ghost-box/lib/lexique.js?v=49"></script>
-<script src="/ghost-box/lib/mur.js?v=49"></script>
-<script src="/ghost-box/lib/questions.js?v=49"></script>
-<script src="/ghost-box/lib/objectif.js?v=49"></script>
-<script src="/ghost-box/lib/fixe.js?v=49"></script>
+<script src="/ghost-box/lib/torche.js?v=50"></script>
+<script src="/ghost-box/lib/lexique.js?v=50"></script>
+<script src="/ghost-box/lib/mur.js?v=50"></script>
+<script src="/ghost-box/lib/questions.js?v=50"></script>
+<script src="/ghost-box/lib/objectif.js?v=50"></script>
+<script src="/ghost-box/lib/fixe.js?v=50"></script>
 <script>
 (() => {
 "use strict";
@@ -1848,7 +1848,7 @@ $('camAi').onclick=async ()=>{
   if(!camActive){ $('aiState').textContent="Active d'abord la caméra."; return; }
   $('aiState').textContent='Chargement du modèle (~5 Mo, une seule fois)…';
   try{
-    if(!POSE) POSE=await import('/ghost-box/lib/pose.js?v=49');
+    if(!POSE) POSE=await import('/ghost-box/lib/pose.js?v=50');
     await POSE.load();
     aiOn=true; $('camAi').className='act';
     $('aiState').innerHTML='Détection active — un squelette n\'apparaît que si une <b>personne réelle</b> est reconnue. Dans le noir, le modèle ne voit rien : c\'est normal.';
@@ -1944,6 +1944,16 @@ $('twoCam').onclick=async ()=>{
   if(!camActive){ $('twoState').textContent="Active d'abord la caméra."; return; }
   const others=lenses.filter(d=>d.deviceId!==curLens);
   if(!others.length){ $('twoState').textContent='Un seul objectif disponible.'; return; }
+  /* écran fixe : le menu de choix s'afficherait dans une zone MASQUÉE (même
+     piège que 8nonies-a) — le bouton du bandeau semblait mort. On prend
+     d'office l'avant si la principale est une arrière, sinon le premier
+     autre objectif ; le choix fin reste disponible hors écran fixe. */
+  if(filming){
+    const av=others.find(d=>/front|user|avant|selfie/i.test(d.label||''));
+    const ch=av||others[0];
+    openSecond(ch.deviceId, av? 'Avant' : lensName(ch,0));
+    return;
+  }
   // proposer le choix de la seconde caméra
   const box=$('twoState');
   box.innerHTML='Seconde caméra : ';
@@ -2076,13 +2086,13 @@ addEventListener('load',function(){ try{ GBCapture.init({label:'seance-capteurs'
 })();
 </script>
 <script>if('serviceWorker' in navigator){window.addEventListener('load',function(){navigator.serviceWorker.register('/ghost-box/sw.js').catch(function(){});});}</script>
-<script src="/ghost-box/lib/wakelock.js?v=49"></script>
-<script src="/ghost-box/lib/media.js?v=49"></script>
-<script src="/ghost-box/lib/capture.js?v=49"></script>
-<script src="/ghost-box/lib/encodage.js?v=49"></script>
-<script src="/ghost-box/lib/tampon.js?v=49"></script>
-<script src="/ghost-box/lib/secours.js?v=49"></script>
-<script src="/ghost-box/lib/sillage.js?v=49"></script>
-<script src="/ghost-box/lib/fullscreen.js?v=49"></script>
+<script src="/ghost-box/lib/wakelock.js?v=50"></script>
+<script src="/ghost-box/lib/media.js?v=50"></script>
+<script src="/ghost-box/lib/capture.js?v=50"></script>
+<script src="/ghost-box/lib/encodage.js?v=50"></script>
+<script src="/ghost-box/lib/tampon.js?v=50"></script>
+<script src="/ghost-box/lib/secours.js?v=50"></script>
+<script src="/ghost-box/lib/sillage.js?v=50"></script>
+<script src="/ghost-box/lib/fullscreen.js?v=50"></script>
 </body>
 </html>

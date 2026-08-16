@@ -12,7 +12,7 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="Ghost Box">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<link rel="stylesheet" href="/ghost-box/lib/fonts.css?v=49">
+<link rel="stylesheet" href="/ghost-box/lib/fonts.css?v=50">
 <style>
 :root{--night:#0A0F12;--panel:#1D262B;--sunk:#0A0F12;--line:#2C383F;--hair:#212B31;
   --signal:#5FD3A6;--gold:#E9B44C;--flag:#E2574C;--paper:#CFC6B4;--dim:#78868E;--text:#DDE6EA;
@@ -93,7 +93,7 @@ a.card.f .vign{background-image:var(--img, none),
   radial-gradient(120% 150% at 20% 0%, rgba(226,87,76,.12), transparent 62%),
   linear-gradient(150deg,#1A1211,#0A0F12 70%)}
 </style>
-<link rel="stylesheet" href="/ghost-box/lib/ambiance.css?v=49">
+<link rel="stylesheet" href="/ghost-box/lib/ambiance.css?v=50">
 </head>
 <body>
 <div class="wrap">
@@ -104,7 +104,14 @@ a.card.f .vign{background-image:var(--img, none),
      à fond blanc — d'où le filet blanc tout autour et le décalage. La marge
      de droite laisse la place au bouton plein écran, qui flotte par-dessus. -->
 <img src="assets/wordmark.png" alt="Ghost Box — poste de terrain"
-     style="display:block;width:calc(100% - 46px);max-width:410px;margin:22px 0 12px">
+     style="display:block;width:calc(100% - 46px);max-width:410px;margin:22px 0 4px">
+<!-- Le numéro est DÉRIVÉ des ?v réellement chargés par cette page
+     (lib/version.js, règle 000ac) — jamais saisi à la main. Demande de
+     terrain : « je ne sais pas où voir que c'est la bonne version » — il
+     est donc ici, en haut de l'accueil, le premier écran qu'on voit. -->
+<p style="margin:0 0 12px;font-family:ui-monospace,monospace;font-size:12.5px;color:#78868E">
+  version <b data-gb-version style="color:#5FD3A6;font-weight:500">…</b>
+  <span style="font-size:11px"> — ce numéro doit monter après chaque mise à jour</span></p>
 <p>Les outils sont rangés par moment : ce qu'on fait <b>pendant</b> la séance, et ce qu'on en fait <b>après</b>. Tout reste sur l'appareil, sauf la transcription du dernier outil. Si tu ouvres l'application pour la première fois, commence par le <a href="manuel/" style="color:var(--gold)">mode d'emploi</a>.</p>
 
 <div class="sect">pendant la séance</div>
@@ -222,8 +229,8 @@ document.getElementById('ctx').innerHTML = ios
 })();
 </script>
 <script>if('serviceWorker' in navigator){window.addEventListener('load',function(){navigator.serviceWorker.register('/ghost-box/sw.js').catch(function(){});});}</script>
-<script src="/ghost-box/lib/version.js?v=49"></script>
-<script src="/ghost-box/lib/nuit.js?v=49"></script>
-<script src="/ghost-box/lib/fullscreen.js?v=49"></script>
+<script src="/ghost-box/lib/version.js?v=50"></script>
+<script src="/ghost-box/lib/nuit.js?v=50"></script>
+<script src="/ghost-box/lib/fullscreen.js?v=50"></script>
 </body>
 </html>

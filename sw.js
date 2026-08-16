@@ -22,7 +22,7 @@
    À CHAQUE LIVRAISON : incrémenter VERSION ci-dessous en même temps que les
    ?v= des pages — c'est elle qui jette l'ancien cache.
    ═══════════════════════════════════════════════════════════════════════ */
-const VERSION = 'v49';
+const VERSION = 'v50';
 const CACHE   = 'ghostbox-' + VERSION;
 const RACINE  = '/ghost-box/';
 
