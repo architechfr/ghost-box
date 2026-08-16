@@ -12,7 +12,7 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="Ghost Box">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<link rel="stylesheet" href="/ghost-box/lib/fonts.css?v=52">
+<link rel="stylesheet" href="/ghost-box/lib/fonts.css?v=53">
 <style>
 :root{
   --night:#0A0F12; --bench:#141A1E; --panel:#1D262B; --sunk:#080C0E;
@@ -164,7 +164,7 @@ body.gbx #mark{display:block;position:fixed;left:10px;right:10px;
   bottom:calc(14px + env(safe-area-inset-bottom, 0px));
   z-index:60;margin:0;padding:22px 0;font-size:17px;opacity:.96}
 </style>
-<link rel="stylesheet" href="/ghost-box/lib/ambiance.css?v=52">
+<link rel="stylesheet" href="/ghost-box/lib/ambiance.css?v=53">
 </head>
 <body>
 <div class="wrap">
@@ -300,8 +300,8 @@ body.gbx #mark{display:block;position:fixed;left:10px;right:10px;
 <!-- l'écran fixe est monté PENDANT le script de la page, pas après : ce module
      doit donc exister avant lui. Les autres modules ne sont appelés que dans
      des gestionnaires d'événement, ils peuvent rester en fin de page. -->
-<script src="/ghost-box/lib/version.js?v=52"></script>
-<script src="/ghost-box/lib/fixe.js?v=52"></script>
+<script src="/ghost-box/lib/version.js?v=53"></script>
+<script src="/ghost-box/lib/fixe.js?v=53"></script>
 <script>
 (() => {
 "use strict";
@@ -606,7 +606,14 @@ addEventListener('load',()=>{
 /* ═══ arrêt + calcul du spectrogramme ═══ */
 $('halt').onclick=async()=>{
   if(!recording)return;recording=false;
-  secoursFini();
+  /* On POUSSE les dernières secondes dans le filet, mais on ne le jette PAS
+     ici (000aq) : entre cet instant et l'écriture réelle du WAV il reste le
+     calcul du spectrogramme — une FFT sur toute la séance, longue sur une
+     veille de plusieurs heures — puis `rangerSeance()`. Le filet jeté ici,
+     une page tuée pendant l'analyse ou une base qui refuse l'écriture
+     perdaient la séance entière, alors que le son était déjà en sécurité.
+     Il ne sera lâché qu'après une écriture CONFIRMÉE. */
+  secoursPousser(true);
   cancelAnimationFrame(raf);clearInterval(clk);
   try{proc.disconnect();src.disconnect();}catch(e){}
   stream.getTracks().forEach(t=>t.stop());
@@ -658,15 +665,19 @@ async function rangerSeance(){
         detail:(e.mot? e.mot+' · ' : '')+(e.db!=null? e.db.toFixed(0)+' dB':'')+(e.note? ' · '+e.note:'')})) };
     await dbPutClip(clip);
     range=true;
+    secoursFini();      // écriture CONFIRMÉE : le filet ne sert plus (000aq)
     dire('<b style="color:var(--signal)">Séance rangée dans la bibliothèque</b> ('
       +(blob.size<1048576?(blob.size/1024).toFixed(0)+' Ko':(blob.size/1048576).toFixed(1)+' Mo')
       +') — <a href="../bibliotheque/" style="color:var(--signal)">y aller</a>. Le WAV reste exportable ici.');
   }catch(e){
     range=false;
+    /* le filet n'est PAS jeté : la séance reste récupérable depuis la
+       bibliothèque, et on le DIT — sans quoi « exporte tout de suite » se lit
+       comme « c'est ta dernière chance » (000aq) */
     dire('<b style="color:var(--flag)">Séance NON rangée</b> — '+(e&&e.name==='QuotaExceededError'
       ? 'il n\'y a plus de place sur l\'appareil. Fais du ménage dans la <a href="../bibliotheque/" style="color:var(--gold)">bibliothèque</a>, puis réessaie avec « Ranger dans la bibliothèque ».'
       : 'l\'appareil a refusé l\'écriture ('+(e&&e.name||'erreur')+'). ')
-      +' <b>Exporte le WAV tout de suite</b> pour ne rien perdre.');
+      +' <b>Exporte le WAV tout de suite</b> — et rien n\'est perdu : le son enregistré au fil de l\'eau reste en sécurité, la <a href="../bibliotheque/" style="color:var(--gold)">bibliothèque</a> proposera de récupérer cette séance.');
   }
 }
 /* le message doit s'afficher là où l'utilisateur se trouve : après un arrêt,
@@ -973,16 +984,16 @@ if(!navigator.mediaDevices||!navigator.mediaDevices.getUserMedia)
 })();
 </script>
 <script>if('serviceWorker' in navigator){window.addEventListener('load',function(){navigator.serviceWorker.register('/ghost-box/sw.js').catch(function(){});});}</script>
-<script src="/ghost-box/lib/nuit.js?v=52"></script>
-<script src="/ghost-box/lib/demarrage.js?v=52"></script>
-<script src="/ghost-box/lib/secours.js?v=52"></script>
-<script src="/ghost-box/lib/retour.js?v=52"></script>
-<script src="/ghost-box/lib/aide.js?v=52"></script>
-<script src="/ghost-box/lib/action.js?v=52"></script>
+<script src="/ghost-box/lib/nuit.js?v=53"></script>
+<script src="/ghost-box/lib/demarrage.js?v=53"></script>
+<script src="/ghost-box/lib/secours.js?v=53"></script>
+<script src="/ghost-box/lib/retour.js?v=53"></script>
+<script src="/ghost-box/lib/aide.js?v=53"></script>
+<script src="/ghost-box/lib/action.js?v=53"></script>
 <script>addEventListener('load',function(){ try{ GBAction.init(['#halt','#go']); }catch(e){} });</script>
-<script src="/ghost-box/lib/moteur.js?v=52"></script>
-<script src="/ghost-box/lib/mur.js?v=52"></script>
-<script src="/ghost-box/lib/wakelock.js?v=52"></script>
-<script src="/ghost-box/lib/fullscreen.js?v=52"></script>
+<script src="/ghost-box/lib/moteur.js?v=53"></script>
+<script src="/ghost-box/lib/mur.js?v=53"></script>
+<script src="/ghost-box/lib/wakelock.js?v=53"></script>
+<script src="/ghost-box/lib/fullscreen.js?v=53"></script>
 </body>
 </html>
