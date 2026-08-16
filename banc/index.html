@@ -12,7 +12,7 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="Ghost Box">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<link rel="stylesheet" href="/ghost-box/lib/fonts.css?v=48">
+<link rel="stylesheet" href="/ghost-box/lib/fonts.css?v=49">
 <style>
 :root{
   --bench:#141A1E;--panel:#1D262B;--sunk:#0A0F12;--line:#2C383F;--hair:#212B31;
@@ -240,7 +240,7 @@ video{display:none}
   font-family:var(--mono);font-size:9px;color:var(--signal);
   background:rgba(10,15,18,.75);padding:1px 4px;border-radius:2px;pointer-events:none}
 </style>
-<link rel="stylesheet" href="/ghost-box/lib/ambiance.css?v=48">
+<link rel="stylesheet" href="/ghost-box/lib/ambiance.css?v=49">
 </head>
 <body>
 <div class="wrap">
@@ -386,24 +386,24 @@ video{display:none}
 <video id="vid2" playsinline muted></video>
 </div>
 
-<script src="/ghost-box/lib/version.js?v=48"></script>
-<script src="/ghost-box/lib/nuit.js?v=48"></script>
-<script src="/ghost-box/lib/demarrage.js?v=48"></script>
-<script src="/ghost-box/lib/voix.js?v=48"></script>
-<script src="/ghost-box/lib/historique.js?v=48"></script>
-<script src="/ghost-box/lib/moteur.js?v=48"></script>
-<script src="/ghost-box/lib/recit.js?v=48"></script>
-<script src="/ghost-box/lib/spectre.js?v=48"></script>
-<script src="/ghost-box/lib/retour.js?v=48"></script>
-<script src="/ghost-box/lib/aide.js?v=48"></script>
-<script src="/ghost-box/lib/action.js?v=48"></script>
+<script src="/ghost-box/lib/version.js?v=49"></script>
+<script src="/ghost-box/lib/nuit.js?v=49"></script>
+<script src="/ghost-box/lib/demarrage.js?v=49"></script>
+<script src="/ghost-box/lib/voix.js?v=49"></script>
+<script src="/ghost-box/lib/historique.js?v=49"></script>
+<script src="/ghost-box/lib/moteur.js?v=49"></script>
+<script src="/ghost-box/lib/recit.js?v=49"></script>
+<script src="/ghost-box/lib/spectre.js?v=49"></script>
+<script src="/ghost-box/lib/retour.js?v=49"></script>
+<script src="/ghost-box/lib/aide.js?v=49"></script>
+<script src="/ghost-box/lib/action.js?v=49"></script>
 <script>addEventListener('load',function(){ try{ GBAction.init(['#run']); }catch(e){} });</script>
-<script src="/ghost-box/lib/torche.js?v=48"></script>
-<script src="/ghost-box/lib/lexique.js?v=48"></script>
-<script src="/ghost-box/lib/mur.js?v=48"></script>
-<script src="/ghost-box/lib/questions.js?v=48"></script>
-<script src="/ghost-box/lib/objectif.js?v=48"></script>
-<script src="/ghost-box/lib/fixe.js?v=48"></script>
+<script src="/ghost-box/lib/torche.js?v=49"></script>
+<script src="/ghost-box/lib/lexique.js?v=49"></script>
+<script src="/ghost-box/lib/mur.js?v=49"></script>
+<script src="/ghost-box/lib/questions.js?v=49"></script>
+<script src="/ghost-box/lib/objectif.js?v=49"></script>
+<script src="/ghost-box/lib/fixe.js?v=49"></script>
 <script>
 (() => {
 "use strict";
@@ -677,7 +677,13 @@ $('pCam').onclick = async () => {
        n'existe tant que rien n'a été demandé (8ter). */
     try{
       if(window.GBTampon && GBTampon.supporte() && !TAMPON){
-        TAMPON = GBTampon.creer({ secondes: 10, largeur: CW, hauteur: CH,
+        /* les dimensions de la PISTE, jamais celles de la vignette d'analyse :
+           le tampon enregistre le flux de la caméra, pas le canvas de mesure.
+           Calculer le débit sur 320×240 pendant qu'on encode du 720p, c'est
+           demander au codeur dix fois moins que ce qu'il lui faut. */
+        const rs=(()=>{ try{ return vstream.getVideoTracks()[0].getSettings()||{}; }catch(e){ return {}; } })();
+        TAMPON = GBTampon.creer({ secondes: 10,
+          largeur: rs.width||1280, hauteur: rs.height||720, images: Math.round(rs.frameRate||30),
           /* le filet : chaque morceau part dans la base au fur et à mesure,
              pour qu'une prise interrompue se récupère au retour (8quinquies) */
           onGarde: parts => { try{ if(SEC) parts.forEach(bl=>SEC.ajouter(bl)); }catch(e){} },
@@ -1738,7 +1744,7 @@ $('camAi').onclick=async ()=>{
   if(!camActive){ $('aiState').textContent="Active d'abord la caméra."; return; }
   $('aiState').textContent='Chargement du modèle (~5 Mo, une seule fois)…';
   try{
-    if(!POSE) POSE=await import('/ghost-box/lib/pose.js?v=48');
+    if(!POSE) POSE=await import('/ghost-box/lib/pose.js?v=49');
     await POSE.load();
     aiOn=true; $('camAi').className='act';
     $('aiState').innerHTML='Détection active — un squelette n\'apparaît que si une <b>personne réelle</b> est reconnue. Dans le noir, le modèle ne voit rien : c\'est normal.';
@@ -1965,12 +1971,13 @@ addEventListener('load',function(){ try{ GBCapture.init({label:'seance-capteurs'
 })();
 </script>
 <script>if('serviceWorker' in navigator){window.addEventListener('load',function(){navigator.serviceWorker.register('/ghost-box/sw.js').catch(function(){});});}</script>
-<script src="/ghost-box/lib/wakelock.js?v=48"></script>
-<script src="/ghost-box/lib/media.js?v=48"></script>
-<script src="/ghost-box/lib/capture.js?v=48"></script>
-<script src="/ghost-box/lib/tampon.js?v=48"></script>
-<script src="/ghost-box/lib/secours.js?v=48"></script>
-<script src="/ghost-box/lib/sillage.js?v=48"></script>
-<script src="/ghost-box/lib/fullscreen.js?v=48"></script>
+<script src="/ghost-box/lib/wakelock.js?v=49"></script>
+<script src="/ghost-box/lib/media.js?v=49"></script>
+<script src="/ghost-box/lib/capture.js?v=49"></script>
+<script src="/ghost-box/lib/encodage.js?v=49"></script>
+<script src="/ghost-box/lib/tampon.js?v=49"></script>
+<script src="/ghost-box/lib/secours.js?v=49"></script>
+<script src="/ghost-box/lib/sillage.js?v=49"></script>
+<script src="/ghost-box/lib/fullscreen.js?v=49"></script>
 </body>
 </html>

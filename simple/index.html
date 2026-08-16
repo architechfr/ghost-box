@@ -12,7 +12,7 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="Ghost Box">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<link rel="stylesheet" href="/ghost-box/lib/fonts.css?v=48">
+<link rel="stylesheet" href="/ghost-box/lib/fonts.css?v=49">
 <style>
 :root{
   --bench:#0A0F12;--panel:#141B20;--line:#2C383F;--hair:#1E262B;
@@ -284,7 +284,7 @@ body{margin:0;background:#000;color:var(--text);font-family:var(--body);
 }
 
 </style>
-<link rel="stylesheet" href="/ghost-box/lib/ambiance.css?v=48">
+<link rel="stylesheet" href="/ghost-box/lib/ambiance.css?v=49">
 </head>
 <body>
 <div id="app">
@@ -422,25 +422,26 @@ body{margin:0;background:#000;color:var(--text);font-family:var(--body);
 <div id="voile"></div>
 </div><!-- #app -->
 
-<script src="/ghost-box/lib/version.js?v=48"></script>
-<script src="/ghost-box/lib/nuit.js?v=48"></script>
-<script src="/ghost-box/lib/wakelock.js?v=48"></script>
-<script src="/ghost-box/lib/media.js?v=48"></script>
-<script src="/ghost-box/lib/moteur.js?v=48"></script>
-<script src="/ghost-box/lib/recit.js?v=48"></script>
-<script src="/ghost-box/lib/capteurs.js?v=48"></script>
-<script src="/ghost-box/lib/objectif.js?v=48"></script>
-<script src="/ghost-box/lib/qr.js?v=48"></script>
-<script src="/ghost-box/lib/croise.js?v=48"></script>
-<script src="/ghost-box/lib/torche.js?v=48"></script>
-<script src="/ghost-box/lib/lexique.js?v=48"></script>
-<script src="/ghost-box/lib/mur.js?v=48"></script>
-<script src="/ghost-box/lib/sillage.js?v=48"></script>
-<script src="/ghost-box/lib/voix.js?v=48"></script>
-<script src="/ghost-box/lib/historique.js?v=48"></script>
-<script src="/ghost-box/lib/tampon.js?v=48"></script>
-<script src="/ghost-box/lib/secours.js?v=48"></script>
-<script src="/ghost-box/lib/capture.js?v=48"></script>
+<script src="/ghost-box/lib/version.js?v=49"></script>
+<script src="/ghost-box/lib/nuit.js?v=49"></script>
+<script src="/ghost-box/lib/wakelock.js?v=49"></script>
+<script src="/ghost-box/lib/media.js?v=49"></script>
+<script src="/ghost-box/lib/moteur.js?v=49"></script>
+<script src="/ghost-box/lib/recit.js?v=49"></script>
+<script src="/ghost-box/lib/capteurs.js?v=49"></script>
+<script src="/ghost-box/lib/objectif.js?v=49"></script>
+<script src="/ghost-box/lib/qr.js?v=49"></script>
+<script src="/ghost-box/lib/croise.js?v=49"></script>
+<script src="/ghost-box/lib/torche.js?v=49"></script>
+<script src="/ghost-box/lib/lexique.js?v=49"></script>
+<script src="/ghost-box/lib/mur.js?v=49"></script>
+<script src="/ghost-box/lib/sillage.js?v=49"></script>
+<script src="/ghost-box/lib/voix.js?v=49"></script>
+<script src="/ghost-box/lib/historique.js?v=49"></script>
+<script src="/ghost-box/lib/encodage.js?v=49"></script>
+<script src="/ghost-box/lib/tampon.js?v=49"></script>
+<script src="/ghost-box/lib/secours.js?v=49"></script>
+<script src="/ghost-box/lib/capture.js?v=49"></script>
 <script>
 /* ═══════════════════════════════════════════════════════════════════════
    Séance simple — un écran, un bouton.
@@ -1212,7 +1213,23 @@ function monterTampon(){
   if(!autoOn || TAMP) return;
   if(!window.GBTampon || !GBTampon.supporte()) return;
   const flux=fluxAGarder(); if(!flux) return;
+  /* ══ LE DÉBIT DOIT ÊTRE IMPOSÉ, ET CALCULÉ SUR LES VRAIES DIMENSIONS ══
+     Défaut payé sur le terrain : « les vidéos sont une succession de pixels
+     grossiers, on ne voit même pas qui que ce soit. » `lib/tampon.js` ne
+     demande le débit calculé QUE si on lui donne largeur et hauteur ; sans
+     elles il retombe sur `{mimeType}` seul et le navigateur choisit — mesuré
+     à 3 Mbps sur du bruit en 720p, un tiers du nécessaire. Or une séance se
+     filme dans le noir au gain maximum, c'est-à-dire sur la matière la moins
+     compressible qui soit : le codeur jette alors l'image par blocs de 16
+     pixels, et ces blocs SONT ce qu'on voit. Le correctif de la règle 000ag
+     avait été appliqué à la séance caméra et jamais ici — et `encodage.js`
+     n'était même pas chargé dans cette page. Les dimensions viennent de la
+     PISTE : une constante ou un canvas d'analyse mentiraient dès que la
+     caméra ou l'objectif change. */
+  const rs=(()=>{ try{ return flux.getVideoTracks()[0].getSettings()||{}; }catch(e){ return {}; } })();
+  const rw=rs.width||1280, rh=rs.height||720, rfps=Math.round(rs.frameRate||30);
   TAMP=GBTampon.creer({ secondes: tamponSec,
+    largeur: rw, hauteur: rh, images: rfps,
     // filet anti-perte : chaque morceau est écrit au fil de l'eau dès qu'une
     // prise est en cours, donc une application tuée ne fait pas tout perdre
     onGarde: parts => { try{ if(SEC) parts.forEach(b=>SEC.ajouter(b)); }catch(e){} },
@@ -1346,10 +1363,10 @@ async function allumerDetection(quoi, silencieux){
   if(!silencieux) $('silAide').textContent='Chargement du modèle (une seule fois)…';
   try{
     if(quoi==='sil'){
-      if(!POSE) POSE = await import('/ghost-box/lib/pose.js?v=48');
+      if(!POSE) POSE = await import('/ghost-box/lib/pose.js?v=49');
       await POSE.load(); silOn=true; silVoulu=true; appliquerSeverite();
     } else {
-      if(!VIS) VIS = await import('/ghost-box/lib/visage.js?v=48');
+      if(!VIS) VIS = await import('/ghost-box/lib/visage.js?v=49');
       await VIS.load(); visOn=true; visVoulu=true; appliquerSeverite();
     }
     $('squelette').classList.add('on'); $('nbPers').classList.add('on');
