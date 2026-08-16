@@ -246,7 +246,7 @@ video{display:none}
 <div class="wrap">
 
 <p style="margin:14px 0 0"><a href="../" style="color:var(--dim);text-decoration:none;font-family:var(--mono);font-size:13px">← poste de terrain</a></p>
-<h1>Séance capteurs <span style="font-size:11px;color:var(--signal);letter-spacing:.12em">v20</span></h1>
+<h1>Séance capteurs <span style="font-size:11px;color:var(--signal);letter-spacing:.12em">v21</span></h1>
 <p class="sub">L'appareil est fait pour <b>se taire</b>. Il apprend le bruit normal du capteur, puis relève son seuil tant que ce bruit pourrait le faire parler. Un mot ne sort que si une mesure dépasse tout ce que l'appareil a vu de normal — <b>et le silence est le résultat attendu</b>. S'il n'y a rien, il n'y a rien.</p>
 
 <div class="step">
@@ -284,18 +284,24 @@ video{display:none}
 </div>
 
 <div class="step">
-  <div class="stepnum"><span class="n" id="n2">2</span><h2>Choisir la source</h2></div>
-  <div class="fld"><span class="lg">capteur</span><select id="src"></select></div>
-  <p class="ex">La seule grandeur que l'appareil surveillera. Un capteur par séance : mélanger les sources rend la trace impossible à interpréter.</p>
-
+  <div class="stepnum"><span class="n" id="n2">2</span><h2>Ce qui est surveillé</h2></div>
+  <!-- Retour de terrain (août 2026) : l'étape 1 faisait CROIRE que tout capteur
+       au vert était surveillé, alors qu'un menu en dessous imposait une seule
+       source. Désormais le réglage de départ surveille TOUT ce qui est activé :
+       autoriser un capteur, c'est le mettre en veille. -->
   <div class="row">
+    <button id="tIndep" class="tgl on">Tous les capteurs</button>
     <button id="tCoinc" class="tgl">Coïncidence</button>
-    <button id="tIndep" class="tgl">Indépendants</button>
+    <button id="tSeul" class="tgl">Un seul capteur</button>
   </div>
-  <p class="ex"><b>Coïncidence</b> : un mot ne sort que si PLUSIEURS capteurs s'écartent en même temps — le plus exigeant. <b>Indépendants</b> : plusieurs capteurs surveillés à la fois — son ET image par exemple — et <b>chacun peut faire sortir un mot seul</b>, avec son propre seuil auto-calibré. Le mot dit toujours quel capteur a parlé.</p>
-  <div id="coincWrap" style="display:none">
-    <p class="ex">Ne parle que si <b>plusieurs capteurs indépendants</b> s'écartent <b>en même temps</b> (dans ~0,7 s). Le bruit n'est pas corrélé entre des capteurs physiquement distincts ; un vrai événement dans la pièce, lui, peut l'être. Coche 2 ou 3 capteurs actifs — la sélection « capteur » ci-dessus est ignorée.</p>
+  <p class="ex"><b>Tous les capteurs</b> (réglage de départ) : chaque capteur activé à l'étape 1 est <b>réellement surveillé</b>, avec son propre seuil auto-calibré, et chacun peut faire sortir un mot seul — le mot dit toujours quel capteur a parlé. <b>Coïncidence</b> : un mot ne sort que si PLUSIEURS capteurs s'écartent en même temps — le plus exigeant. <b>Un seul capteur</b> : une seule grandeur surveillée, la trace la plus simple à lire.</p>
+  <div id="coincWrap">
+    <p class="ex" id="coincAide"></p>
     <div id="coincList" class="grid"></div>
+  </div>
+  <div id="seulWrap" style="display:none">
+    <div class="fld"><span class="lg">capteur</span><select id="src"></select></div>
+    <p class="ex">La seule grandeur que l'appareil surveillera.</p>
   </div>
 
   <p class="ex"><b>Aucun réglage de fréquence, aucun réglage de sensibilité.</b> Le seuil se calibre tout seul contre le bruit réel de ton appareil, et il <b>monte</b> chaque fois que ce bruit aurait suffi à faire sortir un mot. L'appareil parle si — et seulement si — une mesure dépasse tout ce qu'il a vu de normal. Combien de mots sortiront n'est pas un paramètre : c'est le <b>résultat</b>, et il est très souvent zéro.</p>
@@ -392,6 +398,7 @@ video{display:none}
 <script src="/ghost-box/lib/voix.js?v=49"></script>
 <script src="/ghost-box/lib/historique.js?v=49"></script>
 <script src="/ghost-box/lib/moteur.js?v=49"></script>
+<script src="/ghost-box/lib/zone.js?v=49"></script>
 <script src="/ghost-box/lib/recit.js?v=49"></script>
 <script src="/ghost-box/lib/spectre.js?v=49"></script>
 <script src="/ghost-box/lib/retour.js?v=49"></script>
@@ -450,6 +457,11 @@ reg('cam_lum','Luminance caméra','0-255','caméra non activée');
 reg('cam_diff','Mouvement image','%','caméra non activée');
 reg('cam_forme','Forme caméra','%','caméra non activée');
 reg('cam_forme2','Forme caméra 2','%','2e caméra non activée');
+/* la voie qui manquait au terrain : une petite lueur ou un voile léger passent
+   SOUS les voies globales (moyenne diluée, seuil pixel de 24 niveaux). Ici,
+   l'image est découpée en blocs et on mesure le bloc qui s'écarte le plus de
+   son fond — le module lib/zone.js dit pourquoi et comment, mesures à l'appui. */
+reg('cam_zone','Changement localisé','0-255','caméra non activée');
 reg('batterie','Batterie','%','—');
 reg('rtt','Latence réseau','ms','—');
 reg('debit','Débit estimé','Mb/s','—');
@@ -617,6 +629,7 @@ $('pMag').onclick = async () => {
 };
 
 let vstream=null, prevFrame=null, camBg=null, camActive=false, camBlob0=null;
+let ZONE=null, zoneBloc=null, zoneDepuis=0, tZoneVu=0;   // changement localisé (lib/zone.js)
 
 /* ═══ CAPTURE AUTOMATIQUE — le trou que ce mode avait ═══
    Constaté en séance réelle : « j'ai vu passer des silhouettes et il n'y a pas
@@ -668,6 +681,7 @@ $('pCam').onclick = async () => {
     const c=document.createElement('canvas'); c.width=CW; c.height=CH;
     const g=c.getContext('2d',{willReadFrequently:true});
     camActive=true; camStart=performance.now(); camLiveHits=0; camCtrlHits=0; mark('pCam',true);
+    ZONE = window.GBZone? GBZone.creer() : null; zoneBloc=null; zoneDepuis=0;
     try{GBWake.on();}catch(e){}
     curLens=(vstream.getVideoTracks()[0].getSettings()||{}).deviceId||null; listLenses();
     try{ GBTorche.adopter(vstream); }catch(e){}   // la lampe se pose sur CETTE piste
@@ -709,6 +723,8 @@ $('pCam').onclick = async () => {
       for(let j=0;j<px;j++){ if(Math.abs(cur[j]-camBg[j])>CAM_TH) mask[j]=1; camBg[j]+=0.02*(cur[j]-camBg[j]); }
       const live=largestBlob(mask,CW,CH), frac=live.size/px*100;
       push('cam_forme',frac); camBlob0=live;
+      // changement localisé : le bloc qui s'écarte le plus de son fond appris
+      if(ZONE){ const rz=ZONE.mesurer(cur); push('cam_zone', rz.val); zoneBloc=rz.bloc; }
       // témoin visuel : même détecteur sur un masque mélangé (structure détruite, bruit conservé)
       const cfrac=largestBlob(shuffleMask(mask),CW,CH).size/px*100;
       if(frac>=CAM_DET){ if(!camLiveOn){camLiveHits++;camLiveOn=true;} } else camLiveOn=false;
@@ -744,12 +760,12 @@ function stopCam(){
   // une prise automatique en cours doit être FERMÉE, pas abandonnée
   if(videoAuto) stopVideoAuto('caméra arrêtée');
   try{ if(TAMPON){ TAMPON.arreter(); TAMPON=null; } }catch(e){}
-  camActive=false; camBg=null; prevFrame=null;
+  camActive=false; camBg=null; prevFrame=null; ZONE=null; zoneBloc=null; zoneDepuis=0;
   const view=$('camView'); if(view){ view.style.display='none'; view.classList.remove('big'); }
   const hint=$('camHint'); if(hint) hint.style.display='none';
   const tag=$('camTag'); if(tag) tag.style.display='none';
   $('camWatch').textContent=''; markOff('pCam');
-  deactivate(['cam_lum','cam_diff','cam_forme']);
+  deactivate(['cam_lum','cam_diff','cam_forme','cam_zone']);
 }
 /* ═══ photo automatique ═══
    Prise à l'INSTANT de la détection, à partir de la vue analysée, squelette
@@ -778,6 +794,43 @@ function photoAuto(pourquoi, gens){
       personnes: gens? gens.length : 0
     }, voile ? {aveugle:true} : {conditions: etatCapteurs()}));
     if(H) H.noter('photo', voile ? 'capture automatique (séance à l\'aveugle)' : 'capture automatique — '+pourquoi);
+  }catch(e){}
+}
+
+/* ═══ photo sur anomalie VISUELLE (changement localisé) ═══
+   Composée à l'instant, à partir de l'image pleine résolution : le bloc en
+   cause encadré, les mesures écrites dessus — une preuve sans sa raison d'être
+   ne prouve rien (8duodecies-a). En aveugle : ni cadre ni mesures — l'image
+   est gardée, sa cause attendra la révélation (une photo annotée dirait
+   lequel des deux bras tournait). */
+function photoZone(wz){
+  if(!autoCap || !camActive) return;
+  const now=performance.now();
+  if(now-lastPhotoAuto < ANTI_PHOTO) return;
+  lastPhotoAuto=now;
+  try{
+    const v=$('vid'); if(!v || !v.videoWidth) return;
+    const c=document.createElement('canvas');
+    c.width=v.videoWidth; c.height=v.videoHeight;
+    const g=c.getContext('2d');
+    g.drawImage(v,0,0,c.width,c.height);
+    const voile=(blind && !revealed);
+    const motif='changement localisé — '+(+wz.v).toFixed(1)+' niveaux · '
+      +wz.z.toFixed(1)+' σ (seuil '+wz.thr.toFixed(1)+')';
+    if(!voile && zoneBloc){
+      const sx=c.width/CW, sy=c.height/CH, S2=Math.max(1,c.width/960);
+      g.strokeStyle='#E9B44C'; g.lineWidth=Math.max(2,2*S2);
+      g.strokeRect(zoneBloc.x*sx, zoneBloc.y*sy, zoneBloc.w*sx, zoneBloc.h*sy);
+      g.fillStyle='rgba(10,15,18,.72)'; g.fillRect(0,0,c.width,26*S2);
+      g.fillStyle='#E9B44C'; g.font='600 '+(13*S2|0)+'px monospace';
+      g.fillText('CHANGEMENT LOCALISÉ — '+(+wz.v).toFixed(1)+' NIV · '
+        +wz.z.toFixed(1)+' σ (SEUIL '+wz.thr.toFixed(1)+')', 8*S2, 8*S2);
+    }
+    GBCapture.photoCanvas(c, Object.assign({ auto:true,
+      motif: voile? 'capture automatique' : motif },
+      voile? {aveugle:true} : {conditions: etatCapteurs()}));
+    if(H) H.noter('photo', voile? 'capture automatique (séance à l\'aveugle)'
+                                : 'capture automatique — '+motif);
   }catch(e){}
 }
 
@@ -967,6 +1020,9 @@ function fillSrc(){
     sel.appendChild(o);
   });
   if(cur) sel.value=cur;
+  // un capteur qui vient de s'activer entre en surveillance de lui-même :
+  // c'est ce que le bouton vert de l'étape 1 a toujours laissé croire
+  autoCocher();
   if(coinc||indep) updateCoinc();
   checkReady();
 }
@@ -979,7 +1035,7 @@ function checkReady(){
   $('run').disabled = running ? false : !ok;   // en veille, le bouton « Arrêter » reste actif
   $('n2').className = ok? 'n done':'n';
   if(!running) $('deriv').innerHTML = ok
-    ? 'Prêt. <b>'+esc(lbl)+'</b>'+(coinc?' (coïncidence)':(indep?' (indépendants)':''))+' — observé '+$('learn').value+' s avant toute émission.'
+    ? 'Prêt. <b>'+esc(lbl)+'</b>'+(coinc?' (coïncidence)':(indep?' — chaque capteur peut parler seul':''))+' — observé '+$('learn').value+' s avant toute émission.'
     : (coinc?'Coche au moins deux capteurs actifs.':(indep?'Coche au moins un capteur actif.':'Choisis un capteur actif dans la liste.'));
 }
 function remplirClasses(){
@@ -995,11 +1051,21 @@ function remplirClasses(){
     $('learn').value=s; ['lr30','lr60','lr120'].forEach(x=>$(x).classList.remove('on'));
     $(id).classList.add('on'); checkReady(); };
 });
-let speak=false, blind=false, coinc=false, indep=false;
+let speak=false, blind=false, coinc=false, indep=true;   // « tous les capteurs » est le réglage de départ
 let SIL=null, VIE=null, tVie=0, sillageEnAttente=null;
 const coincSel=new Set();
 $('tSpeak').onclick=e=>{speak=!speak;e.target.classList.toggle('on',speak);};
 $('tBlind').onclick=e=>{blind=!blind;e.target.classList.toggle('on',blind);};
+/* les capteurs qu'on a DÉCOCHÉS à la main : la coche automatique ne doit pas
+   les remettre en douce — un choix de l'utilisateur ne se défait pas tout seul */
+const coincOff=new Set();
+/* tout capteur actif rejoint la surveillance de lui-même (modes tous/coïncidence) */
+function autoCocher(){
+  if(!(indep||coinc)) return;
+  Object.values(S).forEach(s=>{
+    if(s.ok && LENT.indexOf(s.code)<0 && !coincOff.has(s.code)) coincSel.add(s.code);
+  });
+}
 /* La capture automatique est ALLUMÉE par défaut — c'est le comportement qui
    évite de perdre ce qui passe devant un téléphone posé — mais elle se coupe,
    et l'écran dit dans quel état elle est. Jamais de décision muette. */
@@ -1010,19 +1076,33 @@ $('tAuto').onclick=e=>{
   if(!autoCap && videoAuto) stopVideoAuto('capture automatique coupée');
   if(H) H.noter('reglage', 'capture automatique '+(autoCap?'allumée':'coupée'));
 };
-$('tCoinc').onclick=e=>{ coinc=!coinc; if(coinc){ indep=false; $('tIndep').classList.remove('on'); }
-  e.target.classList.toggle('on',coinc);
-  $('coincWrap').style.display=(coinc||indep)?'block':'none'; updateCoinc(); checkReady(); };
-$('tIndep').onclick=e=>{ indep=!indep; if(indep){ coinc=false; $('tCoinc').classList.remove('on'); }
-  e.target.classList.toggle('on',indep);
-  $('coincWrap').style.display=(coinc||indep)?'block':'none'; updateCoinc(); checkReady(); };
+/* trois modes, UN seul actif à la fois : cliquer un mode le choisit, il ne
+   l'éteint pas — une séance a toujours un mode, un bouton qui « toggle »
+   laissait l'écran sans aucun */
+function setMode(m){
+  indep = (m==='indep'); coinc = (m==='coinc');
+  $('tIndep').classList.toggle('on', indep);
+  $('tCoinc').classList.toggle('on', coinc);
+  $('tSeul').classList.toggle('on', !indep && !coinc);
+  $('coincWrap').style.display=(coinc||indep)?'block':'none';
+  $('seulWrap').style.display=(coinc||indep)?'none':'block';
+  $('coincAide').innerHTML = coinc
+    ? 'Ne parle que si <b>plusieurs capteurs</b> s\'écartent <b>en même temps</b> (dans ~0,7 s). Le bruit n\'est pas corrélé entre des capteurs physiquement distincts ; un vrai événement dans la pièce, lui, peut l\'être. Coche 2 ou 3 capteurs actifs.'
+    : 'Les capteurs surveillés. <b>Tout capteur activé à l\'étape 1 s\'ajoute ici tout seul</b> ; décoche ceux que tu veux écarter.';
+  autoCocher(); updateCoinc(); checkReady();
+}
+$('tIndep').onclick=()=>setMode('indep');
+$('tCoinc').onclick=()=>setMode('coinc');
+$('tSeul').onclick=()=>setMode('seul');
 function checkedCoinc(){ return [...coincSel].filter(c=>S[c]&&S[c].ok); }
 function updateCoinc(){
   const box=$('coincList'); if(!box) return; box.innerHTML='';
   Object.values(S).filter(s=>s.ok && LENT.indexOf(s.code)<0).forEach(s=>{
     const b=document.createElement('button'); b.textContent=s.label;
     b.className='tgl'+(coincSel.has(s.code)?' on':'');
-    b.onclick=()=>{ if(coincSel.has(s.code)) coincSel.delete(s.code); else coincSel.add(s.code);
+    b.onclick=()=>{
+      if(coincSel.has(s.code)){ coincSel.delete(s.code); coincOff.add(s.code); }
+      else { coincSel.add(s.code); coincOff.delete(s.code); }
       b.classList.toggle('on'); checkReady(); };
     box.appendChild(b);
   });
@@ -1097,7 +1177,7 @@ function start(){
    en 300 relevés — médiane 14, et JAMAIS zéro. Le
    banc a un avantage sur les autres modes : il sait tout recommencer proprement.
    Il RELANCE donc l'apprentissage complet, et le dit. */
-const VOIES_CAM = ['cam_lum','cam_diff','cam_forme'];
+const VOIES_CAM = ['cam_lum','cam_diff','cam_forme','cam_zone'];
 GBTorche.brancher($('pTorche'));
 $('torcheAide').textContent = GBTorche.auRepos();
 GBTorche.surChangement((etat, info)=>{
@@ -1111,6 +1191,7 @@ GBTorche.surChangement((etat, info)=>{
   if(surCam){
     W.forEach(w => { w.samples=[]; w.noise=[]; w.persist=0; w.cPersist=0;
                      w.raises=0; w.thr=8; w.lastAbove=-1e9; });
+    try{ if(ZONE) ZONE.raz(); }catch(e){}  // le fond de blocs ne décrit plus ce lieu-là
     phase='learn'; tPhase=performance.now(); tWatch=0;
     txt += ' Une voie caméra est en veille : sa normale apprise ne décrit plus le lieu. '
          + "L'apprentissage recommence en entier — se taire est la seule réponse honnête à "
@@ -1273,6 +1354,31 @@ function tick(){
   const waited  = (now-lastEmit) >= gap;
 
   $('state').textContent = settled? 'en veille' : 'stabilisation';
+
+  /* ── anomalie visuelle : la preuve part AVANT le mot ──
+     Retour de terrain : une tache lumineuse passée devant la caméra posée n'a
+     laissé aucune trace. La voie « changement localisé » qui tient son seuil
+     depuis 2 relevés (~200 ms) déclenche donc la photo tout de suite — une
+     tache furtive ne durera peut-être pas les 4 relevés qu'exige un mot, mais
+     elle laisse déjà sa preuve, bloc encadré et mesures incrustées. Si l'écart
+     PERSISTE plus de 4 s, la vidéo prend le relais avec les secondes d'avant
+     (8ter). Même anti-rafale de 12 s que la silhouette. Le SEUIL, lui, reste
+     celui du moteur : rien n'est baissé, c'est la persistance exigée qui est
+     moindre pour une photo que pour un mot. */
+  const wz = W.find(w=>w.code==='cam_zone');
+  if(settled && wz){
+    if(wz.z>=wz.thr && wz.persist>=2){
+      if(!zoneDepuis) zoneDepuis=now;
+      photoZone(wz);
+      if(now-zoneDepuis>=SILH_VIDEO && !videoAuto)
+        startVideoAuto('changement localisé persistant ('+Math.round((now-zoneDepuis)/1000)+' s)');
+      tZoneVu=now;
+    } else if(zoneDepuis && now-tZoneVu>SILH_FIN){
+      zoneDepuis=0;
+      if(videoAuto && motifPrise.indexOf('changement localisé')===0)
+        stopVideoAuto('changement localisé terminé');
+    }
+  }
 
   if(settled && ready && waited){
     lastEmit=now; for(const w of W) w.persist=0; emit(now, indep? [primary] : W);
@@ -1487,14 +1593,12 @@ addEventListener('load',()=>{
       {texte:'Mouvement',        faire:()=>C('#pMotion')},
       {texte:'Champ magnétique', faire:()=>C('#pMag')},
       {texte:'Caméra',           faire:()=>C('#pCam'), attendre:900},
-      {texte:'Voies indépendantes', faire:()=>{
+      {texte:'Tous les capteurs surveillés', faire:()=>{
+        // c'est le réglage de départ de la page, mais on le RÉAFFIRME : le
+        // démarrage direct doit donner le même poste quel que soit l'état
+        // dans lequel la page a été laissée
         if(!indep) C('#tIndep');
-        // cocher TOUTES les voies actives : en mode indépendants, chacune peut
-        // parler seule, et l'utilisateur n'a aucune raison d'en écarter une
-        // à l'aveugle avant d'avoir commencé. Sans ce geste, « Lancer la
-        // veille » reste désactivé et le démarrage direct s'arrête là.
-        Object.values(S).filter(s=>s.ok && LENT.indexOf(s.code)<0).forEach(s=>coincSel.add(s.code));
-        updateCoinc(); checkReady();
+        autoCocher(); updateCoinc(); checkReady();
       }},
       {texte:'Spectre audio',    faire:()=>{ if(!spectreOn) C('#spectreBtn'); }},
       {texte:'Mur de mots',      faire:()=>{ if(!MUR) C('#murBtn'); }, attendre:700},
@@ -1820,6 +1924,7 @@ async function useLens(id){
     vstream=await navigator.mediaDevices.getUserMedia({video:{deviceId:{exact:id},width:{ideal:1280}},audio:false});
     const v=$('vid'); v.srcObject=vstream; await v.play().catch(()=>{});
     curLens=id; camBg=null;
+    try{ if(ZONE) ZONE.raz(); }catch(e){}  // autre objectif = autre fond
     return true;
   }catch(e){ $('twoState').innerHTML='<b style="color:var(--flag)">Objectif refusé.</b> '+(window.GBMedia?GBMedia.explain(e):'');
     return false; }
@@ -1954,7 +2059,7 @@ $('camHide').onclick=()=>{
   $('camHide').textContent = camHidden? 'Afficher la vue' : 'Masquer la vue';
 };
 
-buildCards(); setInterval(paintCards,150); checkReady(); drawZ(0);
+buildCards(); setInterval(paintCards,150); setMode('indep'); drawZ(0);
 
 
 /* Une caméra retenue par une page en arrière-plan bloque TOUS les autres modes.

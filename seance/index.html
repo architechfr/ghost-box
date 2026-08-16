@@ -149,7 +149,7 @@ body.filming #live{padding-right:92px}
 <body>
 
 <div class="top"><div class="topin">
-  <a href="../">←</a><h1>Séance caméra <span style="font-size:10px;color:var(--signal)">v4</span></h1>
+  <a href="../">←</a><h1>Séance caméra <span style="font-size:10px;color:var(--signal)">v5</span></h1>
   <span class="lg" id="phase">à préparer</span>
 </div></div>
 
@@ -211,7 +211,7 @@ body.filming #live{padding-right:92px}
   <button id="torchBtn">Torche</button>
 </div>
 <p id="torchState" class="ex"></p>
-<p id="autoState" class="ex"><b>Capture auto</b> : quand la détection confirme une silhouette, une <b>photo part toute seule</b> — une apparition furtive ne laisse pas le temps d'appuyer. Si la personne <b>reste plus de 4 secondes</b>, l'enregistrement vidéo démarre tout seul et s'arrête peu après sa disparition. Tout est noté dans le journal. Nécessite la détection de personne allumée.</p>
+<p id="autoState" class="ex"><b>Capture auto</b> : quand la détection confirme une silhouette <b>ou qu'un changement localisé dépasse son seuil</b> (petite lueur, voile léger — la voie « zone »), une <b>photo part toute seule</b> — une apparition furtive ne laisse pas le temps d'appuyer. Si ça <b>reste plus de 4 secondes</b>, l'enregistrement vidéo démarre tout seul et s'arrête peu après la disparition. Tout est noté dans le journal, mesures comprises. La silhouette nécessite la détection de personne allumée ; le changement localisé, lui, marche toujours.</p>
 <p id="murState" class="ex">Le <b>mur de mots</b> montre tout le vocabulaire à l'écran, en colonnes qui défilent. Écran tourné vers la pièce, il rend visible ce que l'appareil peut dire — et quand une mesure dépasse le seuil, il se fige à cet instant sur un mot. Les vitesses tournent entre les colonnes : aucune famille n'est durablement la plus rapide.</p>
 <p id="incrustState" class="ex"><b>Incrustation allumée</b> : la vidéo enregistrée contient l'heure, le lieu, le niveau sonore, les squelettes et les mots. Éteinte, c'est l'image brute de la caméra principale, sans rien dessus.</p>
 <p id="aiState" class="ex"></p>
@@ -240,6 +240,7 @@ body.filming #live{padding-right:92px}
 <script src="/ghost-box/lib/voix.js?v=49"></script>
 <script src="/ghost-box/lib/historique.js?v=49"></script>
 <script src="/ghost-box/lib/moteur.js?v=49"></script>
+<script src="/ghost-box/lib/zone.js?v=49"></script>
 <script src="/ghost-box/lib/retour.js?v=49"></script>
 <script src="/ghost-box/lib/aide.js?v=49"></script>
 <script src="/ghost-box/lib/action.js?v=49"></script>
@@ -382,6 +383,7 @@ async function useLens(id){
     // même objectif (NotReadableError garanti sur Android)
     try{ GBTorche.adopter(vstream); }catch(e){}
     sizeStage(); bg=null;
+    if(ZS) ZS.raz();      // autre objectif = autre fond de blocs, repris à l'image suivante
     return true;
   }catch(e){ $('prepState').innerHTML='<b style="color:var(--flag)">Caméra indisponible.</b> '+(window.GBMedia?GBMedia.explain(e):'Accès impossible.');
     return false; }
@@ -546,8 +548,9 @@ function hud(now, frac){
   const lvl=Math.max(0,Math.min(1,(level+70)/60));
   const pers=(function(){ let n=0; for(let i=0;i<poseVues.length;i++){ const pv=poseVues[i];
     if(pv && now-pv.t<900) n+=pv.people.length; } return n; })();
-  const seuils = (WA.ready||WM.ready)
-    ? (WA.ready? WA.thr.toFixed(1):'—')+' / '+(WM.ready? WM.thr.toFixed(1):'—')+' σ'
+  const seuils = (WA.ready||WM.ready||WZ.ready)
+    ? (WA.ready? WA.thr.toFixed(1):'—')+' / '+(WM.ready? WM.thr.toFixed(1):'—')
+      +' / '+(WZ.ready? WZ.thr.toFixed(1):'—')+' σ'
     : 'non armés';
   const l1 = chip('temps', tStart? duree((now-tStart)/1000) : '—', 'on')
     + (recording? chip('rec', fmt((now-recStart)/1000)+(prerollDernier?' +'+prerollDernier+'s':''), 'rec') : '')
@@ -660,7 +663,8 @@ let autoIncrustForcee=false;
 function etatCapteursSeance(){
   return { seuil_son:(WA&&WA.ready? +WA.thr.toFixed(2):null),
            seuil_image:(WM&&WM.ready? +WM.thr.toFixed(2):null),
-           relevages_temoin:(WA?WA.raises:0)+(WM?WM.raises:0),
+           seuil_zone:(WZ&&WZ.ready? +WZ.thr.toFixed(2):null),
+           relevages_temoin:(WA?WA.raises:0)+(WM?WM.raises:0)+(WZ?WZ.raises:0),
            presence:mHits, temoin_bruit:cHits };
 }
 $('autoBtn').className = autoCap? 'act':'';
@@ -747,6 +751,69 @@ function autoTic(now, quelquun){
   }
 }
 
+/* ── capture sur anomalie VISUELLE (changement localisé) ──
+   Retour de terrain : une tache lumineuse passée devant la caméra posée n'a
+   rien laissé. Même logique que la silhouette (autoTic), mais le déclencheur
+   est la voie « zone » du moteur : seuil auto-calibré tenu depuis 2 relevés
+   (~200 ms) → photo immédiate, bloc encadré et mesures incrustées ; l'écart
+   PERSISTE plus de 4 s → l'enregistrement démarre seul. Le seuil du moteur
+   n'est pas baissé — seule la persistance exigée est moindre pour une photo
+   (200 ms) que pour un mot (400 ms) : une tache furtive mérite sa preuve.
+   Ne dépend PAS de la détection de personne : une lueur n'est pas un corps. */
+let zPresent=false, zDebut=0, zAbsence=0, zRecEnCours=false;
+function photoPreuveZone(now){
+  const v=$('vid'); if(!v || !v.videoWidth){ try{ GBCapture.photo(); }catch(e){} return; }
+  const c=document.createElement('canvas');
+  c.width=v.videoWidth; c.height=v.videoHeight;
+  const gg=c.getContext('2d'), S2=Math.max(1,c.width/960);
+  gg.drawImage(v,0,0,c.width,c.height);
+  if(zbox){
+    const sx=c.width/64, sy=c.height/48;
+    gg.strokeStyle='#E9B44C'; gg.lineWidth=Math.max(2,2*S2);
+    gg.strokeRect(zbox.x*sx, zbox.y*sy, zbox.w*sx, zbox.h*sy);
+  }
+  gg.fillStyle='rgba(10,15,18,.72)'; gg.fillRect(0,0,c.width,26*S2);
+  gg.fillStyle='#E9B44C'; gg.font='600 '+(13*S2|0)+'px monospace';
+  gg.fillText('CAPTURE AUTO — CHANGEMENT LOCALISÉ '+(+WZ.v).toFixed(1)+' NIV · '
+    +WZ.z.toFixed(1)+' σ (SEUIL '+WZ.thr.toFixed(1)+')', 8*S2, 8*S2);
+  const fiche={ declencheur:'changement localisé', niveaux:+(+WZ.v).toFixed(1),
+    sigma:+WZ.z.toFixed(1), seuil:+WZ.thr.toFixed(2),
+    capteurs:(typeof etatCapteursSeance==='function'? etatCapteursSeance() : undefined) };
+  try{ GBCapture.photoCanvas(c, fiche); }catch(e){ try{ GBCapture.photo(); }catch(e2){} }
+}
+function zoneTic(now){
+  if(!autoCap || !ZS || !WZ.ready) return;
+  const chaud = WZ.z>=WZ.thr && WZ.persist>=2;
+  if(chaud){
+    zAbsence=0;
+    if(!zPresent){
+      zPresent=true; zDebut=now;
+      if(now-autoDernierePhoto>AUTO_PHOTO_GAP){
+        autoDernierePhoto=now;
+        photoPreuveZone(now);
+        addJ(now,'auto','photo déclenchée — changement localisé '+(+WZ.v).toFixed(1)
+          +' niveaux · '+WZ.z.toFixed(1)+' σ (seuil '+WZ.thr.toFixed(1)+')');
+      }
+    } else if(now-zDebut>AUTO_VIDEO_APRES && !recording){
+      zRecEnCours=true;
+      addJ(now,'auto','enregistrement déclenché — le changement localisé persiste ('
+        +Math.round((now-zDebut)/1000)+' s)');
+      try{ $('recBtn').click(); }catch(e){}
+    }
+  } else if(zPresent){
+    if(!zAbsence) zAbsence=now;
+    if(now-zAbsence>AUTO_STOP_APRES){
+      zPresent=false; zAbsence=0;
+      if(zRecEnCours && recording){
+        zRecEnCours=false;
+        addJ(now,'auto','enregistrement arrêté — changement localisé terminé depuis '
+          +Math.round(AUTO_STOP_APRES/1000)+' s');
+        try{ $('recBtn').click(); }catch(e){}
+      }
+    }
+  }
+}
+
 let POSE=null, aiOn=false, lastPeople=null, lastPoseT=-1e9, lastPoseVue=0;
 /* Une détection par image, en tournant sur les vues : le modèle ne peut pas
    analyser quatre flux en même temps sans tout ralentir. Chaque vue garde donc
@@ -784,7 +851,13 @@ $('aiBtn').onclick=async ()=>{
     })();
   }catch(e){ aiOn=false; $('aiBtn').className=''; $('aiState').textContent='Modèle indisponible (réseau ?). Tout le reste fonctionne.'; }
 };
-let WA=mkW('audio','Niveau sonore'), WM=mkW('mouvement','Mouvement');
+let WA=mkW('audio','Niveau sonore'), WM=mkW('mouvement','Mouvement'),
+    WZ=mkW('zone','Changement localisé');
+/* WZ : la voie qui manquait au terrain — une petite lueur ou un voile léger
+   passent SOUS « Mouvement » (moyenne diluée, seuil pixel). lib/zone.js
+   découpe l'image en blocs et mesure le bloc qui s'écarte le plus de son
+   fond ; le moteur garde son seuil auto et son témoin, rien n'est baissé. */
+let ZS=null, zbox=null, zboxT=-1e9;
 let learning=false, tLearn=0, LEARN_MS=45000, tReady=0;
 const cv=$('stage'), g=cv.getContext('2d');
 let lastWord=null, lastWordT=-1e9, lastWordTest=false, lastEmit=-1e9, recentIdx=[], journal=[], H=null;
@@ -805,7 +878,9 @@ $('torchState').textContent = GBTorche.auRepos();
 GBTorche.surChangement((etat, info)=>{
   if(vstream) GBTorche.adopter(vstream);
   bg = null;                               // le fond de comparaison d'image est faux, lui aussi
+  if(ZS) ZS.raz();                         // le fond de blocs aussi
   if(WM) M.relancer(WM, REAPP_CAM);
+  if(WZ) M.relancer(WZ, REAPP_CAM);
   const txt = (etat ? 'Torche allumée' : 'Torche éteinte')
     + (info && info.erreur ? ' — ' + info.erreur : '')
     + ' · la voie image efface sa normale et réapprend le lieu ' + (etat ? 'éclairé' : 'sombre')
@@ -822,6 +897,8 @@ $('prep').onclick=async ()=>{
   catch(e){ sonKO(e); }
   sizeStage();
   WA=mkW('audio','Niveau sonore'); WM=mkW('mouvement','Mouvement');
+  WZ=mkW('zone','Changement localisé');
+  ZS = window.GBZone? GBZone.creer() : null; zbox=null;
   try{ H=GBHistorique.ouvrir({ mode:'séance caméra', lieu:($('lieu').value||'') }); }catch(e){ H=null; }
   learning=true; tLearn=performance.now(); tStart=tLearn; bg=null; mHits=0; cHits=0;
   $('prep').className='act'; $('prep').textContent='Caméra active';
@@ -872,7 +949,7 @@ function measure(tok){
   // Une analyse en pause n'est PAS un silence : on ne l'annonce pas comme tel.
   if(anaVive && (level<-85 || !micVivant())) silence++; else silence=0;
   // mouvement
-  const v=$('vid'); let frac=0;
+  const v=$('vid'); let frac=0, zval=0;
   if(v.videoWidth){
     mg.drawImage(v,0,0,64,48);
     const im=mg.getImageData(0,0,64,48).data, px=64*48, cur=new Float32Array(px);
@@ -884,27 +961,33 @@ function measure(tok){
     const cf=largestBlob(shuffled(mask),64,48).size/px*100;
     if(frac>=4.5){ if(!mOn){mHits++;mOn=true;} box=b; lastPresence=now; } else { mOn=false; box=null; }
     if(cf>=4.5){ if(!cOn){cHits++;cOn=true;} } else cOn=false;
+    // changement localisé : le bloc qui s'écarte le plus de son fond appris —
+    // c'est lui qui voit la petite lueur et le voile léger que « mouvement » noie
+    if(ZS){ const rz=ZS.mesurer(cur); zval=rz.val; if(rz.bloc) zbox=rz.bloc; }
   }
   // moteur
   if(learning){
-    feed(WA,level,true); feed(WM,frac,true);
+    feed(WA,level,true); feed(WM,frac,true); if(ZS) feed(WZ,zval,true);
     if(now-tLearn>=LEARN_MS){
-      const a=seal(WA), m=seal(WM);
+      const a=seal(WA), m=seal(WM), z=ZS? seal(WZ) : false;
       learning=false; tReady=now;
       $('phase').textContent='prêt';
-      $('prepState').innerHTML = (a||m)
-        ? 'Prêt à tourner. Témoins armés : <b>'+[a?'son':'',m?'image':''].filter(Boolean).join(' + ')
+      $('prepState').innerHTML = (a||m||z)
+        ? 'Prêt à tourner. Témoins armés : <b>'+[a?'son':'',m?'image':'',z?'zone':''].filter(Boolean).join(' + ')
           +'</b> — l\'appareil ne parlera que si une mesure dépasse tout ce qu\'il a vu de normal.'
         : 'Aucun témoin armé — les mesures n\'ont pas varié d\'un cheveu (micro absent, image figée). '
           +'<b>Le tournage fonctionne quand même</b> : image, son et détection de personne sont enregistrés, '
           +'simplement aucun mot ne peut sortir. C\'est la règle : sans bruit à comparer, on se tait.';
     }
   } else {
-    const fa=WA.ready&&feed(WA,level,false), fm=WM.ready&&feed(WM,frac,false);
+    const fa=WA.ready&&feed(WA,level,false), fm=WM.ready&&feed(WM,frac,false),
+          fz=WZ.ready&&ZS&&feed(WZ,zval,false);
+    // l'anomalie visuelle laisse sa preuve — photo tout de suite, vidéo si ça dure
+    zoneTic(now);
     // seul délai conservé : empêcher qu'UN MÊME événement physique produise une rafale.
     // Ce n'est pas un quota — rien ne garantit qu'un mot sortira un jour.
-    if((fa||fm) && (now-tReady)>20000 && (now-lastEmit)>=ANTI_RAFALE && MOTS.length){
-      lastEmit=now; emitWord(fa?WA:WM, now, false);
+    if((fa||fm||fz) && (now-tReady)>20000 && (now-lastEmit)>=ANTI_RAFALE && MOTS.length){
+      lastEmit=now; emitWord(fa?WA:(fm?WM:WZ), now, false);
     }
   }
   const mute = silence>50   // 5 s de silence complet : ce n'est pas une ambiance, c'est une panne
@@ -914,10 +997,12 @@ function measure(tok){
   if(filming){ hud(now, frac); }
   else $('live').innerHTML = learning
     ? 'Apprentissage — reste <b>'+Math.ceil((LEARN_MS-(now-tLearn))/1000)+' s</b>. Niveau '+level.toFixed(0)+' dBFS, mouvement '+frac.toFixed(1)+' %.'+mute+cams+depuis
-    : 'Niveau <b>'+level.toFixed(0)+'</b> dBFS · mouvement <b>'+frac.toFixed(1)+'</b> % · seuils auto : son '
+    : 'Niveau <b>'+level.toFixed(0)+'</b> dBFS · mouvement <b>'+frac.toFixed(1)+'</b> % · zone <b>'+zval.toFixed(1)+'</b> niv · seuils auto : son '
       +(WA.ready? WA.thr.toFixed(1)+' σ' : 'non armé')+', image '
       +(M.reste(WM)? '<b style="color:var(--gold)">réapprend, '+Math.ceil(M.reste(WM)/10)+' s</b>'
                    : (WM.ready? WM.thr.toFixed(1)+' σ' : 'non armé'))
+      +', zone '+(M.reste(WZ)? '<b style="color:var(--gold)">réapprend, '+Math.ceil(M.reste(WZ)/10)+' s</b>'
+                   : (WZ.ready? WZ.thr.toFixed(1)+' σ' : 'non armée'))
       +' (relevés '+(WA.raises+WM.raises)+'×) · présence '
       +mHits+'× vs témoin de bruit '+cHits+'×'+mute+cams+depuis;
   setTimeout(()=>measure(tok),100);
@@ -986,7 +1071,7 @@ function renderJ(){
 $('clrJ').onclick=()=>{ journal=[]; renderJ(); };
 $('expJ').onclick=()=>{
   const b=new Blob([JSON.stringify({lieu:$('lieu').value||'—',date:new Date().toISOString(),
-    seuil_son:+WA.thr.toFixed(2),seuil_image:+WM.thr.toFixed(2),
+    seuil_son:+WA.thr.toFixed(2),seuil_image:+WM.thr.toFixed(2),seuil_zone:+WZ.thr.toFixed(2),
     presence:mHits,temoin_bruit:cHits,evenements:[...journal].reverse()},null,1)],{type:'application/json'});
   const u=URL.createObjectURL(b),a=document.createElement('a');
   a.href=u;a.download='tournage-'+stamp()+'.json';a.click();setTimeout(()=>URL.revokeObjectURL(u),4000);
@@ -1042,6 +1127,15 @@ function render(tok){
     g.strokeRect(box.minx*sx, box.miny*sy, (box.maxx-box.minx+1)*sx, (box.maxy-box.miny+1)*sy);
     g.fillStyle='#5FD3A6'; g.font=(13*S|0)+'px monospace';
     g.fillText('MOUVEMENT', box.minx*sx, Math.max(0,box.miny*sy-16*S));
+  }
+  // changement localisé : le bloc en cause, encadré SEULEMENT quand la voie
+  // dépasse réellement son seuil — un cadre permanent serait une invention
+  if(WZ && WZ.ready && WZ.z>=WZ.thr && zbox){
+    const sx=vW/64, sy=vH/48;
+    g.strokeStyle='#E9B44C'; g.lineWidth=2*S;
+    g.strokeRect(zbox.x*sx, zbox.y*sy, zbox.w*sx, zbox.h*sy);
+    g.fillStyle='#E9B44C'; g.font=(13*S|0)+'px monospace';
+    g.fillText('CHANGEMENT '+WZ.z.toFixed(1)+' σ', zbox.x*sx, Math.min(vH-14*S, zbox.y*sy+zbox.h*sy+4*S));
   }
   // squelette réel, incrusté dans l'image enregistrée (seulement si une personne est détectée)
   if(aiOn){
@@ -1272,7 +1366,8 @@ async function sauver(blob, type, dur, preroll){
     // l'état des témoins au moment de la sauvegarde : un fichier seul, dans un an,
     // doit encore dire dans quelles conditions il est né
     capteurs:{ seuil_son:(WA.ready? +WA.thr.toFixed(2):null), seuil_image:(WM.ready? +WM.thr.toFixed(2):null),
-      relevages_temoin:WA.raises+WM.raises, presence:mHits, temoin_bruit:cHits,
+      seuil_zone:(WZ.ready? +WZ.thr.toFixed(2):null),
+      relevages_temoin:WA.raises+WM.raises+WZ.raises, presence:mHits, temoin_bruit:cHits,
       detection_personne:aiOn, capture_auto:autoCap, incrustation:incrust,
       phrase:(MUR? MUR.phrase(): []) },
     journal:[...journal].reverse() };

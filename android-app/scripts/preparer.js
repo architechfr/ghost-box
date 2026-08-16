@@ -87,7 +87,7 @@ fs.writeFileSync(path.join(WWW, 'index.html'), RENVOI);
 const INDISPENSABLES = [
   'index.html', 'manifest.json', 'sw.js',
   'data/lexique.json',
-  'lib/moteur.js', 'lib/mur.js', 'lib/capteurs.js',
+  'lib/moteur.js', 'lib/mur.js', 'lib/capteurs.js', 'lib/zone.js',
   'simple/index.html', 'banc/index.html', 'seance/index.html',
   'mur/index.html', 'planche/index.html',
   'enregistreur/index.html', 'bibliotheque/index.html',

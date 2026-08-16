@@ -48,7 +48,7 @@ const ENVELOPPE = [
   ...['simple','seance','banc','mur','planche','bibliotheque','enregistreur','reglages','manuel']
     .map(n => RACINE + 'assets/menu/' + n + '.webp'),
   // modules et feuilles, avec leur numéro : ce sont ces URL-là que les pages demandent
-  ...['moteur','mur','tampon','secours','pose','capture','wakelock','media','fullscreen','retour','aide','action','qr','spectre','capteurs','nuit','voix','historique','demarrage','visage','fixe','objectif','croise','questions','planche','lettres','version','encodage','recit','lexique','torche','sillage']
+  ...['moteur','mur','tampon','secours','pose','capture','wakelock','media','fullscreen','retour','aide','action','qr','spectre','capteurs','nuit','voix','historique','demarrage','visage','fixe','objectif','croise','questions','planche','lettres','version','encodage','recit','lexique','torche','sillage','zone']
     .map(m => RACINE + 'lib/' + m + '.js?v=' + VERSION.slice(1)),
   ...['ambiance','fonts'].map(m => RACINE + 'lib/' + m + '.css?v=' + VERSION.slice(1)),
   // polices : sans elles, l'application change de visage hors ligne
