@@ -12,7 +12,7 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="Ghost Box">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<link rel="stylesheet" href="/ghost-box/lib/fonts.css?v=51">
+<link rel="stylesheet" href="/ghost-box/lib/fonts.css?v=52">
 <style>
 :root{
   --bench:#0A0F12;--panel:#141B20;--line:#2C383F;--hair:#1E262B;
@@ -284,7 +284,7 @@ body{margin:0;background:#000;color:var(--text);font-family:var(--body);
 }
 
 </style>
-<link rel="stylesheet" href="/ghost-box/lib/ambiance.css?v=51">
+<link rel="stylesheet" href="/ghost-box/lib/ambiance.css?v=52">
 </head>
 <body>
 <div id="app">
@@ -422,27 +422,27 @@ body{margin:0;background:#000;color:var(--text);font-family:var(--body);
 <div id="voile"></div>
 </div><!-- #app -->
 
-<script src="/ghost-box/lib/version.js?v=51"></script>
-<script src="/ghost-box/lib/nuit.js?v=51"></script>
-<script src="/ghost-box/lib/wakelock.js?v=51"></script>
-<script src="/ghost-box/lib/media.js?v=51"></script>
-<script src="/ghost-box/lib/moteur.js?v=51"></script>
-<script src="/ghost-box/lib/recit.js?v=51"></script>
-<script src="/ghost-box/lib/zone.js?v=51"></script>
-<script src="/ghost-box/lib/capteurs.js?v=51"></script>
-<script src="/ghost-box/lib/objectif.js?v=51"></script>
-<script src="/ghost-box/lib/qr.js?v=51"></script>
-<script src="/ghost-box/lib/croise.js?v=51"></script>
-<script src="/ghost-box/lib/torche.js?v=51"></script>
-<script src="/ghost-box/lib/lexique.js?v=51"></script>
-<script src="/ghost-box/lib/mur.js?v=51"></script>
-<script src="/ghost-box/lib/sillage.js?v=51"></script>
-<script src="/ghost-box/lib/voix.js?v=51"></script>
-<script src="/ghost-box/lib/historique.js?v=51"></script>
-<script src="/ghost-box/lib/encodage.js?v=51"></script>
-<script src="/ghost-box/lib/tampon.js?v=51"></script>
-<script src="/ghost-box/lib/secours.js?v=51"></script>
-<script src="/ghost-box/lib/capture.js?v=51"></script>
+<script src="/ghost-box/lib/version.js?v=52"></script>
+<script src="/ghost-box/lib/nuit.js?v=52"></script>
+<script src="/ghost-box/lib/wakelock.js?v=52"></script>
+<script src="/ghost-box/lib/media.js?v=52"></script>
+<script src="/ghost-box/lib/moteur.js?v=52"></script>
+<script src="/ghost-box/lib/recit.js?v=52"></script>
+<script src="/ghost-box/lib/zone.js?v=52"></script>
+<script src="/ghost-box/lib/capteurs.js?v=52"></script>
+<script src="/ghost-box/lib/objectif.js?v=52"></script>
+<script src="/ghost-box/lib/qr.js?v=52"></script>
+<script src="/ghost-box/lib/croise.js?v=52"></script>
+<script src="/ghost-box/lib/torche.js?v=52"></script>
+<script src="/ghost-box/lib/lexique.js?v=52"></script>
+<script src="/ghost-box/lib/mur.js?v=52"></script>
+<script src="/ghost-box/lib/sillage.js?v=52"></script>
+<script src="/ghost-box/lib/voix.js?v=52"></script>
+<script src="/ghost-box/lib/historique.js?v=52"></script>
+<script src="/ghost-box/lib/encodage.js?v=52"></script>
+<script src="/ghost-box/lib/tampon.js?v=52"></script>
+<script src="/ghost-box/lib/secours.js?v=52"></script>
+<script src="/ghost-box/lib/capture.js?v=52"></script>
 <script>
 /* ═══════════════════════════════════════════════════════════════════════
    Séance simple — un écran, un bouton.
@@ -1298,7 +1298,9 @@ async function stopVideoAuto(pourquoi){
   let r=null;
   try{ r = await TAMP.terminer(); }catch(e){}
   TAMP=null;
-  try{ if(SEC){ SEC.jeter(); SEC=null; } }catch(e){}
+  /* le filet n'est jeté qu'APRÈS l'écriture confirmée (000aq) — c'est
+     sauver() qui s'en charge ; ici on ne le jette que si la prise est vide */
+  if(!(r && r.blob && r.blob.size>1000)){ try{ if(SEC){ SEC.jeter(); SEC=null; } }catch(e){} }
   if(r && r.blob && r.blob.size>1000){
     const nom='simple-'+new Date().toISOString().slice(0,19).replace(/[:T]/g,'-')+'.webm';
     sauver({ id:Date.now(), nom:nom, mime:r.type, taille:r.blob.size, duree:r.duree,
@@ -1314,11 +1316,36 @@ async function stopVideoAuto(pourquoi){
 }
 
 function sauver(o){
+  /* L'écriture était lancée sans jamais vérifier qu'elle avait abouti, et le
+     filet de secours était déjà jeté : une base qui refusait perdait la prise
+     EN SILENCE — le pire défaut possible sur cet outil (000aq). Désormais :
+     écriture confirmée → on jette le filet ; échec → le filet reste en base
+     (la Bibliothèque proposera de récupérer la prise) ET le fichier part en
+     téléchargement direct, et l'écran le dit. */
+  let regle=false;
+  const fini=ok=>{
+    if(regle) return; regle=true;
+    if(ok){ try{ if(SEC){ SEC.jeter(); SEC=null; } }catch(e){} return; }
+    SEC=null;                       // les morceaux restent : prise récupérable
+    try{
+      const u=URL.createObjectURL(o.blob), a=document.createElement('a');
+      a.href=u; a.download=o.nom; a.click();
+      setTimeout(()=>URL.revokeObjectURL(u),6000);
+    }catch(e){}
+    try{ $('legend').textContent='base indisponible — prise téléchargée, et récupérable en bibliothèque'; }catch(e){}
+    if(H) H.noter('panne','sauvegarde en base refusée — téléchargement direct, filet conservé');
+  };
   try{
     const r=indexedDB.open('ghostbox-vision',1);
     r.onupgradeneeded=()=>{ if(!r.result.objectStoreNames.contains('clips')) r.result.createObjectStore('clips',{keyPath:'id'}); };
-    r.onsuccess=()=>{ try{ r.result.transaction('clips','readwrite').objectStore('clips').put(o); }catch(e){} };
-  }catch(e){}
+    r.onsuccess=()=>{ try{
+        const t=r.result.transaction('clips','readwrite');
+        t.objectStore('clips').put(o);
+        t.oncomplete=()=>fini(true);
+        t.onerror=()=>fini(false);
+      }catch(e){ fini(false); } };
+    r.onerror=()=>fini(false);
+  }catch(e){ fini(false); }
 }
 
 /* la silhouette qui PASSE donne une photo, celle qui RESTE donne une vidéo */
@@ -1364,10 +1391,10 @@ async function allumerDetection(quoi, silencieux){
   if(!silencieux) $('silAide').textContent='Chargement du modèle (une seule fois)…';
   try{
     if(quoi==='sil'){
-      if(!POSE) POSE = await import('/ghost-box/lib/pose.js?v=51');
+      if(!POSE) POSE = await import('/ghost-box/lib/pose.js?v=52');
       await POSE.load(); silOn=true; silVoulu=true; appliquerSeverite();
     } else {
-      if(!VIS) VIS = await import('/ghost-box/lib/visage.js?v=51');
+      if(!VIS) VIS = await import('/ghost-box/lib/visage.js?v=52');
       await VIS.load(); visOn=true; visVoulu=true; appliquerSeverite();
     }
     $('squelette').classList.add('on'); $('nbPers').classList.add('on');
