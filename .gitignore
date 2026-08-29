@@ -31,3 +31,6 @@ mintty.*.png
 
 # Construction Cloudflare Pages (recopie du site, jamais versionnee)
 /dist/
+
+# Cache local de wrangler
+.wrangler/
