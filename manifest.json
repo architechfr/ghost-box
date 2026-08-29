@@ -2,6 +2,7 @@
   "name": "Ghost Box — poste de terrain",
   "short_name": "Ghost Box",
   "description": "Outils de séance : caméras, veille capteurs, enregistrement.",
+  "id": "/ghost-box/",
   "start_url": "/ghost-box/",
   "scope": "/ghost-box/",
   "display": "fullscreen",

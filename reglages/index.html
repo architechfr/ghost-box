@@ -10,7 +10,7 @@
 <link rel="manifest" href="/ghost-box/manifest.json">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
-<link rel="stylesheet" href="/ghost-box/lib/fonts.css?v=54">
+<link rel="stylesheet" href="/ghost-box/lib/fonts.css?v=55">
 <style>
 :root{
   --bench:#0A0F12;--panel:#1D262B;--line:#2C383F;--hair:#212B31;
@@ -45,7 +45,7 @@ table{width:100%;border-collapse:collapse;margin-top:8px}
 td{padding:7px 6px 7px 0;border-bottom:1px solid var(--hair);font-family:var(--mono);font-size:12px}
 td:first-child{color:var(--dim);width:46%}
 </style>
-<link rel="stylesheet" href="/ghost-box/lib/ambiance.css?v=54">
+<link rel="stylesheet" href="/ghost-box/lib/ambiance.css?v=55">
 </head>
 <body>
 
@@ -62,8 +62,16 @@ td:first-child{color:var(--dim);width:46%}
 </div>
 
 <div class="step">
+  <div class="lg">Installer l'application</div>
+  <p class="ex">Une <b>vraie</b> installation range Ghost Box dans le menu des applications, à côté des autres, et l'ouvre en plein écran sans barre d'adresse. Le menu du navigateur, lui, fabrique souvent un simple raccourci : une icône sur le bureau et rien d'autre. Ce bouton-ci ne fabrique que la vraie.</p>
+  <div class="row"><button id="installer">Installer l'application</button></div>
+  <p id="installState" class="ex"></p>
+  <table><tbody id="installDiag"></tbody></table>
+</div>
+
+<div class="step">
   <div class="lg">Partager l'application</div>
-  <p class="ex">Fais scanner ce code par un autre téléphone : il ouvre directement le poste de terrain. Sur place, chacun peut ensuite l'installer (« Ajouter à l'écran d'accueil ») et il fonctionnera même sans réseau.</p>
+  <p class="ex">Fais scanner ce code par un autre téléphone : il ouvre directement le poste de terrain. Sur place, chacun peut ensuite l'installer depuis les Réglages et il fonctionnera même sans réseau.</p>
   <div id="qrBox"><img id="qrImg" alt="QR code vers l'application"></div>
   <p id="lien"></p>
   <div class="row">
@@ -137,13 +145,14 @@ td:first-child{color:var(--dim);width:46%}
 
 </div>
 
-<script src="/ghost-box/lib/version.js?v=54"></script>
-<script src="/ghost-box/lib/lexique.js?v=54"></script>
-<script src="/ghost-box/lib/nuit.js?v=54"></script>
-<script src="/ghost-box/lib/demarrage.js?v=54"></script>
-<script src="/ghost-box/lib/qr.js?v=54"></script>
-<script src="/ghost-box/lib/retour.js?v=54"></script>
-<script src="/ghost-box/lib/aide.js?v=54"></script>
+<script src="/ghost-box/lib/version.js?v=55"></script>
+<script src="/ghost-box/lib/lexique.js?v=55"></script>
+<script src="/ghost-box/lib/nuit.js?v=55"></script>
+<script src="/ghost-box/lib/demarrage.js?v=55"></script>
+<script src="/ghost-box/lib/qr.js?v=55"></script>
+<script src="/ghost-box/lib/installer.js?v=55"></script>
+<script src="/ghost-box/lib/retour.js?v=55"></script>
+<script src="/ghost-box/lib/aide.js?v=55"></script>
 <script>
 (() => {
 "use strict";
@@ -201,11 +210,43 @@ $('copier').onclick=async ()=>{
   catch(e){ $('partState').textContent='Copie refusée par le navigateur.'; }
 };
 
+/* ═══════ installation ═══════ */
+/* Le navigateur ne propose l'installation qu'une fois, et son menu ne dit pas
+   s'il fabriquera une vraie application ou un raccourci. On lui prend la
+   proposition et on la rend ici : si le bouton s'allume, ce sera une vraie. */
+async function majInstall(){
+  const b=$('installer'), e=$('installState');
+  if(GBInstall.installee()){
+    b.disabled=true; b.textContent='Déjà installée';
+    e.textContent='Tu utilises l\'application installée : plein écran, aucune barre d\'adresse.';
+    $('installDiag').innerHTML=''; return;
+  }
+  if(GBInstall.disponible()){
+    b.disabled=false; b.textContent='Installer l\'application';
+    e.textContent='Prêt : le navigateur fabriquera une vraie application.';
+    $('installDiag').innerHTML=''; return;
+  }
+  b.disabled=true; b.textContent='Installation pas encore proposée';
+  e.textContent='Le navigateur ne la propose pas encore. Recharge la page une fois en ligne : le service de cache doit d\'abord prendre les commandes. Sur iPhone, l\'installation passe obligatoirement par Partager → Sur l\'écran d\'accueil.';
+  const l=await GBInstall.etat();
+  $('installDiag').innerHTML=l.map(r=>'<tr><td>'+r[0]+'</td><td>'+(r[1]?'oui':'<b>non</b>')+'</td></tr>').join('');
+}
+$('installer').onclick=async ()=>{
+  $('installState').textContent='Installation…';
+  const r=await GBInstall.installer();
+  $('installState').textContent =
+    r==='acceptee'    ? 'Installée. Elle est maintenant dans le menu des applications.' :
+    r==='refusee'     ? 'Installation refusée. Le bouton reste disponible après un rechargement.' :
+                        'Le navigateur ne propose plus l\'installation. Recharge la page.';
+  setTimeout(majInstall,500);
+};
+GBInstall.surChangement(majInstall);
+
 /* ═══════ diagnostic ═══════ */
 async function diag(){
   const rows=[];
   rows.push(['Adresse', URL_APP.replace('https://','')]);
-  rows.push(['Installée en application', (matchMedia('(display-mode: fullscreen)').matches||matchMedia('(display-mode: standalone)').matches)? 'oui':'non — menu du navigateur → « Ajouter à l\'écran d\'accueil »']);
+  rows.push(['Installée en application', (matchMedia('(display-mode: fullscreen)').matches||matchMedia('(display-mode: standalone)').matches)? 'oui':'non — bouton « Installer l\'application » plus haut']);
   rows.push(['Réseau', navigator.onLine? 'en ligne':'hors ligne']);
   try{ const r=await navigator.serviceWorker.getRegistration();
     rows.push(['Service de cache', r&&r.active? 'actif':'absent']); }catch(e){ rows.push(['Service de cache','indisponible']); }
@@ -237,10 +278,10 @@ $('verifCache').onclick=async ()=>{
     '/ghost-box/data/lexique.json',
     // les deux modules livrés en v46 : sans eux, hors ligne, le vocabulaire n'est
     // plus trié et la torche n'existe pas
-    '/ghost-box/lib/lexique.js?v=54','/ghost-box/lib/torche.js?v=54',
+    '/ghost-box/lib/lexique.js?v=55','/ghost-box/lib/torche.js?v=55',
     // v47 : sans lui, les courbes de la bibliothèque et des actes de naissance
     // ne se dessinent pas — et c'est hors ligne qu'on relit ses séances
-    '/ghost-box/lib/sillage.js?v=54'];
+    '/ghost-box/lib/sillage.js?v=55'];
   try{
     const ks=await caches.keys(); const k=ks.find(x=>x.startsWith('ghostbox-'));
     if(!k){ $('cacheState').innerHTML='<b style="color:var(--flag)">Aucun cache</b> — recharge la page une fois avec du réseau.'; return; }
