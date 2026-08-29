@@ -1,0 +1,12 @@
+# Configuration Cloudflare Pages pour Ghost Box.
+#
+# Le depot est prive ; Cloudflare Pages construit depuis un depot prive et
+# sert un site public, ce que GitHub Pages ne fait pas sur l'offre gratuite.
+#
+# Commande de construction, cote projet Cloudflare :
+#   node deploiement/preparer-cf.js
+# Le dossier servi est declare ici, pas dans le tableau de bord.
+
+name = "ghost-box"
+pages_build_output_dir = "dist"
+compatibility_date = "2026-08-01"

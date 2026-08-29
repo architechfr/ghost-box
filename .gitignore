@@ -28,3 +28,6 @@ mintty.*.png
 
 # Outils locaux (session Claude)
 .claude/
+
+# Construction Cloudflare Pages (recopie du site, jamais versionnee)
+/dist/
