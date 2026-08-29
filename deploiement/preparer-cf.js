@@ -31,7 +31,11 @@ const EXCLUS = new Set([
   'android-app', 'deploiement', 'dist', '_to_delete',
   'docs', 'db',
   'CLAUDE.md', 'README.md', 'LICENSE',
-  'node_modules'
+  'node_modules',
+  /* Outils d'hebergement : ils n'ont rien a faire sur le site public.
+     .wrangler contient le cache de connexion (identifiant de compte
+     Cloudflare) — il etait servi en clair avant qu'on le remarque. */
+  '.wrangler', 'wrangler.toml', '.nojekyll'
 ]);
 
 /* data/ ne garde que le lexique : gen_lexique.py et lexique.csv sont les
