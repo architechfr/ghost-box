@@ -10,7 +10,7 @@
 <link rel="manifest" href="/ghost-box/manifest.json">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
-<link rel="stylesheet" href="/ghost-box/lib/fonts.css?v=55">
+<link rel="stylesheet" href="/ghost-box/lib/fonts.css?v=56">
 <style>
 :root{
   --bench:#0A0F12;--panel:#1D262B;--line:#2C383F;--hair:#212B31;
@@ -45,7 +45,7 @@ table{width:100%;border-collapse:collapse;margin-top:8px}
 td{padding:7px 6px 7px 0;border-bottom:1px solid var(--hair);font-family:var(--mono);font-size:12px}
 td:first-child{color:var(--dim);width:46%}
 </style>
-<link rel="stylesheet" href="/ghost-box/lib/ambiance.css?v=55">
+<link rel="stylesheet" href="/ghost-box/lib/ambiance.css?v=56">
 </head>
 <body>
 
@@ -145,14 +145,14 @@ td:first-child{color:var(--dim);width:46%}
 
 </div>
 
-<script src="/ghost-box/lib/version.js?v=55"></script>
-<script src="/ghost-box/lib/lexique.js?v=55"></script>
-<script src="/ghost-box/lib/nuit.js?v=55"></script>
-<script src="/ghost-box/lib/demarrage.js?v=55"></script>
-<script src="/ghost-box/lib/qr.js?v=55"></script>
-<script src="/ghost-box/lib/installer.js?v=55"></script>
-<script src="/ghost-box/lib/retour.js?v=55"></script>
-<script src="/ghost-box/lib/aide.js?v=55"></script>
+<script src="/ghost-box/lib/version.js?v=56"></script>
+<script src="/ghost-box/lib/lexique.js?v=56"></script>
+<script src="/ghost-box/lib/nuit.js?v=56"></script>
+<script src="/ghost-box/lib/demarrage.js?v=56"></script>
+<script src="/ghost-box/lib/qr.js?v=56"></script>
+<script src="/ghost-box/lib/installer.js?v=56"></script>
+<script src="/ghost-box/lib/retour.js?v=56"></script>
+<script src="/ghost-box/lib/aide.js?v=56"></script>
 <script>
 (() => {
 "use strict";
@@ -278,10 +278,10 @@ $('verifCache').onclick=async ()=>{
     '/ghost-box/data/lexique.json',
     // les deux modules livrés en v46 : sans eux, hors ligne, le vocabulaire n'est
     // plus trié et la torche n'existe pas
-    '/ghost-box/lib/lexique.js?v=55','/ghost-box/lib/torche.js?v=55',
+    '/ghost-box/lib/lexique.js?v=56','/ghost-box/lib/torche.js?v=56',
     // v47 : sans lui, les courbes de la bibliothèque et des actes de naissance
     // ne se dessinent pas — et c'est hors ligne qu'on relit ses séances
-    '/ghost-box/lib/sillage.js?v=55'];
+    '/ghost-box/lib/sillage.js?v=56'];
   try{
     const ks=await caches.keys(); const k=ks.find(x=>x.startsWith('ghostbox-'));
     if(!k){ $('cacheState').innerHTML='<b style="color:var(--flag)">Aucun cache</b> — recharge la page une fois avec du réseau.'; return; }

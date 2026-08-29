@@ -12,7 +12,7 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="Ghost Box">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<link rel="stylesheet" href="/ghost-box/lib/fonts.css?v=55">
+<link rel="stylesheet" href="/ghost-box/lib/fonts.css?v=56">
 <style>
 :root{
   --bench:#0A0F12;--panel:#1D262B;--sunk:#0A0F12;--line:#2C383F;--hair:#212B31;
@@ -144,7 +144,7 @@ body.avecmur #murBox{display:flex}
    la place du ✕ à droite pour ne jamais passer dessous. */
 body.filming #live{padding-right:92px}
 </style>
-<link rel="stylesheet" href="/ghost-box/lib/ambiance.css?v=55">
+<link rel="stylesheet" href="/ghost-box/lib/ambiance.css?v=56">
 </head>
 <body>
 
@@ -236,27 +236,27 @@ body.filming #live{padding-right:92px}
 <video id="vid3" playsinline muted></video>
 <video id="vid4" playsinline muted></video>
 
-<script src="/ghost-box/lib/version.js?v=55"></script>
-<script src="/ghost-box/lib/nuit.js?v=55"></script>
-<script src="/ghost-box/lib/demarrage.js?v=55"></script>
-<script src="/ghost-box/lib/voix.js?v=55"></script>
-<script src="/ghost-box/lib/historique.js?v=55"></script>
-<script src="/ghost-box/lib/moteur.js?v=55"></script>
-<script src="/ghost-box/lib/zone.js?v=55"></script>
-<script src="/ghost-box/lib/retour.js?v=55"></script>
-<script src="/ghost-box/lib/aide.js?v=55"></script>
-<script src="/ghost-box/lib/action.js?v=55"></script>
+<script src="/ghost-box/lib/version.js?v=56"></script>
+<script src="/ghost-box/lib/nuit.js?v=56"></script>
+<script src="/ghost-box/lib/demarrage.js?v=56"></script>
+<script src="/ghost-box/lib/voix.js?v=56"></script>
+<script src="/ghost-box/lib/historique.js?v=56"></script>
+<script src="/ghost-box/lib/moteur.js?v=56"></script>
+<script src="/ghost-box/lib/zone.js?v=56"></script>
+<script src="/ghost-box/lib/retour.js?v=56"></script>
+<script src="/ghost-box/lib/aide.js?v=56"></script>
+<script src="/ghost-box/lib/action.js?v=56"></script>
 <script>addEventListener('load',function(){ try{ GBAction.init(['#recBtn','#prep']); }catch(e){} });</script>
-<script src="/ghost-box/lib/secours.js?v=55"></script>
-<script src="/ghost-box/lib/encodage.js?v=55"></script>
-<script src="/ghost-box/lib/tampon.js?v=55"></script>
-<script src="/ghost-box/lib/lexique.js?v=55"></script>
-<script src="/ghost-box/lib/torche.js?v=55"></script>
-<script src="/ghost-box/lib/mur.js?v=55"></script>
-<script src="/ghost-box/lib/media.js?v=55"></script>
-<script src="/ghost-box/lib/wakelock.js?v=55"></script>
-<script src="/ghost-box/lib/objectif.js?v=55"></script>
-<script src="/ghost-box/lib/fixe.js?v=55"></script>
+<script src="/ghost-box/lib/secours.js?v=56"></script>
+<script src="/ghost-box/lib/encodage.js?v=56"></script>
+<script src="/ghost-box/lib/tampon.js?v=56"></script>
+<script src="/ghost-box/lib/lexique.js?v=56"></script>
+<script src="/ghost-box/lib/torche.js?v=56"></script>
+<script src="/ghost-box/lib/mur.js?v=56"></script>
+<script src="/ghost-box/lib/media.js?v=56"></script>
+<script src="/ghost-box/lib/wakelock.js?v=56"></script>
+<script src="/ghost-box/lib/objectif.js?v=56"></script>
+<script src="/ghost-box/lib/fixe.js?v=56"></script>
 <script>
 (() => {
 "use strict";
@@ -843,7 +843,7 @@ $('aiBtn').onclick=async ()=>{
   if(!vstream){ $('aiState').textContent="Prépare d'abord le tournage."; return; }
   $('aiState').textContent='Chargement du modèle (~5 Mo, une seule fois)…';
   try{
-    if(!POSE) POSE=await import('/ghost-box/lib/pose.js?v=55');
+    if(!POSE) POSE=await import('/ghost-box/lib/pose.js?v=56');
     await POSE.load();
     aiOn=true; $('aiBtn').className='act';
     $('aiState').innerHTML='Détection active — jusqu\'à <b>4 personnes suivies en même temps</b>, chacune avec sa couleur et son numéro. Les squelettes s\'incrustent dans la vidéo enregistrée, et seulement si une personne réelle est reconnue.';
@@ -1479,9 +1479,40 @@ async function onStop(){
 async function finTampon(){
   const r=await tampon.terminer();
   tampon=null; $('tampBtn').className='';
+  /* Une prise « vide » n'est pas une prise courte : c'est un fichier réduit à
+     son en-tête, sans une seule image. Il pèse quelques centaines d'octets et
+     s'ouvre sur un écran noir muet. On ne l'écrit pas dans la bibliothèque —
+     mais on GARDE les morceaux bruts, qui eux se décodent. */
+  if(r && r.vide){
+    SEC=null;   // la poignée est lâchée sans « finir » : le filet reste en base
+    addJ(performance.now(),'fin','prise vide — aucune image complète retenue par la mémoire tampon ; les morceaux bruts sont conservés, la prise est récupérable en Bibliothèque');
+    $('live').innerHTML='<b style="color:var(--flag)">La prise n\'a retenu aucune image</b> — rien n\'a été écrit comme vidéo, mais les morceaux bruts sont gardés : récupère-la depuis la Bibliothèque.';
+    tampDemarre(); return;
+  }
   if(r && r.blob && r.blob.size) await sauver(r.blob, r.type, r.duree, r.preroll);
   else addJ(performance.now(),'fin','rien à sauvegarder');
   tampDemarre();      // on remet la mémoire en route tout de suite
+}
+
+/* ── UNE PRISE N'EST « SAUVEGARDÉE » QUE SI ELLE SE RELIT ──
+   Un fichier peut être bien formé, peser lourd, annoncer une durée, et rester
+   indécodable. Le seul juge fiable est le décodeur du navigateur lui-même :
+   on lui demande de lire les métadonnées AVANT d'annoncer la sauvegarde.
+   Un doute coûte un avertissement, jamais une perte : la prise est écrite
+   dans tous les cas, et le filet de secours est conservé quand elle échoue. */
+function relisible(blob){
+  return new Promise(res=>{
+    let fini=false; const v=document.createElement('video');
+    v.preload='metadata'; v.muted=true;
+    const u=URL.createObjectURL(blob);
+    const fin=ok=>{ if(fini) return; fini=true;
+      try{ URL.revokeObjectURL(u); v.removeAttribute('src'); v.load(); }catch(e){}
+      res(ok); };
+    v.onloadedmetadata=()=>fin(v.videoWidth>0 && v.videoHeight>0);
+    v.onerror=()=>fin(false);
+    setTimeout(()=>fin(false), 5000);
+    v.src=u;
+  });
 }
 async function sauver(blob, type, dur, preroll){
   recording=false;
@@ -1505,9 +1536,15 @@ async function sauver(blob, type, dur, preroll){
      il était jeté avant, et une base qui refusait laissait le téléchargement
      comme seule copie. Si la base refuse, les morceaux restent en place et
      la Bibliothèque proposera de récupérer la prise. */
-  try{ await dbPut(clip); secoursFini();
-    addJ(performance.now(),'fin','vidéo sauvegardée ('+mo(blob.size)+')'
-      +(preroll? ' — dont '+preroll+' s d\'avant le geste':'')); }
+  const lisible = await relisible(blob);
+  if(!lisible) clip.illisible = true;
+  try{ await dbPut(clip);
+    if(lisible){ secoursFini();
+      addJ(performance.now(),'fin','vidéo sauvegardée ('+mo(blob.size)+')'
+        +(preroll? ' — dont '+preroll+' s d\'avant le geste':'')); }
+    else { SEC=null;   // le filet reste en base : c'est exactement le cas où il sert
+      addJ(performance.now(),'fin','ATTENTION — la vidéo enregistrée NE SE RELIT PAS ('+mo(blob.size)+') ; elle est gardée telle quelle, marquée illisible, et les morceaux bruts sont conservés');
+      $('live').innerHTML='<b style="color:var(--flag)">La vidéo ne se relit pas</b> — elle est en bibliothèque, marquée illisible, et les morceaux bruts sont gardés pour la récupérer.'; } }
   catch(e){ SEC=null;   // le filet est conservé en base, seule la poignée est lâchée
     addJ(performance.now(),'fin','sauvegarde impossible — téléchargement direct, et la prise reste récupérable en bibliothèque');
     const u=URL.createObjectURL(blob),a=document.createElement('a'); a.href=u;a.download=clip.nom;a.click();
@@ -1570,7 +1607,7 @@ addEventListener('load',function(){ try{ GBCapture.init({label:($('lieu').value|
 })();
 </script>
 <script>if('serviceWorker' in navigator){window.addEventListener('load',function(){navigator.serviceWorker.register('/ghost-box/sw.js').catch(function(){});});}</script>
-<script src="/ghost-box/lib/capture.js?v=55"></script>
-<script src="/ghost-box/lib/fullscreen.js?v=55"></script>
+<script src="/ghost-box/lib/capture.js?v=56"></script>
+<script src="/ghost-box/lib/fullscreen.js?v=56"></script>
 </body>
 </html>

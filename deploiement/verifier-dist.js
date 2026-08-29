@@ -35,6 +35,30 @@ for(const f of tous(SITE,'.js')){
 }
 if(!mauvais) dire('.',tous(SITE,'.js').length+' scripts, aucun defaut de syntaxe');
 
+/* 1 bis. syntaxe des scripts ECRITS DANS LES PAGES — c'est la que vit le
+      gros du code de cette application, et il n'etait pas verifie du tout */
+console.log('\n1 bis. Scripts ecrits dans les pages');
+const os=require('os');
+let blocs=0, casses=0;
+for(const f of tous(SITE,'.html')){
+  const html=fs.readFileSync(f,'utf8');
+  for(const m of html.matchAll(/<script\b([^>]*)>([\s\S]*?)<\/script>/gi)){
+    const attrs=m[1]||'';
+    if(/\bsrc\s*=/i.test(attrs)) continue;                 // script externe : deja verifie
+    const t=(attrs.match(/type\s*=\s*["']([^"']+)["']/i)||[,''])[1].toLowerCase();
+    if(t && !/^(text\/javascript|application\/javascript|module)$/.test(t)) continue;
+    const corps=m[2];
+    if(!corps.trim()) continue;
+    blocs++;
+    const tmp=path.join(os.tmpdir(),'gb-bloc-'+blocs+(t==='module'?'.mjs':'.js'));
+    fs.writeFileSync(tmp,corps);
+    try{ cp.execSync(`node --check "${tmp}"`,{stdio:'pipe'}); }
+    catch(e){ dire('X',path.relative(SITE,f)+' : '+String(e.stderr).split('\n').slice(1,3).join(' ').trim()); casses++; }
+    fs.unlinkSync(tmp);
+  }
+}
+if(!casses) dire('.',blocs+' scripts dans les pages, aucun defaut de syntaxe');
+
 /* 2. ressources citees par les pages */
 console.log('\n2. Ressources citees par les pages');
 const CITE=/(?:src|href)\s*=\s*["']([^"']+)["']/g;
