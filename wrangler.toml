@@ -17,5 +17,10 @@ compatibility_date = "2026-08-01"
 # Sans cette ligne, l'adresse *.workers.dev reste desactivee et tout repond 404.
 workers_dev = true
 
+# Sans cette ligne, CHAQUE version deployee recoit en plus sa propre adresse
+# publique de previsualisation. Une seule adresse suffit, et le projet n'a pas
+# a semer des copies de lui-meme sur le reseau.
+preview_urls = false
+
 [assets]
 directory = "./dist"
